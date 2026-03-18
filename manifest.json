@@ -1,0 +1,17 @@
+{
+  "name": "Focus Tribe Tracker",
+  "short_name": "Focus Tribe",
+  "description": "21-Day Accountability Challenge Tracker",
+  "start_url": "/21-days Tracker/app.html",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#FF5500",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='42' fill='%23FF5500'/><text x='96' y='130' font-size='110' text-anchor='middle' fill='white' font-family='system-ui' font-weight='900'>F</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

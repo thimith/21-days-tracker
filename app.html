@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F5F5F7">
+  <link rel="manifest" href="manifest.json">
+  <title>Focus Tribe</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --orange:    #FF5500;
+      --orange-dk: #CC4400;
+      --orange-lt: rgba(255,85,0,0.1);
+      --green:     #34C759;
+      --green-lt:  rgba(52,199,89,0.1);
+      --red:       #FF3B30;
+      --red-lt:    rgba(255,59,48,0.1);
+      --yellow:    #FF9F0A;
+      --blue:      #007AFF;
+      --blue-lt:   rgba(0,122,255,0.1);
+      --bg:        #F5F5F7;
+      --card:      #FFFFFF;
+      --text:      #1C1C1E;
+      --muted:     #8E8E93;
+      --border:    #E5E5EA;
+      --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100dvh;
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 1.05rem; font-weight: 900;
+      color: var(--text); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .day-badge {
+      background: var(--orange);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 100px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .day-badge.upcoming { background: var(--muted); }
+    .day-badge.complete { background: var(--green); }
+    .avatar {
+      width: 30px; height: 30px;
+      background: var(--orange-lt);
+      color: var(--orange);
+      font-size: 0.78rem; font-weight: 800;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Progress strip ──────────────────────────────────────────────────── */
+    .progress-section {
+      background: var(--card);
+      padding: 14px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .progress-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .cohort-label {
+      font-size: 0.72rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+    .progress-pct { font-size: 0.72rem; color: var(--muted); }
+    .dots-strip { display: flex; gap: 3px; align-items: center; }
+    .dot {
+      flex: 1; height: 7px; border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .dot.done    { background: var(--green); }
+    .dot.missed  { background: rgba(255,59,48,0.35); }
+    .dot.partial { background: var(--yellow); }
+    .dot.today   { background: var(--orange); animation: pulse-dot 2s ease-in-out infinite; }
+    .dot.future  { background: var(--border); }
+    @keyframes pulse-dot {
+      0%,100% { opacity:1; transform:scaleY(1); }
+      50%     { opacity:0.65; transform:scaleY(1.5); }
+    }
+
+    /* ── Date tabs ───────────────────────────────────────────────────────── */
+    .date-tabs {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex; gap: 6px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .date-tabs::-webkit-scrollbar { display: none; }
+    .date-tab {
+      flex-shrink: 0;
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.76rem; font-weight: 600;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .date-tab.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+    .date-tab:not(.active):hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── Content ─────────────────────────────────────────────────────────── */
+    .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── Redemption card ─────────────────────────────────────────────────── */
+    .redemption-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      border-left: 4px solid var(--red);
+      box-shadow: var(--shadow);
+    }
+    .redemption-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .redemption-label {
+      font-size: 0.7rem; font-weight: 800; color: var(--red);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .strikes { display: flex; gap: 4px; margin-left: auto; }
+    .strike-pip {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border);
+    }
+    .strike-pip.active { background: var(--red); }
+    .redemption-reason {
+      font-size: 0.88rem; color: var(--text); line-height: 1.45; margin-bottom: 12px;
+    }
+    .btn-redemption-done {
+      width: 100%; padding: 10px;
+      background: var(--green); color: #fff;
+      font-family: inherit; font-size: 0.88rem; font-weight: 700;
+      border: none; border-radius: 10px; cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .btn-redemption-done:active { transform: scale(0.98); opacity: 0.9; }
+
+    /* ── Goal card ───────────────────────────────────────────────────────── */
+    .goal-group-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+      color: var(--muted); padding: 4px 2px 6px; margin-top: 4px;
+    }
+    .goal-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 11px 14px;
+      box-shadow: var(--shadow);
+      transition: transform 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+    .goal-card.is-done { background: var(--green-lt); }
+    .goal-card.is-tappable { cursor: pointer; }
+    .goal-card.is-tappable:active { transform: scale(0.985); }
+    .goal-type-tag {
+      font-size: 0.62rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 3px;
+    }
+    .goal-title {
+      font-size: 0.95rem; font-weight: 700; color: var(--text);
+      letter-spacing: -0.01em; flex: 1;
+    }
+
+    /* Daily boolean */
+    .bool-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .check-circle {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 2.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .check-circle.checked { background: var(--green); border-color: var(--green); }
+    .check-circle svg { opacity:0; transform:scale(0.4); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+    .check-circle.checked svg { opacity:1; transform:scale(1); }
+
+    /* Weekly count */
+    .session-inline { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .session-dots-row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+    .session-pip {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      transition: all 0.2s;
+    }
+    .session-pip.done { background: var(--orange); border-color: var(--orange); }
+    .session-count-label { font-size: 0.7rem; color: var(--muted); }
+    .session-count-label strong { color: var(--text); }
+
+    /* Daily time */
+    .time-title-row { display: flex; align-items: center; gap: 10px; }
+    .time-bar-inline { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .time-bar-inline-label { font-size: 0.68rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .time-bar-inline-label.over { color: var(--red); }
+    .time-bar-inline-label.met  { color: var(--green); }
+    .time-bar-inline-track { width: 72px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .time-bar-inline-fill { height: 100%; background: var(--orange); border-radius: 3px; transition: width 0.3s; }
+    .time-bar-inline-fill.over { background: var(--red); }
+    .time-bar-inline-fill.met  { background: var(--green); }
+    .time-area { margin-top: 12px; }
+    .time-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .time-input {
+      width: 76px; padding: 9px 10px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 1rem; font-family: inherit; font-weight: 700;
+      color: var(--text); background: var(--bg);
+      text-align: center; outline: none;
+      transition: border-color 0.2s;
+    }
+    .time-input:focus { border-color: var(--orange); }
+    .time-input:disabled { opacity: 0.5; }
+    .time-unit { font-size: 0.84rem; color: var(--muted); }
+    .time-bar-wrap {}
+    .time-bar-labels {
+      display: flex; justify-content: space-between;
+      font-size: 0.72rem; color: var(--muted); margin-bottom: 4px;
+    }
+    .time-bar-labels.over { color: var(--red); }
+    .time-bar {
+      height: 4px; background: var(--border);
+      border-radius: 2px; overflow: hidden;
+    }
+    .time-bar-fill {
+      height: 100%; background: var(--green); border-radius: 2px;
+      transition: width 0.35s;
+    }
+    .time-bar-fill.over { background: var(--red); }
+
+    /* Milestone */
+    .milestone-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 2px;
+    }
+    .milestone-chip {
+      font-size: 0.7rem; font-weight: 700;
+      padding: 3px 8px; border-radius: 6px;
+      background: var(--blue-lt); color: var(--blue);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .milestone-chip.done { background: var(--green-lt); color: var(--green); }
+
+    /* ── Goal setup (pre Day-2) ──────────────────────────────────────────── */
+    .setup-banner {
+      background: var(--card);
+      border-radius: 16px; padding: 16px 18px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--orange);
+    }
+    .setup-banner-title {
+      font-size: 0.72rem; font-weight: 800; color: var(--orange);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;
+    }
+    .setup-banner-sub {
+      font-size: 0.82rem; color: var(--muted); line-height: 1.45; margin-bottom: 14px;
+    }
+    .btn-add-goal {
+      width: 100%; padding: 12px;
+      background: var(--bg); color: var(--orange);
+      font-family: inherit; font-size: 0.88rem; font-weight: 700;
+      border: 2px dashed rgba(255,85,0,0.3); border-radius: 12px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-add-goal:hover { border-color: var(--orange); background: var(--orange-lt); }
+    /* Add goal form */
+    .add-form { display: none; margin-top: 14px; }
+    .add-form.open { display: block; }
+    .form-field { margin-bottom: 12px; }
+    .form-label {
+      display: block; font-size: 0.72rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px;
+    }
+    .form-input {
+      width: 100%; padding: 11px 13px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 0.92rem; font-family: inherit; color: var(--text);
+      background: var(--bg); outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--orange); }
+    .type-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .type-pill {
+      padding: 5px 11px; border-radius: 100px;
+      font-size: 0.76rem; font-weight: 600;
+      color: var(--muted); background: var(--bg);
+      border: 1.5px solid var(--border); cursor: pointer; transition: all 0.15s;
+    }
+    .type-pill.sel { background: var(--orange); color: #fff; border-color: var(--orange); }
+    .config-field { display: none; }
+    .config-field.show { display: block; margin-top: 10px; }
+    .form-row { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-xs {
+      flex: 1; padding: 10px; font-family: inherit;
+      font-size: 0.84rem; font-weight: 700;
+      border-radius: 10px; cursor: pointer; transition: all 0.15s; border: none;
+    }
+    .btn-xs.pri { background: var(--orange); color: #fff; }
+    .btn-xs.sec { background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); }
+
+    /* ── Goal delete button (setup mode) ─────────────────────────────────── */
+    .goal-delete {
+      position: absolute; top: 12px; right: 14px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--red-lt); color: var(--red);
+      font-size: 0.8rem; font-weight: 700;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .goal-delete:hover { background: rgba(255,59,48,0.2); }
+
+    /* ── Bottom nav ──────────────────────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex;
+      padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 2px; padding: 6px 0;
+      cursor: pointer; text-decoration: none; transition: opacity 0.15s;
+    }
+    .nav-icon { display: none; }
+    .nav-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .nav-item.active .nav-label { color: var(--orange); }
+
+    /* ── Failed overlay ──────────────────────────────────────────────────── */
+    .failed-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; z-index: 999;
+    }
+    .failed-card {
+      background: var(--card); border-radius: 24px;
+      padding: 36px 28px; text-align: center; max-width: 320px;
+    }
+    .failed-icon { font-size: 3rem; margin-bottom: 16px; }
+    .failed-title {
+      font-size: 1.25rem; font-weight: 800; color: var(--text);
+      margin-bottom: 10px; letter-spacing: -0.02em;
+    }
+    .failed-body { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── Empty state ─────────────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 48px 20px;
+      font-size: 0.88rem; color: var(--muted); line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">The Focus Tribe</div>
+    <div class="header-right">
+      <div class="day-badge" id="dayBadge">—</div>
+      <div class="avatar" id="userAvatar">?</div>
+    </div>
+  </div>
+
+  <!-- Progress strip -->
+  <div class="progress-section">
+    <div class="progress-meta">
+      <div class="cohort-label" id="cohortLabel">—</div>
+      <div class="progress-pct" id="progressPct">—</div>
+    </div>
+    <div class="dots-strip" id="dotsStrip"></div>
+  </div>
+
+  <!-- Date tabs -->
+  <div class="date-tabs" id="dateTabs"></div>
+
+  <!-- Main content -->
+  <div class="content" id="content"></div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <a class="nav-item active" href="app.html">
+      
+      <span class="nav-label">Today</span>
+    </a>
+    <a class="nav-item" href="cohort.html">
+      
+      <span class="nav-label">Cohort</span>
+    </a>
+    <a class="nav-item" id="adminNav" href="admin.html" style="display:none;">
+      
+      <span class="nav-label">Admin</span>
+    </a>
+    <a class="nav-item" href="me.html">
+      
+      <span class="nav-label" id="userNavLabel">Me</span>
+    </a>
+  </nav>
+
+  <script>
+    const ADMIN_EMAIL = 'thierry.muller@gmail.com';
+
+    // ══════════════════════════════════════════════════════════════════════
+    // DATA LAYER (canonical — duplicated across pages for self-containment)
+    // ══════════════════════════════════════════════════════════════════════
+    const db = {
+      get(k)   { try { return JSON.parse(localStorage.getItem('ft_'+k)); } catch(e){ return null; } },
+      set(k,v) { localStorage.setItem('ft_'+k, JSON.stringify(v)); },
+      uid()    { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); },
+
+      getSession()  { return this.get('session'); },
+      setSession(s) { this.set('session', s); },
+      clearSession(){ localStorage.removeItem('ft_session'); },
+
+      getUsers()     { return this.get('users')     || {}; },
+      getCohorts()   { return this.get('cohorts')   || {}; },
+      getGoals()     { return this.get('goals')     || {}; },
+      getCheckins()  { return this.get('checkins')  || {}; },
+      getRedemptions(){ return this.get('redemptions') || {}; },
+
+      getUser(id)   { return this.getUsers()[id]   || null; },
+      getCohort(id) { return this.getCohorts()[id] || null; },
+
+      // Days since cohort start (1-indexed). targetDate defaults to today.
+      getCohortDay(startDate, targetDate) {
+        const s = new Date(startDate); s.setHours(0,0,0,0);
+        const t = targetDate ? new Date(targetDate) : new Date(); t.setHours(0,0,0,0);
+        return Math.floor((t-s)/86400000)+1;
+      },
+
+      // Week 1 = days 1-7, Week 2 = 8-14, Week 3 = 15-21
+      getCohortWeekNum(startDate, date) {
+        const day = this.getCohortDay(startDate, date);
+        return Math.min(3, Math.max(1, Math.ceil(day/7)));
+      },
+
+      getWeekDates(startDate, weekNum) {
+        const s = new Date(startDate);
+        return Array.from({length:7}, (_,i) => {
+          const d = new Date(s); d.setDate(d.getDate()+(weekNum-1)*7+i);
+          return d.toISOString().split('T')[0];
+        });
+      },
+
+      getCohortDates(startDate) {
+        return Array.from({length:21}, (_,i) => {
+          const d = new Date(startDate); d.setDate(d.getDate()+i);
+          return d.toISOString().split('T')[0];
+        });
+      },
+
+      getCurrentCohort(userId) {
+        const all = Object.values(this.getCohorts())
+          .filter(c => c.memberIds && c.memberIds.includes(userId));
+        if (!all.length) return null;
+        const active = all.find(c => { const d=this.getCohortDay(c.startDate); return d>=1&&d<=21; });
+        return active || all.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate))[0];
+      },
+
+      getGoalsForUser(userId, cohortId) {
+        return Object.values(this.getGoals())
+          .filter(g => g.userId===userId && g.cohortId===cohortId)
+          .sort((a,b) => a.order-b.order);
+      },
+
+      areGoalsLocked(cohortId) {
+        const c = this.getCohort(cohortId);
+        return c ? this.getCohortDay(c.startDate) >= 2 : false;
+      },
+
+      getCheckin(goalId, date)   { return this.getCheckins()[`${goalId}_${date}`] || null; },
+      setCheckin(goalId, date, value, overriddenBy=null) {
+        const checkins = this.getCheckins();
+        const goal = this.getGoals()[goalId];
+        if (!goal) return;
+        checkins[`${goalId}_${date}`] = {
+          id:`${goalId}_${date}`, goalId,
+          userId:goal.userId, cohortId:goal.cohortId,
+          date, value,
+          updatedAt:new Date().toISOString(), overriddenBy
+        };
+        this.set('checkins', checkins);
+      },
+
+      getWeeklyTotal(goalId, weekDates) {
+        return weekDates.reduce((s,d) => {
+          const c=this.getCheckin(goalId,d); return s+(c?Number(c.value)||0:0);
+        }, 0);
+      },
+
+      // A day is "done" if all daily_boolean goals are checked
+      isDayDone(userId, cohortId, date) {
+        const gs = this.getGoalsForUser(userId, cohortId).filter(g=>g.type==='daily_boolean');
+        if (!gs.length) return false;
+        return gs.every(g => { const c=this.getCheckin(g.id,date); return c&&c.value===true; });
+      },
+      isDayPartial(userId, cohortId, date) {
+        const gs = this.getGoalsForUser(userId, cohortId).filter(g=>g.type==='daily_boolean');
+        return gs.some(g => { const c=this.getCheckin(g.id,date); return c&&c.value===true; });
+      },
+
+      getRedemptionsForUser(userId, cohortId) {
+        return Object.values(this.getRedemptions())
+          .filter(r=>r.userId===userId&&r.cohortId===cohortId)
+          .sort((a,b)=>a.strikeNumber-b.strikeNumber);
+      },
+      getPendingRedemptions(userId, cohortId) {
+        return this.getRedemptionsForUser(userId,cohortId).filter(r=>r.status==='pending');
+      },
+      markRedemptionDone(id) {
+        const r=this.getRedemptions();
+        if(r[id]){ r[id].status='done'; r[id].completedAt=new Date().toISOString(); this.set('redemptions',r); }
+      },
+
+      getStakes(userId, cohortId) { return (this.get('stakes')||{})[`${userId}_${cohortId}`] || null; },
+
+      upsertGoal(g) {
+        const gs=this.getGoals(); gs[g.id]=g; this.set('goals',gs);
+      },
+      deleteGoal(id) {
+        const gs=this.getGoals(); delete gs[id]; this.set('goals',gs);
+      },
+
+      // Evaluate and create redemption records for missed targets
+      evalRedemptions(userId, cohortId) {
+        const cohort = this.getCohort(cohortId);
+        if (!cohort) return;
+        const currentDay = this.getCohortDay(cohort.startDate);
+        if (currentDay < 2) return;
+
+        const today = new Date(); today.setHours(0,0,0,0);
+        const todayStr = today.toISOString().split('T')[0];
+        const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        const goals   = this.getGoalsForUser(userId, cohortId);
+        const existing = this.getRedemptionsForUser(userId, cohortId);
+        if (existing.length >= 3) return;
+
+        // Collect failures grouped by week number (deduplicate: 1 strike per week)
+        const failuresByWeek = {};
+        const addF = (wk, msg) => { if(!failuresByWeek[wk]) failuresByWeek[wk]=[]; failuresByWeek[wk].push(msg); };
+
+        for (const g of goals) {
+          if (g.type === 'daily_boolean') {
+            const yDay = currentDay - 1;
+            if (yDay >= 1 && yDay <= 21) {
+              const c = this.getCheckin(g.id, yesterdayStr);
+              if (!c || !c.value) addF(this.getCohortWeekNum(cohort.startDate, yesterdayStr), `Missed: ${g.title}`);
+            }
+          } else if (g.type === 'weekly_count') {
+            // Check at start of each new week
+            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
+              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+              const wkDates = this.getWeekDates(cohort.startDate, prevWk);
+              const total = this.getWeeklyTotal(g.id, wkDates);
+              if (total < (g.config.weeklyTarget||1))
+                addF(prevWk, `${g.title}: ${total}/${g.config.weeklyTarget} sessions`);
+            }
+          } else if (g.type === 'daily_time_max' || g.type === 'daily_time') {
+            const wk = this.getCohortWeekNum(cohort.startDate);
+            const wkDates = this.getWeekDates(cohort.startDate, wk);
+            const total = this.getWeeklyTotal(g.id, wkDates);
+            if (total > (g.config.weeklyMaxMinutes||120))
+              addF(wk, `${g.title}: over weekly limit`);
+          } else if (g.type === 'daily_time_min') {
+            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
+              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+              const wkDates = this.getWeekDates(cohort.startDate, prevWk);
+              const total = this.getWeeklyTotal(g.id, wkDates);
+              if (total < (g.config.weeklyTargetMinutes||60))
+                addF(prevWk, `${g.title}: ${total}min/${g.config.weeklyTargetMinutes}min target`);
+            }
+          }
+        }
+
+        const allR = this.getRedemptions();
+
+        // Real-time: remove/update pending redemption for current week if violations changed
+        const currentWk = this.getCohortWeekNum(cohort.startDate);
+        const pendingCurrent = existing.find(r => r.status === 'pending' && r.weekNumber === currentWk);
+        if (pendingCurrent) {
+          if (!failuresByWeek[currentWk]) {
+            // Violation cleared — remove the redemption
+            delete allR[pendingCurrent.id];
+            this.set('redemptions', allR);
+            return;
+          } else {
+            // Still failing — update reason in case goals changed
+            allR[pendingCurrent.id].reason = [...new Set(failuresByWeek[currentWk])].join(' · ');
+            this.set('redemptions', allR);
+            return;
+          }
+        }
+
+        let count = existing.length;
+        for (const [wkStr, reasons] of Object.entries(failuresByWeek)) {
+          if (count >= 3) break;
+          const wk = parseInt(wkStr);
+          if (existing.some(r=>r.weekNumber===wk)) continue;
+          count++;
+          const id = `r_${this.uid()}`;
+          allR[id] = {
+            id, userId, cohortId,
+            triggeredDate: todayStr,
+            reason: [...new Set(reasons)].join(' · '),
+            strikeNumber: count,
+            status: 'pending', completedAt: null,
+            weekNumber: wk
+          };
+        }
+        this.set('redemptions', allR);
+      },
+    };
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STATE
+    // ══════════════════════════════════════════════════════════════════════
+    let session, user, cohort;
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let addGoalFrame  = 'daily';    // daily | weekly | milestone
+    let addGoalMetric = 'boolean';  // boolean | count | min_time | max_time
+    let addGoalTitle  = '';
+    let addFormOpen   = false;
+
+    // ══════════════════════════════════════════════════════════════════════
+    // INIT
+    // ══════════════════════════════════════════════════════════════════════
+    session = db.getSession();
+    if (!session?.userId) { window.location.href = 'index.html'; }
+
+    user   = db.getUser(session.userId);
+    cohort = db.getCurrentCohort(session.userId);
+
+    if (cohort) db.evalRedemptions(session.userId, cohort.id);
+
+    // Header setup
+    const currentDay = cohort ? db.getCohortDay(cohort.startDate) : 0;
+    const badge = document.getElementById('dayBadge');
+    if (!cohort) {
+      badge.textContent = 'No cohort';
+    } else if (currentDay < 1) {
+      badge.textContent = 'Upcoming'; badge.classList.add('upcoming');
+    } else if (currentDay > 21) {
+      badge.textContent = 'Complete'; badge.classList.add('complete');
+    } else {
+      badge.textContent = `Day ${currentDay}`;
+    }
+    document.getElementById('userAvatar').textContent = (user?.name||'?')[0].toUpperCase();
+    document.getElementById('userNavLabel').textContent = user?.name?.split(' ')[0] || 'Me';
+    if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
+
+    if (!cohort) {
+      document.getElementById('content').innerHTML = '<div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div>';
+    } else {
+      render();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // RENDER
+    // ══════════════════════════════════════════════════════════════════════
+    function render() {
+      renderDots();
+      renderDateTabs();
+      renderContent();
+      checkFailed();
+    }
+
+    function renderDots() {
+      const dates    = db.getCohortDates(cohort.startDate);
+      const todayStr = new Date().toISOString().split('T')[0];
+      const day      = db.getCohortDay(cohort.startDate);
+      const pct      = Math.max(0, Math.min(100, Math.round(((Math.min(day,21)-1)/21)*100)));
+
+      document.getElementById('cohortLabel').textContent = cohort.name;
+      document.getElementById('progressPct').textContent = `${pct}% complete`;
+
+      document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {
+        let cls = 'dot';
+        if      (d === todayStr) cls += ' today';
+        else if (d < todayStr)   cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : db.isDayPartial(session.userId,cohort.id,d) ? ' partial' : ' missed';
+        else                     cls += ' future';
+        return `<div class="${cls}" title="Day ${i+1}"></div>`;
+      }).join('');
+    }
+
+    function renderDateTabs() {
+      const today = new Date();
+      const tabs  = [];
+      for (let i=6; i>=0; i--) {
+        const d  = new Date(today); d.setDate(d.getDate()-i);
+        const ds = d.toISOString().split('T')[0];
+        const cd = db.getCohortDay(cohort.startDate, ds);
+        if (cd < 1 || cd > 21) continue;
+        const label = i===0 ? 'Today' : d.toLocaleDateString('en',{weekday:'short'});
+        tabs.push(`<button class="date-tab${ds===selectedDate?' active':''}" onclick="selectDate('${ds}')">${label}</button>`);
+      }
+      document.getElementById('dateTabs').innerHTML = tabs.join('');
+    }
+
+    function renderContent() {
+      const goals   = db.getGoalsForUser(session.userId, cohort.id);
+      const locked  = db.areGoalsLocked(cohort.id);
+      const pending = db.getPendingRedemptions(session.userId, cohort.id);
+      const strikes = db.getRedemptionsForUser(session.userId, cohort.id).length;
+      const html    = [];
+
+      // ── Redemption banner ──
+      if (pending.length) {
+        const r = pending[0];
+        const pips = [1,2,3].map(n=>`<div class="strike-pip${n<=strikes?' active':''}"></div>`).join('');
+        const stakes = db.getStakes(session.userId, cohort.id);
+        const taskKey = r.strikeNumber === 1 ? 'r1' : r.strikeNumber === 2 ? 'r2' : 'fail';
+        const taskText = stakes?.[taskKey] || '';
+        html.push(`
+          <div class="redemption-card">
+            <div class="redemption-header">
+              <div class="redemption-label">⚠ Redemption ${r.strikeNumber}</div>
+              <div class="strikes">${pips}</div>
+            </div>
+            <div class="redemption-reason">${r.reason}</div>
+            ${taskText ? `<div style="margin-top:8px;padding:10px 12px;background:rgba(255,59,48,0.07);border-radius:10px;font-size:0.82rem;color:var(--text);line-height:1.5;"><strong style="color:var(--red);font-size:0.73rem;letter-spacing:0.04em;text-transform:uppercase;">Your task</strong><br>${taskText}</div>` : ''}
+            <button class="btn-redemption-done" onclick="doneRedemption('${r.id}')">Mark Done ✓</button>
+          </div>`);
+      }
+
+      // ── Goal cards (grouped) ──
+      if (!goals.length) {
+        html.push('<div class="empty-state">No goals yet.<br>Add your goals below before Day 2.</div>');
+      }
+
+      const daily     = goals.filter(g => ['daily_boolean','daily_time','daily_time_min','daily_time_max'].includes(g.type));
+      const weekly    = goals.filter(g => g.type === 'weekly_count');
+      const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
+
+      if (daily.length) {
+        html.push('<div class="goal-group-label">Daily</div>');
+        daily.forEach(g => html.push(renderGoalCard(g, selectedDate, locked)));
+      }
+      if (weekly.length) {
+        html.push('<div class="goal-group-label">Weekly</div>');
+        weekly.forEach(g => html.push(renderGoalCard(g, selectedDate, locked)));
+      }
+      if (milestone.length) {
+        html.push('<div class="goal-group-label">21-Day</div>');
+        milestone.forEach(g => html.push(renderGoalCard(g, selectedDate, locked)));
+      }
+
+      // ── Goal setup (pre Day-2) ──
+      if (!locked) {
+        html.push(`
+          <div class="setup-banner">
+            <div class="setup-banner-title">⚙ Goal Setup</div>
+            <div class="setup-banner-sub">Add up to 10 goals. Locks at midnight tonight.</div>
+            <div class="add-form${addFormOpen?' open':''}" id="addForm">
+              <div class="form-field">
+                <label class="form-label">Goal name</label>
+                <input class="form-input" id="newTitle" placeholder="e.g. Meditate, Workout, No YouTube…" value="${addGoalTitle}" oninput="addGoalTitle=this.value" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Time frame</label>
+                <div class="type-pills">
+                  <button class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')">Daily</button>
+                  <button class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')">Weekly</button>
+                  <button class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')">21 Days</button>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Type</label>
+                <div class="type-pills">
+                  <button class="type-pill${addGoalMetric==='boolean'?' sel':''}" onclick="setAddMetric(this,'boolean')">Yes / No</button>
+                  <button class="type-pill${addGoalMetric==='count'?' sel':''}" onclick="setAddMetric(this,'count')">Count</button>
+                  <button class="type-pill${addGoalMetric==='min_time'?' sel':''}" onclick="setAddMetric(this,'min_time')">Min time</button>
+                  <button class="type-pill${addGoalMetric==='max_time'?' sel':''}" onclick="setAddMetric(this,'max_time')">Max time</button>
+                </div>
+              </div>
+              ${addGoalMetric==='count' ? `
+              <div class="form-field">
+                <label class="form-label">${addGoalFrame==='milestone'?'Total sessions over 21 days':'Sessions per week'}</label>
+                <input class="form-input" id="cfgCountVal" type="number" min="1" max="63" placeholder="${addGoalFrame==='milestone'?'e.g. 10':'e.g. 4'}" />
+              </div>` : ''}
+              ${addGoalMetric==='min_time'||addGoalMetric==='max_time' ? `
+              <div class="form-field">
+                <label class="form-label">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':'Weekly maximum (minutes)')}</label>
+                <input class="form-input" id="cfgTimeVal" type="number" min="1" placeholder="e.g. 120 = 2h" />
+              </div>` : ''}
+              <div class="form-row">
+                <button class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
+                <button class="btn-xs pri" onclick="saveGoal()">Add Goal</button>
+              </div>
+            </div>
+            <button class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
+          </div>`);
+      }
+
+      document.getElementById('content').innerHTML = html.join('');
+    }
+
+    function renderGoalCard(g, date, locked) {
+      const isFuture = date > new Date().toISOString().split('T')[0];
+      const c = db.getCheckin(g.id, date);
+      const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
+      const delBtn = !locked ? `<button class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
+
+      if (g.type === 'daily_boolean') {
+        const done = !!(c?.value);
+        return `
+          <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleBoolean('${g.id}','${date}')">
+            ${delBtn}
+            <div class="bool-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="check-circle${done?' checked':''}">
+                <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+                  <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'weekly_count') {
+        const wk      = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDates = db.getWeekDates(cohort.startDate, wk);
+        const wkTotal = db.getWeeklyTotal(g.id, wkDates);
+        const target  = (g.config && g.config.weeklyTarget) || 1;
+        const todayV  = c ? Number(c.value)||0 : 0;
+        const checked = todayV > 0;
+        const pips    = Array.from({length:target}, (_,i) =>
+          `<div class="session-pip${i<wkTotal?' done':''}"></div>`).join('');
+        return `
+          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`toggleSession('${g.id}','${date}')`:''}" style="${isFuture?'cursor:default':''}">
+            ${delBtn}
+            <div class="bool-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="session-inline">
+                <div class="session-dots-row">${pips}</div>
+                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week</div>
+              </div>
+              <div class="check-circle${checked?' checked':''}">
+                <svg width="12" height="9" viewBox="0 0 13 10" fill="none">
+                  <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'daily_time') {
+        const wk       = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDates  = db.getWeekDates(cohort.startDate, wk);
+        const wkTotal  = db.getWeeklyTotal(g.id, wkDates);
+        const maxMin   = g.config.weeklyMaxMinutes || 120;
+        const pct      = Math.min(100, Math.round((wkTotal/maxMin)*100));
+        const over     = wkTotal > maxMin;
+        const todayV   = c ? Number(c.value)||'' : '';
+        const wkMin    = wkTotal;
+        const maxM     = maxMin;
+        return `
+          <div class="goal-card">
+            ${delBtn}
+            <div class="time-title-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="time-bar-inline">
+                <div class="time-bar-inline-label${over?' over':''}">${wkMin}/${maxM}min</div>
+                <div class="time-bar-inline-track">
+                  <div class="time-bar-inline-fill${over?' over':''}" style="width:${pct}%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="time-input-row" style="margin-top:9px;">
+              <input class="time-input" type="number" min="0" max="1440"
+                value="${todayV}" placeholder="0"
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">min today</span>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'daily_time_min') {
+        const wk      = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDates = db.getWeekDates(cohort.startDate, wk);
+        const wkTotal = db.getWeeklyTotal(g.id, wkDates);
+        const target  = g.config.weeklyTargetMinutes || 60;
+        const pct     = Math.min(100, Math.round((wkTotal/target)*100));
+        const met     = wkTotal >= target;
+        const todayV  = c ? Number(c.value)||'' : '';
+        return `
+          <div class="goal-card">
+            ${delBtn}
+            <div class="time-title-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="time-bar-inline">
+                <div class="time-bar-inline-label${met?' met':''}">${met?'✓ ':''} ${wkTotal}/${target}min</div>
+                <div class="time-bar-inline-track">
+                  <div class="time-bar-inline-fill${met?' met':''}" style="width:${pct}%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="time-input-row" style="margin-top:9px;">
+              <input class="time-input" type="number" min="0" max="1440"
+                value="${todayV}" placeholder="0"
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">min today</span>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'daily_time_max') {
+        const wk      = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDates = db.getWeekDates(cohort.startDate, wk);
+        const wkTotal = db.getWeeklyTotal(g.id, wkDates);
+        const maxMin  = g.config.weeklyMaxMinutes || 120;
+        const pct     = Math.min(100, Math.round((wkTotal/maxMin)*100));
+        const over    = wkTotal > maxMin;
+        const todayV  = c ? Number(c.value)||'' : '';
+        return `
+          <div class="goal-card">
+            ${delBtn}
+            <div class="time-title-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="time-bar-inline">
+                <div class="time-bar-inline-label${over?' over':''}">${over?'⚠ ':''} ${wkTotal}/${maxMin}min</div>
+                <div class="time-bar-inline-track">
+                  <div class="time-bar-inline-fill${over?' over':''}" style="width:${pct}%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="time-input-row" style="margin-top:9px;">
+              <input class="time-input" type="number" min="0" max="1440"
+                value="${todayV}" placeholder="0"
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">min today</span>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'milestone') {
+        const done = !!(c?.value);
+        return `
+          <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleMilestone('${g.id}','${date}')">
+            ${delBtn}
+            <div class="milestone-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="check-circle${done?' checked':''}">
+                <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+                  <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <div style="margin-top:10px;">
+              <span class="milestone-chip${done?' done':''}">${done?'✓ Complete':'21-day commitment'}</span>
+            </div>
+          </div>`;
+      }
+      // ── 21-day count goal ─────────────────────────────────────────────────
+      if (g.type === 'total_count') {
+        const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
+        const target    = g.config.totalTarget || 10;
+        const pct       = Math.min(100, Math.round(total/target*100));
+        const met       = total >= target;
+        return `
+          <div class="goal-card">
+            ${delBtn}
+            <div class="time-title-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="time-bar-inline">
+                <div class="time-bar-inline-label${met?' met':''}">${total}/${target} sessions</div>
+                <div class="time-bar-inline-track">
+                  <div class="time-bar-inline-fill" style="width:${pct}%;${met?'background:var(--green)':''}"></div>
+                </div>
+              </div>
+            </div>
+            <div class="time-input-row" style="margin-top:9px;">
+              <input class="time-input" type="number" min="0" max="1" value="${c?.value||0}" placeholder="0"
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">session today</span>
+            </div>
+          </div>`;
+      }
+
+      // ── 21-day min time goal ──────────────────────────────────────────────
+      if (g.type === 'total_time_min') {
+        const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
+        const target    = g.config.totalTargetMinutes || 120;
+        const pct       = Math.min(100, Math.round(total/target*100));
+        const met       = total >= target;
+        const todayV    = c?.value || '';
+        return `
+          <div class="goal-card">
+            ${delBtn}
+            <div class="time-title-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="time-bar-inline">
+                <div class="time-bar-inline-label${met?' met':''}">${total}/${target}min total</div>
+                <div class="time-bar-inline-track">
+                  <div class="time-bar-inline-fill" style="width:${pct}%;${met?'background:var(--green)':''}"></div>
+                </div>
+              </div>
+            </div>
+            <div class="time-input-row" style="margin-top:9px;">
+              <input class="time-input" type="number" min="0" max="1440" value="${todayV}" placeholder="0"
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">min today</span>
+            </div>
+          </div>`;
+      }
+
+      // ── 21-day max time goal ──────────────────────────────────────────────
+      if (g.type === 'total_time_max') {
+        const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
+        const maxMin    = g.config.totalMaxMinutes || 300;
+        const pct       = Math.min(100, Math.round(total/maxMin*100));
+        const over      = total > maxMin;
+        const todayV    = c?.value || '';
+        return `
+          <div class="goal-card">
+            ${delBtn}
+            <div class="time-title-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="time-bar-inline">
+                <div class="time-bar-inline-label${over?' over':''}">${over?'⚠ ':''}${total}/${maxMin}min total</div>
+                <div class="time-bar-inline-track">
+                  <div class="time-bar-inline-fill${over?' over':''}" style="width:${pct}%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="time-input-row" style="margin-top:9px;">
+              <input class="time-input" type="number" min="0" max="1440" value="${todayV}" placeholder="0"
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">min today</span>
+            </div>
+          </div>`;
+      }
+
+      return '';
+    }
+
+    function checkFailed() {
+      if (!cohort) return;
+      const r = db.getRedemptionsForUser(session.userId, cohort.id);
+      if (r.length >= 3) {
+        document.body.insertAdjacentHTML('beforeend',`
+          <div class="failed-overlay">
+            <div class="failed-card">
+              <div class="failed-icon">🔒</div>
+              <div class="failed-title">Challenge Over</div>
+              <p class="failed-body">You've reached 3 strikes. The 21-Day Challenge is complete for this cohort.<br><br>Contact Thierry for next steps.</p>
+            </div>
+          </div>`);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // INTERACTIONS
+    // ══════════════════════════════════════════════════════════════════════
+    function selectDate(date) { selectedDate=date; renderDateTabs(); renderContent(); }
+
+    function toggleBoolean(goalId, date) {
+      const c = db.getCheckin(goalId, date);
+      db.setCheckin(goalId, date, !(c?.value));
+      renderContent(); renderDots();
+    }
+
+    function toggleSession(goalId, date) {
+      const c = db.getCheckin(goalId, date);
+      const cur = c ? Number(c.value)||0 : 0;
+      db.setCheckin(goalId, date, cur > 0 ? 0 : 1);
+      renderContent();
+    }
+
+    let _timeDebounce;
+    function updateTime(goalId, date, val) {
+      db.setCheckin(goalId, date, parseInt(val)||0);
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
+      clearTimeout(_timeDebounce);
+      _timeDebounce = setTimeout(()=>{ renderContent(); }, 450);
+    }
+
+    function toggleMilestone(goalId, date) {
+      const c = db.getCheckin(goalId, date);
+      db.setCheckin(goalId, date, !(c?.value));
+      renderContent();
+    }
+
+    function doneRedemption(id) { db.markRedemptionDone(id); renderContent(); }
+
+    function deleteGoal(e, goalId) {
+      e.stopPropagation();
+      db.deleteGoal(goalId);
+      renderContent();
+    }
+
+    function openAddForm()  { addFormOpen=true;  renderContent(); }
+    function closeAddForm() { addFormOpen=false; addGoalTitle=''; renderContent(); }
+
+    function setAddFrame(btn, frame) {
+      addGoalFrame = frame;
+      renderContent();
+    }
+
+    function setAddMetric(btn, metric) {
+      addGoalMetric = metric;
+      renderContent();
+    }
+
+    function saveGoal() {
+      const title = addGoalTitle.trim();
+      if (!title) return;
+      const goals = db.getGoalsForUser(session.userId, cohort.id);
+      if (goals.length >= 10) { alert('Max 10 goals per cohort.'); return; }
+      const config = {};
+      let type;
+      if (addGoalFrame === 'milestone') {
+        if (addGoalMetric === 'boolean')  { type = 'milestone'; }
+        if (addGoalMetric === 'count')    { type = 'total_count';    config.totalTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||10; }
+        if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
+        if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||300; }
+      } else {
+        if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
+        if (addGoalMetric === 'count')    { type = 'weekly_count'; config.weeklyTarget = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
+        if (addGoalMetric === 'min_time') { type = 'daily_time_min'; config.weeklyTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
+        if (addGoalMetric === 'max_time') { type = 'daily_time_max'; config.weeklyMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
+      }
+      db.upsertGoal({
+        id:`g_${db.uid()}`, type, title, config,
+        userId:session.userId, cohortId:cohort.id,
+        locked:false, createdAt:new Date().toISOString(), order:goals.length
+      });
+      addGoalFrame  = 'daily';
+      addGoalMetric = 'boolean';
+      addGoalTitle  = '';
+      addFormOpen   = false;
+      renderContent();
+    }
+
+    function logout() { db.clearSession(); window.location.href='index.html'; }
+  </script>
+</body>
+</html>

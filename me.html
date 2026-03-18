@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F5F5F7">
+  <link rel="manifest" href="manifest.json">
+  <title>My Account — The Focus Tribe</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --orange:    #FF5500;
+      --orange-dk: #CC4400;
+      --orange-lt: rgba(255,85,0,0.1);
+      --green:     #34C759;
+      --red:       #FF3B30;
+      --bg:        #F5F5F7;
+      --card:      #FFFFFF;
+      --text:      #1C1C1E;
+      --muted:     #8E8E93;
+      --border:    #E5E5EA;
+      --shadow:    0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100dvh;
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 10px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-logo { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; }
+    .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
+    /* Bottom nav */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex;
+      padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 2px; padding: 6px 0;
+      cursor: pointer; text-decoration: none; transition: opacity 0.15s;
+    }
+    .nav-icon { display: none; }
+    .nav-label { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .nav-item.active .nav-label { color: var(--orange); }
+    /* Page content */
+    .page { padding: 20px 16px; max-width: 480px; margin: 0 auto; }
+    /* Profile card */
+    .profile-card {
+      background: var(--card); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .profile-avatar {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--orange); display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name { font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+    .profile-email { font-size: 0.82rem; color: var(--muted); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .role-badge {
+      display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+    }
+    .role-badge.admin { background: var(--orange-lt); color: var(--orange); }
+    .role-badge.member { background: rgba(52,199,89,0.12); color: var(--green); }
+    /* Section */
+    .section-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+    /* Info table */
+    .info-card {
+      background: var(--card); border-radius: 14px; box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 20px;
+    }
+    .info-row {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 12px 16px; gap: 12px; border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 0.82rem; color: var(--muted); font-weight: 500; flex-shrink: 0; }
+    .info-value { font-size: 0.85rem; color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
+    /* Goals list */
+    .goals-card {
+      background: var(--card); border-radius: 14px; box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 20px;
+    }
+    .goal-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 16px; gap: 10px; border-bottom: 1px solid var(--border);
+    }
+    .goal-row:last-child { border-bottom: none; }
+    .goal-row-title { font-size: 0.85rem; color: var(--text); font-weight: 600; flex: 1; min-width: 0; }
+    .goal-type-pill {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;
+      padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
+    }
+    .pill-boolean { background: rgba(52,199,89,0.12); color: #1a8f3a; }
+    .pill-weekly  { background: rgba(0,122,255,0.1);  color: #0057cc; }
+    .pill-time    { background: rgba(255,85,0,0.1);   color: var(--orange-dk); }
+    .pill-milestone { background: rgba(175,82,222,0.12); color: #8e44ad; }
+    .goal-config  { font-size: 0.74rem; color: var(--muted); flex-shrink: 0; }
+    /* Logout */
+    .logout-btn {
+      width: 100%; padding: 14px; border-radius: 14px; border: none;
+      background: var(--red); color: #fff; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; letter-spacing: -0.01em; margin-bottom: 20px;
+      transition: opacity 0.15s;
+    }
+    .logout-btn:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">The Focus Tribe</div>
+  </div>
+
+  <div class="page">
+    <!-- Profile -->
+    <div class="profile-card" id="profileCard"></div>
+
+    <!-- Goals -->
+    <div class="section-title">Goals</div>
+    <div class="goals-card" id="goalsList"></div>
+
+    <!-- Stakes -->
+    <div class="section-title">Stakes</div>
+    <div class="info-card" id="stakesList"></div>
+
+    <!-- Cohort details -->
+    <div class="section-title">Cohort</div>
+    <div class="info-card" id="cohortInfo"></div>
+
+    <!-- Account details -->
+    <div class="section-title">Account</div>
+    <div class="info-card" id="accountInfo"></div>
+
+    <!-- Logout -->
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <a class="nav-item" href="app.html">
+      
+      <span class="nav-label">Today</span>
+    </a>
+    <a class="nav-item" href="cohort.html">
+      
+      <span class="nav-label">Cohort</span>
+    </a>
+    <a class="nav-item" id="adminNav" href="admin.html" style="display:none;">
+      
+      <span class="nav-label">Admin</span>
+    </a>
+    <a class="nav-item active" href="me.html">
+      
+      <span class="nav-label" id="userNavLabel">Me</span>
+    </a>
+  </nav>
+
+  <script>
+    const db = {
+      get(k)   { try { return JSON.parse(localStorage.getItem('ft_'+k)); } catch(e){ return null; } },
+      set(k,v) { localStorage.setItem('ft_'+k, JSON.stringify(v)); },
+      getSession()  { return this.get('session'); },
+      setSession(s) { this.set('session', s); },
+      clearSession(){ localStorage.removeItem('ft_session'); },
+      getUsers()    { return this.get('users')   || {}; },
+      getCohorts()  { return this.get('cohorts') || {}; },
+      getGoals()    { return this.get('goals')   || {}; },
+      getUser(id)   { return this.getUsers()[id] || null; },
+      getCohort(id) { return this.getCohorts()[id] || null; },
+      getCohortDay(startDate) {
+        const s = new Date(startDate); s.setHours(0,0,0,0);
+        const t = new Date(); t.setHours(0,0,0,0);
+        return Math.floor((t-s)/86400000)+1;
+      },
+      getCurrentCohort(userId) {
+        const all = Object.values(this.getCohorts()).filter(c => c.memberIds && c.memberIds.includes(userId));
+        if (!all.length) return null;
+        const active = all.find(c => { const d=this.getCohortDay(c.startDate); return d>=1&&d<=21; });
+        return active || all.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate))[0];
+      },
+      getStakes(userId, cohortId) { return (this.get('stakes')||{})[`${userId}_${cohortId}`] || null; },
+      getGoalsForUser(userId, cohortId) {
+        return Object.values(this.getGoals())
+          .filter(g => g.userId===userId && g.cohortId===cohortId)
+          .sort((a,b) => a.order-b.order);
+      },
+    };
+
+    const session = db.getSession();
+    if (!session) { window.location.href='index.html'; throw 0; }
+
+    const user   = db.getUser(session.userId);
+    const cohort = db.getCurrentCohort(session.userId);
+
+    // Show admin nav + update label
+    document.getElementById('userNavLabel').textContent = user?.name?.split(' ')[0] || 'Me';
+    if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
+
+    // ── Profile card ──────────────────────────────────────────────────────
+    const initial = (user?.name||'?')[0].toUpperCase();
+    document.getElementById('profileCard').innerHTML = `
+      <div class="profile-avatar">${initial}</div>
+      <div class="profile-info">
+        <div class="profile-name">${user?.name || '—'}</div>
+        <div class="profile-email">${user?.email || '—'}</div>
+        <span class="role-badge ${user?.role==='admin'?'admin':'member'}">${user?.role==='admin'?'Admin':'Member'}</span>
+      </div>`;
+
+    // ── Account info ──────────────────────────────────────────────────────
+    // ── Stakes ────────────────────────────────────────────────────────────
+    const stakes = cohort ? db.getStakes(user.id, cohort.id) : null;
+    if (stakes) {
+      document.getElementById('stakesList').innerHTML = `
+        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">🏆 If I complete</span><span class="info-value" style="text-align:left;">${stakes.complete||'—'}</span></div>
+        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">⚡ Slip #1</span><span class="info-value" style="text-align:left;">${stakes.r1||'—'}</span></div>
+        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">⚡ Slip #2</span><span class="info-value" style="text-align:left;">${stakes.r2||'—'}</span></div>
+        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">💀 Fail (3 strikes)</span><span class="info-value" style="text-align:left;">${stakes.fail||'—'}</span></div>`;
+    } else {
+      document.getElementById('stakesList').innerHTML = `<div class="info-row"><span class="info-label">No stakes set</span></div>`;
+    }
+
+    document.getElementById('accountInfo').innerHTML = `
+      <div class="info-row"><span class="info-label">Name</span><span class="info-value">${user?.name||'—'}</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value">${user?.email||'—'}</span></div>
+      <div class="info-row"><span class="info-label">Role</span><span class="info-value">${user?.role||'—'}</span></div>`;
+
+    // ── Cohort info ───────────────────────────────────────────────────────
+    if (cohort) {
+      const day = db.getCohortDay(cohort.startDate);
+      const dayLabel = day>=1&&day<=21 ? `Day ${day} of 21` : day<1 ? 'Upcoming' : 'Completed';
+      document.getElementById('cohortInfo').innerHTML = `
+        <div class="info-row"><span class="info-label">Cohort</span><span class="info-value">${cohort.name}</span></div>
+        <div class="info-row"><span class="info-label">Start Date</span><span class="info-value">${cohort.startDate}</span></div>
+        <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${dayLabel}</span></div>
+        <div class="info-row"><span class="info-label">Members</span><span class="info-value">${cohort.memberIds.length}</span></div>`;
+    } else {
+      document.getElementById('cohortInfo').innerHTML = `<div class="info-row"><span class="info-label">Cohort</span><span class="info-value">No active cohort</span></div>`;
+    }
+
+    // ── Goals list ────────────────────────────────────────────────────────
+    const goals = cohort ? db.getGoalsForUser(user.id, cohort.id) : [];
+
+    function goalTypePill(type) {
+      const map = {
+        'daily_boolean': ['boolean', 'Daily ✓'],
+        'weekly_count':  ['weekly',  'Weekly count'],
+        'daily_time':    ['time',    'Time (max/wk)'],
+        'daily_time_max':['time',    'Time (max/wk)'],
+        'daily_time_min':['time',    'Time (min/wk)'],
+        'milestone':      ['milestone','Milestone'],
+        'total_count':    ['milestone','21-Day count'],
+        'total_time_min': ['time',     'Time (min/21d)'],
+        'total_time_max': ['time',     'Time (max/21d)'],
+      };
+      const [cls, label] = map[type] || ['boolean', type];
+      return `<span class="goal-type-pill pill-${cls}">${label}</span>`;
+    }
+
+    function goalConfigLabel(g) {
+      if (g.type === 'weekly_count')   return `${g.config?.weeklyTarget||1}×/wk`;
+      if (g.type === 'daily_time' || g.type === 'daily_time_max') return `≤${g.config?.weeklyMaxMinutes||'?'}min/wk`;
+      if (g.type === 'daily_time_min')  return `≥${g.config?.weeklyTargetMinutes||'?'}min/wk`;
+      if (g.type === 'total_count')     return `${g.config?.totalTarget||'?'} total`;
+      if (g.type === 'total_time_min')  return `≥${g.config?.totalTargetMinutes||'?'}min total`;
+      if (g.type === 'total_time_max')  return `≤${g.config?.totalMaxMinutes||'?'}min total`;
+      return '';
+    }
+
+    if (goals.length) {
+      document.getElementById('goalsList').innerHTML = goals.map(g => `
+        <div class="goal-row">
+          <div class="goal-row-title">${g.title}</div>
+          ${goalTypePill(g.type)}
+          <div class="goal-config">${goalConfigLabel(g)}</div>
+        </div>`).join('');
+    } else {
+      document.getElementById('goalsList').innerHTML = `<div class="info-row"><span class="info-label">No goals set</span></div>`;
+    }
+
+    function logout() {
+      db.clearSession();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
