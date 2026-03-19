@@ -607,15 +607,16 @@
         const addF = (wk, msg) => { if (!failuresByWeek[wk]) failuresByWeek[wk]=[]; failuresByWeek[wk].push(msg); };
 
         for (const g of goals) {
+
+          // ── Daily: evaluate at end of each day (check yesterday) ──────────
           if (g.type === 'daily_boolean') {
-            // Only evaluate at end of week (day 8, 15, 22) — never mid-week
-            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
-              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
-              const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
-              const missed = wkDates.filter(d => !_c.checkins[`${g.id}_${d}`]).length;
-              if (missed > 0)
-                addF(prevWk, `Missed ${missed}/${wkDates.length} days: ${g.title}`);
+            const yDay = currentDay - 1;
+            if (yDay >= 1 && yDay <= 21) {
+              const v = _c.checkins[`${g.id}_${yesterdayStr}`];
+              if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `Missed: ${g.title}`);
             }
+
+          // ── Weekly: evaluate at end of each week (day 8, 15, 22) ─────────
           } else if (g.type === 'weekly_count') {
             if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
               const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
@@ -624,19 +625,50 @@
               if (total < (g.config.weeklyTarget||1))
                 addF(prevWk, `${g.title}: ${total}/${g.config.weeklyTarget} sessions`);
             }
-          } else if (g.type === 'daily_time_max' || g.type === 'daily_time') {
-            const wk = this.getCohortWeekNum(cohortObj.startDate);
-            const wkDates = this.getWeekDates(cohortObj.startDate, wk);
-            const total = this.getWeeklyTotal(g.id, wkDates);
-            if (total > (g.config.weeklyMaxMinutes||120))
-              addF(wk, `${g.title}: over weekly limit`);
-          } else if (g.type === 'daily_time_min') {
+          } else if (g.type === 'weekly_time_min' || g.type === 'daily_time_min') {
             if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
               const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total < (g.config.weeklyTargetMinutes||60))
                 addF(prevWk, `${g.title}: ${total}min/${g.config.weeklyTargetMinutes}min target`);
+            }
+          } else if (g.type === 'weekly_time_max' || g.type === 'daily_time_max' || g.type === 'daily_time') {
+            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
+              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+              const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
+              const total = this.getWeeklyTotal(g.id, wkDates);
+              if (total > (g.config.weeklyMaxMinutes||120))
+                addF(prevWk, `${g.title}: over weekly limit`);
+            }
+
+          // ── 21-day: evaluate at end of challenge (day 22) ─────────────────
+          } else if (g.type === 'milestone') {
+            if (currentDay === 22) {
+              const allDates = this.getCohortDates(cohortObj.startDate);
+              const done = allDates.some(d => !!_c.checkins[`${g.id}_${d}`]);
+              if (!done) addF(3, `${g.title}: 21-day goal not completed`);
+            }
+          } else if (g.type === 'total_count') {
+            if (currentDay === 22) {
+              const allDates = this.getCohortDates(cohortObj.startDate);
+              const total = allDates.reduce((s,d) => s + (Number(_c.checkins[`${g.id}_${d}`])||0), 0);
+              if (total < (g.config.totalTarget||10))
+                addF(3, `${g.title}: ${total}/${g.config.totalTarget} sessions`);
+            }
+          } else if (g.type === 'total_time_min') {
+            if (currentDay === 22) {
+              const allDates = this.getCohortDates(cohortObj.startDate);
+              const total = allDates.reduce((s,d) => s + (Number(_c.checkins[`${g.id}_${d}`])||0), 0);
+              if (total < (g.config.totalTargetMinutes||120))
+                addF(3, `${g.title}: ${total}min/${g.config.totalTargetMinutes}min target`);
+            }
+          } else if (g.type === 'total_time_max') {
+            if (currentDay === 22) {
+              const allDates = this.getCohortDates(cohortObj.startDate);
+              const total = allDates.reduce((s,d) => s + (Number(_c.checkins[`${g.id}_${d}`])||0), 0);
+              if (total > (g.config.totalMaxMinutes||300))
+                addF(3, `${g.title}: over 21-day limit`);
             }
           }
         }
