@@ -85,66 +85,59 @@
     /* ── Member card ── */
     .member-card {
       background: var(--card);
-      border-radius: 16px;
-      padding: 16px 18px;
+      border-radius: 14px;
+      padding: 10px 14px;
       box-shadow: var(--shadow);
       cursor: pointer;
       transition: transform 0.12s;
     }
     .member-card:active { transform: scale(0.985); }
-    .member-card.at-risk {
-      border-left: 4px solid var(--red);
-      background: var(--red-lt);
-    }
-    .member-card.complete {
-      border-left: 4px solid var(--green);
-    }
+    .member-card.at-risk  { border-left: 4px solid var(--red);   background: var(--red-lt); }
+    .member-card.complete { border-left: 4px solid var(--green); }
 
+    /* Single-row layout */
     .member-top {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px;
     }
     .member-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
       background: var(--orange-lt); color: var(--orange);
-      font-size: 1rem; font-weight: 800;
+      font-size: 0.82rem; font-weight: 800;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
     }
-    .member-avatar.at-risk { background: var(--red-lt); color: var(--red); }
+    .member-avatar.at-risk { background: var(--red-lt);   color: var(--red); }
     .member-avatar.good    { background: var(--green-lt); color: var(--green); }
-    .member-info { flex: 1; min-width: 0; }
     .member-name {
-      font-size: 0.95rem; font-weight: 700; color: var(--text);
-      letter-spacing: -0.01em; margin-bottom: 2px;
+      font-size: 0.86rem; font-weight: 700; color: var(--text);
+      letter-spacing: -0.01em; flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .member-meta { font-size: 0.74rem; color: var(--muted); }
-    .member-strikes { display: flex; gap: 4px; align-items: center; }
-    .strike-pip {
-      width: 8px; height: 8px; border-radius: 50%; background: var(--border);
-    }
+    .member-meta-inline { font-size: 0.72rem; font-weight: 400; color: var(--muted); margin-left: 5px; }
+    .member-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .member-strikes { display: flex; gap: 3px; align-items: center; }
+    .strike-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
     .strike-pip.active { background: var(--red); }
 
-    /* On-track status badge */
+    /* Status badge */
     .status-badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 4px 10px; border-radius: 100px;
-      font-size: 0.72rem; font-weight: 700;
+      display: inline-flex; align-items: center;
+      padding: 3px 8px; border-radius: 100px;
+      font-size: 0.66rem; font-weight: 700; white-space: nowrap;
     }
-    .status-badge.on-track  { background: var(--green-lt);  color: var(--green); }
-    .status-badge.at-risk   { background: var(--red-lt);    color: var(--red); }
-    .status-badge.complete  { background: var(--green-lt);  color: var(--green); }
+    .status-badge.on-track { background: var(--green-lt); color: var(--green); }
+    .status-badge.at-risk  { background: var(--red-lt);   color: var(--red); }
     /* Chevron */
     .member-chevron {
-      font-size: 0.75rem; color: var(--muted);
-      transition: transform 0.2s; margin-left: 4px;
+      font-size: 0.68rem; color: var(--muted);
+      transition: transform 0.2s;
     }
     .member-card.open .member-chevron { transform: rotate(180deg); }
 
     /* ── Expanded member detail ── */
     .member-detail {
       display: none;
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-top: 10px;
+      padding-top: 10px;
       border-top: 1px solid var(--border);
     }
     .member-detail.open { display: block; }
@@ -524,11 +517,8 @@
         <div class="member-card ${cardClass}" onclick="toggleExpand('${member.id}')">
           <div class="member-top">
             <div class="member-avatar ${avatarClass}">${member.name[0].toUpperCase()}</div>
-            <div class="member-info">
-              <div class="member-name">${member.name}${isSelf?' (you)':''}</div>
-              <div class="member-meta">${strikeCount} strike${strikeCount!==1?'s':''} · ${goals.length} goal${goals.length!==1?'s':''}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;">
+            <div class="member-name">${member.name}${isSelf?' <span class="member-meta-inline">(you)</span>':''}<span class="member-meta-inline">· ${strikeCount} strike${strikeCount!==1?'s':''}</span></div>
+            <div class="member-right">
               ${badge}
               <div class="member-strikes">${pips}</div>
               <span class="member-chevron">▼</span>
