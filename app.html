@@ -812,7 +812,7 @@
 
       document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {
         let cls = 'dot';
-        if      (d === todayStr) cls += ' today';
+        if      (d === todayStr) cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : ' today';
         else if (d < todayStr)   cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : db.isDayPartial(session.userId,cohort.id,d) ? ' partial' : ' missed';
         else                     cls += ' future';
         return `<div class="${cls}" title="Day ${i+1}"></div>`;
