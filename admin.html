@@ -133,7 +133,10 @@
 <body>
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-    <div class="admin-badge">Admin</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="lastPushDate" style="font-size:0.68rem;color:var(--muted);"></span>
+      <div class="admin-badge">Admin</div>
+    </div>
   </div>
 
   <div class="tab-bar">
@@ -161,6 +164,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    fetch('https://api.github.com/repos/thimith/21-days-tracker/commits/main')
+      .then(r => r.json())
+      .then(d => {
+        const date = new Date(d.commit.committer.date);
+        const el = document.getElementById('lastPushDate');
+        if (el) el.textContent = 'pushed ' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      }).catch(() => {});
+
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
