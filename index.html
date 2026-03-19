@@ -16,7 +16,6 @@
       --orange:    #FF5500;
       --orange-dk: #CC4400;
       --orange-lt: rgba(255,85,0,0.1);
-      --green:     #34C759;
       --red:       #FF3B30;
       --bg:        #F5F5F7;
       --card:      #FFFFFF;
@@ -48,128 +47,167 @@
       margin-bottom: 36px; text-align: center;
       letter-spacing: 0.04em; text-transform: uppercase;
     }
+
+    /* Card — hidden until we know no session exists */
     .card {
       background: var(--card); border-radius: 20px;
-      box-shadow: var(--shadow); padding: 32px 28px;
+      box-shadow: var(--shadow); padding: 24px 24px 28px;
       width: 100%; max-width: 380px;
+      opacity: 0; transition: opacity 0.18s ease;
     }
-    .card-title {
-      font-size: 1.15rem; font-weight: 700; color: var(--text);
-      margin-bottom: 6px; letter-spacing: -0.02em;
+    .card.visible { opacity: 1; }
+
+    /* Tabs */
+    .tabs {
+      display: flex; background: var(--bg); border-radius: 12px;
+      padding: 4px; margin-bottom: 24px; gap: 4px;
     }
-    .card-sub {
-      font-size: 0.85rem; color: var(--muted);
-      margin-bottom: 24px; line-height: 1.55;
+    .tab {
+      flex: 1; padding: 9px 0;
+      font-family: inherit; font-size: 0.88rem; font-weight: 700;
+      color: var(--muted); background: transparent;
+      border: none; border-radius: 9px; cursor: pointer;
+      transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+      letter-spacing: -0.01em;
     }
-    input[type="email"], input[type="password"] {
-      width: 100%; padding: 14px 16px;
+    .tab.active {
+      background: var(--card); color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Fields */
+    .field-row { display: flex; gap: 10px; }
+    .field-row .form-field { flex: 1; }
+    .form-field { margin-bottom: 12px; }
+    .form-label {
+      display: block; font-size: 0.72rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.07em; margin-bottom: 5px;
+    }
+    .form-input {
+      width: 100%; padding: 13px 14px;
       border: 1.5px solid var(--border); border-radius: 12px;
-      font-size: 1rem; font-family: inherit;
+      font-size: 0.95rem; font-family: inherit;
       color: var(--text); background: var(--bg);
-      outline: none; transition: border-color 0.2s;
-      margin-bottom: 12px;
+      outline: none; transition: border-color 0.18s;
     }
-    input[type="email"]:focus, input[type="password"]:focus { border-color: var(--orange); }
-    input[type="email"].error { border-color: var(--red); }
+    .form-input:focus { border-color: var(--orange); }
+    .form-input.error { border-color: var(--red); }
+
+    /* Buttons */
     .btn {
       width: 100%; padding: 14px;
       background: var(--orange); color: #fff;
       font-family: inherit; font-size: 0.95rem; font-weight: 700;
       border: none; border-radius: 12px; cursor: pointer;
-      transition: background 0.2s, transform 0.15s;
-      letter-spacing: -0.01em;
+      transition: background 0.18s, transform 0.12s;
+      letter-spacing: -0.01em; margin-top: 4px;
     }
     .btn:hover  { background: var(--orange-dk); }
     .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.6; cursor: default; }
-    .error-msg {
-      font-size: 0.8rem; color: var(--red);
-      margin-bottom: 12px; display: none;
+    .btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+    .text-btn {
+      background: none; border: none; color: var(--orange);
+      font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      padding: 0; font-family: inherit;
     }
-    .error-msg.show { display: block; }
-    .success-state { display: none; text-align: center; }
-    .success-state.active { display: block; }
-    .login-form.hidden { display: none; }
-    .success-icon { font-size: 2.8rem; margin-bottom: 16px; }
-    .success-title {
-      font-size: 1.1rem; font-weight: 700; color: var(--text);
-      margin-bottom: 8px; letter-spacing: -0.01em;
+    .divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 14px 0;
     }
-    .success-sub {
-      font-size: 0.85rem; color: var(--muted);
-      line-height: 1.55;
-    }
-    .loading { opacity: 0.5; pointer-events: none; }
-    .divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
     .divider span { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
     .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
-    .text-btn { background: none; border: none; color: var(--orange); font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 0; font-family: inherit; }
-    .profile-setup { display: none; }
-    .profile-setup.active { display: block; }
-    .form-field { margin-bottom: 14px; }
-    .form-label {
-      display: block; font-size: 0.75rem; font-weight: 700;
-      color: var(--muted); text-transform: uppercase;
-      letter-spacing: 0.07em; margin-bottom: 6px;
+
+    /* Errors */
+    .error-msg {
+      font-size: 0.8rem; color: var(--red);
+      margin-bottom: 10px; display: none;
     }
-    .form-input {
-      width: 100%; padding: 14px 16px;
-      border: 1.5px solid var(--border); border-radius: 12px;
-      font-size: 1rem; font-family: inherit;
-      color: var(--text); background: var(--bg);
-      outline: none; transition: border-color 0.2s;
-    }
-    .form-input:focus { border-color: var(--orange); }
-    .form-input:disabled { color: var(--muted); }
-    .form-input.error { border-color: var(--red); }
+    .error-msg.show { display: block; }
+
+    /* Success */
+    .success-state { display: none; text-align: center; padding: 8px 0; }
+    .success-state.active { display: block; }
+    .success-icon { font-size: 2.6rem; margin-bottom: 14px; }
+    .success-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; }
+    .success-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
   </style>
 </head>
 <body>
   <div class="logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
   <p class="tagline">21-Day Challenge</p>
 
-  <div class="card">
-    <div class="login-form" id="loginForm">
-      <div class="card-title" id="cardTitle">Sign in</div>
-      <div class="card-sub" id="cardSub">Enter your email and we'll send you a magic link. No password needed.</div>
-      <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email"
-        onkeydown="if(event.key==='Enter')requestLink()" />
-      <div id="passwordField" style="display:none;">
-        <input type="password" id="passwordInput" class="form-input" placeholder="Password"
-          style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')signInWithPassword()" />
-      </div>
-      <div class="error-msg" id="errorMsg">Something went wrong. Please try again.</div>
-      <button class="btn" id="sendBtn" onclick="requestLink()">Send magic link</button>
-      <div class="divider"><span>or</span></div>
-      <div style="text-align:center;">
-        <button class="text-btn" id="pwToggle" onclick="togglePasswordMode()">Sign in with password instead</button>
-      </div>
-    </div>
+  <div class="card" id="mainCard">
 
+    <!-- Success state (shared) -->
     <div class="success-state" id="successState">
       <div class="success-icon">📬</div>
       <div class="success-title">Check your inbox</div>
-      <p class="success-sub">We sent a sign-in link to <strong id="sentTo"></strong>.<br>Click the link in the email to continue.</p>
+      <p class="success-sub">We sent a link to <strong id="sentTo"></strong>.<br>Click it to continue.</p>
     </div>
 
-    <div class="profile-setup" id="profileSetup">
-      <div class="card-title">One last step</div>
-      <div class="card-sub" style="margin-bottom:20px;">Tell us a bit about yourself.</div>
-      <div class="form-field">
-        <label class="form-label">Display name</label>
-        <input class="form-input" id="setupName" placeholder="Your name" autocomplete="name" />
+    <!-- Tabs + panels (hidden when success shown) -->
+    <div id="authForms">
+      <div class="tabs">
+        <button class="tab active" id="tabSignin" onclick="switchTab('signin')">Sign in</button>
+        <button class="tab"        id="tabSignup" onclick="switchTab('signup')">Sign up</button>
       </div>
-      <div class="form-field">
-        <label class="form-label">Email</label>
-        <input class="form-input" id="setupEmail" type="email" disabled />
+
+      <!-- ── Sign in panel ── -->
+      <div class="panel active" id="panelSignin">
+        <div class="form-field">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="siEmail" placeholder="you@example.com"
+            autocomplete="email" onkeydown="if(event.key==='Enter')siSubmit()" />
+        </div>
+        <div id="siPasswordWrap" style="display:none;">
+          <div class="form-field">
+            <label class="form-label">Password</label>
+            <input class="form-input" type="password" id="siPassword" placeholder="Password"
+              autocomplete="current-password" onkeydown="if(event.key==='Enter')signInWithPassword()" />
+          </div>
+        </div>
+        <div class="error-msg" id="siError"></div>
+        <button class="btn" id="siBtn" onclick="siSubmit()">Send magic link</button>
+        <div class="divider"><span>or</span></div>
+        <div style="text-align:center;">
+          <button class="text-btn" id="siToggle" onclick="togglePasswordMode()">Sign in with password instead</button>
+        </div>
       </div>
-      <div class="form-field" style="margin-bottom:20px;">
-        <label class="form-label">WhatsApp number</label>
-        <input class="form-input" id="setupWhatsapp" type="tel" placeholder="+1 555 000 0000" autocomplete="tel" />
+
+      <!-- ── Sign up panel ── -->
+      <div class="panel" id="panelSignup">
+        <div class="field-row">
+          <div class="form-field">
+            <label class="form-label">First name</label>
+            <input class="form-input" type="text" id="suFirst" placeholder="First"
+              autocomplete="given-name" />
+          </div>
+          <div class="form-field">
+            <label class="form-label">Last name</label>
+            <input class="form-input" type="text" id="suLast" placeholder="Last"
+              autocomplete="family-name" />
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="suEmail" placeholder="you@example.com"
+            autocomplete="email" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Phone <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.7rem;">(optional)</span></label>
+          <input class="form-input" type="tel" id="suPhone" placeholder="+1 555 000 0000"
+            autocomplete="tel" />
+        </div>
+        <div class="error-msg" id="suError"></div>
+        <button class="btn" id="suBtn" onclick="signUp()">Create account</button>
       </div>
-      <div class="error-msg" id="setupError">Please fill in your name.</div>
-      <button class="btn" onclick="submitProfile()">Join the tribe</button>
     </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -177,18 +215,23 @@
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
     const ADMIN_EMAIL  = 'thierry.muller@gmail.com';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
 
     let redirected = false;
-    let _pendingUser = null;
-    let _pendingCohortId = null;
 
     // ── Auth state listener ──────────────────────────────────────────────
     sb.auth.onAuthStateChange(async (event, session) => {
       if (redirected) return;
-      if (event === 'INITIAL_SESSION' && session) {
-        redirected = true;
-        await redirectUser(session.user);
+      if (event === 'INITIAL_SESSION') {
+        if (session) {
+          redirected = true;
+          await redirectUser(session.user);
+        } else {
+          // No session — show the card
+          document.getElementById('mainCard').classList.add('visible');
+        }
       } else if (event === 'SIGNED_IN' && session) {
         redirected = true;
         await handleNewSignIn(session);
@@ -196,7 +239,6 @@
     });
 
     async function redirectUser(user) {
-      // Use email to determine role — no DB query needed
       window.location.href = user.email === ADMIN_EMAIL ? 'admin.html' : 'app.html';
     }
 
@@ -204,66 +246,41 @@
       const user = sessionData.user;
       if (!user) { window.location.href = 'index.html'; return; }
 
-      // Check for existing profile with a 4s timeout fallback
+      // Check for existing profile
       const { data: profile } = await Promise.race([
         sb.from('profiles').select('id, role').eq('id', user.id).single(),
         new Promise(resolve => setTimeout(() => resolve({ data: null }), 4000))
       ]);
 
       if (profile) {
-        // Existing user — redirect
         window.location.href = profile.role === 'admin' ? 'admin.html' : 'app.html';
         return;
       }
 
-      // New user — check for pending invite
-      const token = localStorage.getItem('ft_pending_invite');
-      let prefillName = '';
-      let cohortId = null;
-      if (token) {
-        const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
-        if (invite && !invite.used) { prefillName = invite.name || ''; cohortId = invite.cohort_id; }
-      }
+      // New user — try to auto-create profile from sign-up data stored before link was sent
+      const raw = localStorage.getItem('ft_signup_data');
+      const signupData = raw ? JSON.parse(raw) : null;
 
-      // Show profile setup form
-      _pendingUser = user;
-      _pendingCohortId = cohortId;
-      document.getElementById('loginForm').classList.add('hidden');
-      document.getElementById('successState').style.display = 'none';
-      const setup = document.getElementById('profileSetup');
-      setup.classList.add('active');
-      document.getElementById('setupName').value = prefillName;
-      document.getElementById('setupEmail').value = user.email;
-      document.getElementById('setupName').focus();
-    }
-
-    async function submitProfile() {
-      const name = document.getElementById('setupName').value.trim();
-      const whatsapp = document.getElementById('setupWhatsapp').value.trim();
-      const errEl = document.getElementById('setupError');
-      errEl.classList.remove('show');
-
-      if (!name) { errEl.textContent = 'Please fill in your name.'; errEl.classList.add('show'); return; }
-
-      const btn = document.querySelector('#profileSetup .btn');
-      btn.disabled = true; btn.textContent = 'Saving…';
-
-      const user = _pendingUser;
       const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
+      const name = signupData
+        ? [signupData.firstName, signupData.lastName].filter(Boolean).join(' ')
+        : (user.email.split('@')[0]); // fallback: use email prefix
+      const whatsapp = signupData?.phone || '';
 
-      const { error } = await sb.from('profiles').insert({ id: user.id, name, role, whatsapp });
-      if (error) { errEl.textContent = error.message; errEl.classList.add('show'); btn.disabled = false; btn.textContent = 'Join the tribe'; return; }
+      await sb.from('profiles').insert({ id: user.id, name, role, whatsapp });
+      if (raw) localStorage.removeItem('ft_signup_data');
 
-      // Consume invite
+      // Consume invite if any
       const token = localStorage.getItem('ft_pending_invite');
       if (token) {
         const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
-        if (invite && !invite.used) await sb.from('invites').update({ used: true }).eq('id', invite.id);
+        if (invite && !invite.used) {
+          await sb.from('invites').update({ used: true }).eq('id', invite.id);
+          if (invite.cohort_id) {
+            await sb.from('cohort_members').insert({ cohort_id: invite.cohort_id, user_id: user.id });
+          }
+        }
         localStorage.removeItem('ft_pending_invite');
-      }
-
-      if (_pendingCohortId) {
-        await sb.from('cohort_members').insert({ cohort_id: _pendingCohortId, user_id: user.id });
       }
 
       window.location.href = role === 'admin' ? 'admin.html' : 'app.html';
@@ -272,80 +289,100 @@
     // ── Invite token in URL ──────────────────────────────────────────────
     (async function checkInviteToken() {
       const params = new URLSearchParams(location.search);
-      const token = params.get('invite');
+      const token  = params.get('invite');
       if (!token) return;
-
       localStorage.setItem('ft_pending_invite', token);
       const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
       if (invite && !invite.used) {
-        document.getElementById('cardTitle').textContent = "You're invited! 🎉";
-        document.getElementById('cardSub').textContent =
-          `Hi ${invite.name || 'there'}! Enter your email below to join the Focus Tribe 21-Day Challenge.`;
-        if (invite.email) document.getElementById('emailInput').value = invite.email;
+        // Pre-fill sign-up tab and switch to it
+        switchTab('signup');
+        if (invite.name)  document.getElementById('suFirst').value = invite.name;
+        if (invite.email) document.getElementById('suEmail').value = invite.email;
       }
     })();
 
-    // ── Password mode toggle ─────────────────────────────────────────────
+    // ── Tab switching ────────────────────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById('tabSignin').classList.toggle('active', tab === 'signin');
+      document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+      document.getElementById('panelSignin').classList.toggle('active', tab === 'signin');
+      document.getElementById('panelSignup').classList.toggle('active', tab === 'signup');
+    }
+
+    // ── Sign in ──────────────────────────────────────────────────────────
     let passwordMode = false;
+
     function togglePasswordMode() {
       passwordMode = !passwordMode;
-      document.getElementById('passwordField').style.display = passwordMode ? 'block' : 'none';
-      document.getElementById('sendBtn').textContent = passwordMode ? 'Sign in' : 'Send magic link';
-      document.getElementById('sendBtn').onclick = passwordMode ? signInWithPassword : requestLink;
-      document.getElementById('pwToggle').textContent = passwordMode ? 'Use magic link instead' : 'Sign in with password instead';
-      document.getElementById('errorMsg').classList.remove('show');
+      document.getElementById('siPasswordWrap').style.display = passwordMode ? 'block' : 'none';
+      document.getElementById('siBtn').textContent   = passwordMode ? 'Sign in' : 'Send magic link';
+      document.getElementById('siBtn').onclick       = passwordMode ? signInWithPassword : siSubmit;
+      document.getElementById('siToggle').textContent = passwordMode ? 'Use magic link instead' : 'Sign in with password instead';
+      document.getElementById('siError').classList.remove('show');
+    }
+
+    function siSubmit() {
+      if (passwordMode) signInWithPassword(); else sendMagicLink('signin');
     }
 
     async function signInWithPassword() {
-      const email    = document.getElementById('emailInput').value.trim().toLowerCase();
-      const password = document.getElementById('passwordInput').value;
-      const errMsg   = document.getElementById('errorMsg');
-      const btn      = document.getElementById('sendBtn');
-      errMsg.classList.remove('show');
-      if (!email || !password) { errMsg.textContent = 'Enter your email and password.'; errMsg.classList.add('show'); return; }
+      const email    = document.getElementById('siEmail').value.trim().toLowerCase();
+      const password = document.getElementById('siPassword').value;
+      const errEl    = document.getElementById('siError');
+      const btn      = document.getElementById('siBtn');
+      errEl.classList.remove('show');
+      if (!email || !password) { errEl.textContent = 'Enter your email and password.'; errEl.classList.add('show'); return; }
       btn.disabled = true; btn.textContent = 'Signing in…';
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) {
-        errMsg.textContent = error.message;
-        errMsg.classList.add('show');
+        errEl.textContent = error.message; errEl.classList.add('show');
         btn.disabled = false; btn.textContent = 'Sign in';
         return;
       }
-      // Handle redirect directly — don't rely on onAuthStateChange
       redirected = true;
       await handleNewSignIn(data);
     }
 
-    // ── Send magic link ──────────────────────────────────────────────────
-    async function requestLink() {
-      const email  = document.getElementById('emailInput').value.trim().toLowerCase();
-      const errMsg = document.getElementById('errorMsg');
-      const btn    = document.getElementById('sendBtn');
-      errMsg.classList.remove('show');
-      document.getElementById('emailInput').classList.remove('error');
-
-      if (!email || !email.includes('@')) {
-        document.getElementById('emailInput').classList.add('error');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Sending…';
-
+    async function sendMagicLink(source) {
+      const emailEl = document.getElementById(source === 'signup' ? 'suEmail' : 'siEmail');
+      const errEl   = document.getElementById(source === 'signup' ? 'suError'  : 'siError');
+      const btn     = document.getElementById(source === 'signup' ? 'suBtn'    : 'siBtn');
+      const email   = emailEl.value.trim().toLowerCase();
+      errEl.classList.remove('show');
+      emailEl.classList.remove('error');
+      if (!email || !email.includes('@')) { emailEl.classList.add('error'); return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
       const redirectTo = window.location.origin + window.location.pathname;
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
-
       if (error) {
-        errMsg.textContent = error.message;
-        errMsg.classList.add('show');
-        btn.disabled = false;
-        btn.textContent = 'Send magic link';
+        errEl.textContent = error.message; errEl.classList.add('show');
+        btn.disabled = false; btn.textContent = source === 'signup' ? 'Create account' : 'Send magic link';
         return;
       }
-
-      document.getElementById('loginForm').classList.add('hidden');
-      document.getElementById('successState').classList.add('active');
+      document.getElementById('authForms').style.display = 'none';
+      const s = document.getElementById('successState');
+      s.classList.add('active');
       document.getElementById('sentTo').textContent = email;
+    }
+
+    // ── Sign up ──────────────────────────────────────────────────────────
+    async function signUp() {
+      const firstName = document.getElementById('suFirst').value.trim();
+      const lastName  = document.getElementById('suLast').value.trim();
+      const email     = document.getElementById('suEmail').value.trim().toLowerCase();
+      const phone     = document.getElementById('suPhone').value.trim();
+      const errEl     = document.getElementById('suError');
+      errEl.classList.remove('show');
+      ['suFirst','suLast','suEmail'].forEach(id => document.getElementById(id).classList.remove('error'));
+
+      if (!firstName) { document.getElementById('suFirst').classList.add('error'); errEl.textContent = 'First name is required.'; errEl.classList.add('show'); return; }
+      if (!lastName)  { document.getElementById('suLast').classList.add('error');  errEl.textContent = 'Last name is required.';  errEl.classList.add('show'); return; }
+      if (!email || !email.includes('@')) { document.getElementById('suEmail').classList.add('error'); return; }
+
+      // Store profile data so handleNewSignIn can auto-create the profile silently
+      localStorage.setItem('ft_signup_data', JSON.stringify({ firstName, lastName, phone }));
+
+      await sendMagicLink('signup');
     }
   </script>
 </body>
