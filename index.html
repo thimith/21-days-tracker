@@ -61,7 +61,7 @@
       font-size: 0.85rem; color: var(--muted);
       margin-bottom: 24px; line-height: 1.55;
     }
-    input[type="email"] {
+    input[type="email"], input[type="password"] {
       width: 100%; padding: 14px 16px;
       border: 1.5px solid var(--border); border-radius: 12px;
       font-size: 1rem; font-family: inherit;
@@ -69,7 +69,7 @@
       outline: none; transition: border-color 0.2s;
       margin-bottom: 12px;
     }
-    input[type="email"]:focus { border-color: var(--orange); }
+    input[type="email"]:focus, input[type="password"]:focus { border-color: var(--orange); }
     input[type="email"].error { border-color: var(--red); }
     .btn {
       width: 100%; padding: 14px;
@@ -100,6 +100,10 @@
       line-height: 1.55;
     }
     .loading { opacity: 0.5; pointer-events: none; }
+    .divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+    .divider span { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .text-btn { background: none; border: none; color: var(--orange); font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 0; font-family: inherit; }
     .profile-setup { display: none; }
     .profile-setup.active { display: block; }
     .form-field { margin-bottom: 14px; }
@@ -130,8 +134,16 @@
       <div class="card-sub" id="cardSub">Enter your email and we'll send you a magic link. No password needed.</div>
       <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email"
         onkeydown="if(event.key==='Enter')requestLink()" />
+      <div id="passwordField" style="display:none;">
+        <input type="password" id="passwordInput" class="form-input" placeholder="Password"
+          style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')signInWithPassword()" />
+      </div>
       <div class="error-msg" id="errorMsg">Something went wrong. Please try again.</div>
       <button class="btn" id="sendBtn" onclick="requestLink()">Send magic link</button>
+      <div class="divider"><span>or</span></div>
+      <div style="text-align:center;">
+        <button class="text-btn" id="pwToggle" onclick="togglePasswordMode()">Sign in with password instead</button>
+      </div>
     </div>
 
     <div class="success-state" id="successState">
@@ -268,6 +280,29 @@
         if (invite.email) document.getElementById('emailInput').value = invite.email;
       }
     })();
+
+    // ── Password mode toggle ─────────────────────────────────────────────
+    let passwordMode = false;
+    function togglePasswordMode() {
+      passwordMode = !passwordMode;
+      document.getElementById('passwordField').style.display = passwordMode ? 'block' : 'none';
+      document.getElementById('sendBtn').textContent = passwordMode ? 'Sign in' : 'Send magic link';
+      document.getElementById('sendBtn').onclick = passwordMode ? signInWithPassword : requestLink;
+      document.getElementById('pwToggle').textContent = passwordMode ? 'Use magic link instead' : 'Sign in with password instead';
+      document.getElementById('errorMsg').classList.remove('show');
+    }
+
+    async function signInWithPassword() {
+      const email    = document.getElementById('emailInput').value.trim().toLowerCase();
+      const password = document.getElementById('passwordInput').value;
+      const errMsg   = document.getElementById('errorMsg');
+      const btn      = document.getElementById('sendBtn');
+      errMsg.classList.remove('show');
+      if (!email || !password) { errMsg.textContent = 'Enter your email and password.'; errMsg.classList.add('show'); return; }
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign in'; }
+    }
 
     // ── Send magic link ──────────────────────────────────────────────────
     async function requestLink() {
