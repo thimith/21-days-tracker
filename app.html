@@ -1337,6 +1337,7 @@
     function toggleBoolean(goalId, date) {
       const c = db.getCheckin(goalId, date);
       db.setCheckin(goalId, date, !(c?.value));
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent(); renderDots();
     }
 
@@ -1344,6 +1345,7 @@
       const c = db.getCheckin(goalId, date);
       const cur = c ? Number(c.value)||0 : 0;
       db.setCheckin(goalId, date, cur > 0 ? 0 : 1);
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent();
     }
 
@@ -1363,6 +1365,7 @@
       // Clear any existing checkins on other dates, then set on canonical date
       allDates.forEach(d => { if (db.getCheckin(goalId, d)?.value) db.setCheckin(goalId, d, false); });
       db.setCheckin(goalId, canonDate, !done);
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent();
     }
 
