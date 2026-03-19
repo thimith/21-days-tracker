@@ -343,12 +343,12 @@
     }
     .goal-delete:hover { background: rgba(255,59,48,0.2); }
     .goal-rename-btn {
-      position: absolute; top: 12px; right: 14px;
-      width: 22px; height: 22px; border-radius: 50%;
+      flex-shrink: 0;
+      width: 24px; height: 24px; border-radius: 6px;
       background: var(--bg); color: var(--muted);
-      font-size: 0.85rem; font-weight: 700;
+      font-size: 0.8rem;
       border: 1px solid var(--border); cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: inline-flex; align-items: center; justify-content: center;
       transition: background 0.15s;
     }
     .goal-rename-btn:hover { background: var(--border); }
@@ -906,17 +906,16 @@
       const isFuture = date > new Date().toISOString().split('T')[0];
       const c = db.getCheckin(g.id, date);
       const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
-      const delBtn = !locked
-        ? `<button class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>`
-        : `<button class="goal-rename-btn" onclick="startRenameGoal(event,'${g.id}',this)" title="Rename">✎</button>`;
+      const deleteBtn = !locked ? `<button class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
+      const renameBtn = locked  ? `<button class="goal-rename-btn" onclick="startRenameGoal(event,'${g.id}',this)" title="Rename">✎</button>` : '';
 
       if (g.type === 'daily_boolean') {
         const done = !!(c?.value);
         return `
           <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleBoolean('${g.id}','${date}')">
-            ${delBtn}
+            ${deleteBtn}
             <div class="bool-row">
-              <div class="goal-title">${g.title}</div>
+              ${renameBtn}<div class="goal-title">${g.title}</div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
                   <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -937,9 +936,9 @@
           `<div class="session-pip${i<wkTotal?' done':''}"></div>`).join('');
         return `
           <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`toggleSession('${g.id}','${date}')`:''}" style="${isFuture?'cursor:default':''}">
-            ${delBtn}
+            ${deleteBtn}
             <div class="bool-row">
-              <div class="goal-title">${g.title}</div>
+              ${renameBtn}<div class="goal-title">${g.title}</div>
               <div class="session-inline">
                 <div class="session-dots-row">${pips}</div>
                 <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week</div>
@@ -962,8 +961,8 @@
         const todayV  = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
-            ${delBtn}
-            <div class="time-inline-row">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
@@ -985,8 +984,8 @@
         const todayV  = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
-            ${delBtn}
-            <div class="time-inline-row">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
@@ -1008,8 +1007,8 @@
         const todayV  = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
-            ${delBtn}
-            <div class="time-inline-row">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
@@ -1026,8 +1025,8 @@
         const done = !!(c?.value);
         return `
           <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleMilestone('${g.id}','${date}')">
-            ${delBtn}
-            <div class="milestone-row">
+            ${deleteBtn}
+            <div class="milestone-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
@@ -1049,8 +1048,8 @@
         const todayV   = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
-            ${delBtn}
-            <div class="time-inline-row">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1"
                 value="${todayV}" placeholder=""
@@ -1071,8 +1070,8 @@
         const todayV   = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
-            ${delBtn}
-            <div class="time-inline-row">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
@@ -1093,8 +1092,8 @@
         const todayV   = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
-            ${delBtn}
-            <div class="time-inline-row">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
