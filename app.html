@@ -308,6 +308,16 @@
     .time-input:focus { border-color: var(--orange); }
     .time-input:disabled { opacity: 0.5; }
     .time-unit { font-size: 0.72rem; color: var(--muted); flex-shrink: 0; }
+    /* Progress line at card bottom */
+    .card-progress-track {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 3px; border-radius: 0 0 14px 14px;
+      background: rgba(0,0,0,0.06); overflow: hidden;
+    }
+    .card-progress-fill {
+      height: 100%; border-radius: 0 0 14px 14px;
+      transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1), background-color 0.3s;
+    }
     .time-bar-wrap {}
     .time-bar-labels {
       display: flex; justify-content: space-between;
@@ -1106,6 +1116,8 @@
         const maxMin  = g.config.weeklyMaxMinutes || 120;
         const over    = wkTotal > maxMin;
         const todayV  = c ? Number(c.value)||'' : '';
+        const pct     = Math.min(100, maxMin > 0 ? (wkTotal / maxMin * 100) : 0);
+        const barColor = over ? 'var(--red)' : 'var(--green)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1118,6 +1130,7 @@
               <span class="time-unit">min</span>
               <span class="time-counter${over?' over':''}">${wkTotal}/${maxMin}</span>
             </div>
+            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
@@ -1128,6 +1141,8 @@
         const target  = g.config.weeklyTargetMinutes || 60;
         const met     = wkTotal >= target;
         const todayV  = c ? Number(c.value)||'' : '';
+        const pct     = Math.min(100, target > 0 ? (wkTotal / target * 100) : 0);
+        const barColor = met ? 'var(--green)' : 'var(--orange)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1140,6 +1155,7 @@
               <span class="time-unit">min</span>
               <span class="time-counter${met?' met':''}">${met?'✓ ':''}${wkTotal}/${target}</span>
             </div>
+            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
@@ -1150,6 +1166,8 @@
         const maxMin  = g.config.weeklyMaxMinutes || 120;
         const over    = wkTotal > maxMin;
         const todayV  = c ? Number(c.value)||'' : '';
+        const pct     = Math.min(100, maxMin > 0 ? (wkTotal / maxMin * 100) : 0);
+        const barColor = over ? 'var(--red)' : 'var(--green)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1162,6 +1180,7 @@
               <span class="time-unit">min</span>
               <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
             </div>
+            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
@@ -1172,6 +1191,8 @@
         const maxMin  = g.config.weeklyMaxMinutes || 120;
         const over    = wkTotal > maxMin;
         const todayV  = c ? Number(c.value)||'' : '';
+        const pct     = Math.min(100, maxMin > 0 ? (wkTotal / maxMin * 100) : 0);
+        const barColor = over ? 'var(--red)' : 'var(--green)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1184,6 +1205,7 @@
               <span class="time-unit">min</span>
               <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
             </div>
+            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
