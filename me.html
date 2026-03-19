@@ -170,132 +170,130 @@
     </a>
   </nav>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const db = {
-      get(k)   { try { return JSON.parse(localStorage.getItem('ft_'+k)); } catch(e){ return null; } },
-      set(k,v) { localStorage.setItem('ft_'+k, JSON.stringify(v)); },
-      getSession()  { return this.get('session'); },
-      setSession(s) { this.set('session', s); },
-      clearSession(){ localStorage.removeItem('ft_session'); },
-      getUsers()    { return this.get('users')   || {}; },
-      getCohorts()  { return this.get('cohorts') || {}; },
-      getGoals()    { return this.get('goals')   || {}; },
-      getUser(id)   { return this.getUsers()[id] || null; },
-      getCohort(id) { return this.getCohorts()[id] || null; },
-      getCohortDay(startDate) {
-        const s = new Date(startDate); s.setHours(0,0,0,0);
-        const t = new Date(); t.setHours(0,0,0,0);
-        return Math.floor((t-s)/86400000)+1;
-      },
-      getCurrentCohort(userId) {
-        const all = Object.values(this.getCohorts()).filter(c => c.memberIds && c.memberIds.includes(userId));
-        if (!all.length) return null;
-        const active = all.find(c => { const d=this.getCohortDay(c.startDate); return d>=1&&d<=21; });
-        return active || all.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate))[0];
-      },
-      getStakes(userId, cohortId) { return (this.get('stakes')||{})[`${userId}_${cohortId}`] || null; },
-      getGoalsForUser(userId, cohortId) {
-        return Object.values(this.getGoals())
-          .filter(g => g.userId===userId && g.cohortId===cohortId)
-          .sort((a,b) => a.order-b.order);
-      },
-    };
+    const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const session = db.getSession();
-    if (!session) { window.location.href='index.html'; throw 0; }
-
-    const user   = db.getUser(session.userId);
-    const cohort = db.getCurrentCohort(session.userId);
-
-    // Show admin nav + update label
-    document.getElementById('userNavLabel').textContent = user?.name?.split(' ')[0] || 'Me';
-    if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
-
-    // ── Profile card ──────────────────────────────────────────────────────
-    const initial = (user?.name||'?')[0].toUpperCase();
-    document.getElementById('profileCard').innerHTML = `
-      <div class="profile-avatar">${initial}</div>
-      <div class="profile-info">
-        <div class="profile-name">${user?.name || '—'}</div>
-        <div class="profile-email">${user?.email || '—'}</div>
-        <span class="role-badge ${user?.role==='admin'?'admin':'member'}">${user?.role==='admin'?'Admin':'Member'}</span>
-      </div>`;
-
-    // ── Account info ──────────────────────────────────────────────────────
-    // ── Stakes ────────────────────────────────────────────────────────────
-    const stakes = cohort ? db.getStakes(user.id, cohort.id) : null;
-    if (stakes) {
-      document.getElementById('stakesList').innerHTML = `
-        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">🏆 If I complete</span><span class="info-value" style="text-align:left;">${stakes.complete||'—'}</span></div>
-        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">⚡ Slip #1</span><span class="info-value" style="text-align:left;">${stakes.r1||'—'}</span></div>
-        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">⚡ Slip #2</span><span class="info-value" style="text-align:left;">${stakes.r2||'—'}</span></div>
-        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">💀 Fail (3 strikes)</span><span class="info-value" style="text-align:left;">${stakes.fail||'—'}</span></div>`;
-    } else {
-      document.getElementById('stakesList').innerHTML = `<div class="info-row"><span class="info-label">No stakes set</span></div>`;
+    function getCohortDay(startDate, targetDate) {
+      const s = new Date(startDate); s.setHours(0,0,0,0);
+      const t = targetDate ? new Date(targetDate) : new Date(); t.setHours(0,0,0,0);
+      return Math.floor((t-s)/86400000)+1;
     }
 
-    document.getElementById('accountInfo').innerHTML = `
-      <div class="info-row"><span class="info-label">Name</span><span class="info-value">${user?.name||'—'}</span></div>
-      <div class="info-row"><span class="info-label">Email</span><span class="info-value">${user?.email||'—'}</span></div>
-      <div class="info-row"><span class="info-label">Role</span><span class="info-value">${user?.role||'—'}</span></div>`;
+    (async () => {
+      const { data: { user: authUser } } = await sb.auth.getUser();
+      if (!authUser) { window.location.href = 'index.html'; return; }
 
-    // ── Cohort info ───────────────────────────────────────────────────────
-    if (cohort) {
-      const day = db.getCohortDay(cohort.startDate);
-      const dayLabel = day>=1&&day<=21 ? `Day ${day} of 21` : day<1 ? 'Upcoming' : 'Completed';
-      document.getElementById('cohortInfo').innerHTML = `
-        <div class="info-row"><span class="info-label">Cohort</span><span class="info-value">${cohort.name}</span></div>
-        <div class="info-row"><span class="info-label">Start Date</span><span class="info-value">${cohort.startDate}</span></div>
-        <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${dayLabel}</span></div>
-        <div class="info-row"><span class="info-label">Members</span><span class="info-value">${cohort.memberIds.length}</span></div>`;
-    } else {
-      document.getElementById('cohortInfo').innerHTML = `<div class="info-row"><span class="info-label">Cohort</span><span class="info-value">No active cohort</span></div>`;
-    }
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+      if (!profile) { window.location.href = 'index.html'; return; }
 
-    // ── Goals list ────────────────────────────────────────────────────────
-    const goals = cohort ? db.getGoalsForUser(user.id, cohort.id) : [];
+      document.getElementById('userNavLabel').textContent = profile.name?.split(' ')[0] || 'Me';
+      if (profile.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
 
-    function goalTypePill(type) {
-      const map = {
-        'daily_boolean': ['boolean', 'Daily ✓'],
-        'weekly_count':  ['weekly',  'Weekly count'],
-        'daily_time':    ['time',    'Time (max/wk)'],
-        'daily_time_max':['time',    'Time (max/wk)'],
-        'daily_time_min':['time',    'Time (min/wk)'],
-        'milestone':      ['milestone','Milestone'],
-        'total_count':    ['milestone','21-Day count'],
-        'total_time_min': ['time',     'Time (min/21d)'],
-        'total_time_max': ['time',     'Time (max/21d)'],
-      };
-      const [cls, label] = map[type] || ['boolean', type];
-      return `<span class="goal-type-pill pill-${cls}">${label}</span>`;
-    }
+      const initial = (profile.name || '?')[0].toUpperCase();
+      document.getElementById('profileCard').innerHTML = `
+        <div class="profile-avatar">${initial}</div>
+        <div class="profile-info">
+          <div class="profile-name">${profile.name || '—'}</div>
+          <div class="profile-email">${authUser.email || '—'}</div>
+          <span class="role-badge ${profile.role === 'admin' ? 'admin' : 'member'}">${profile.role === 'admin' ? 'Admin' : 'Member'}</span>
+        </div>`;
 
-    function goalConfigLabel(g) {
-      if (g.type === 'weekly_count')   return `${g.config?.weeklyTarget||1}×/wk`;
-      if (g.type === 'daily_time' || g.type === 'daily_time_max') return `≤${g.config?.weeklyMaxMinutes||'?'}min/wk`;
-      if (g.type === 'daily_time_min')  return `≥${g.config?.weeklyTargetMinutes||'?'}min/wk`;
-      if (g.type === 'total_count')     return `${g.config?.totalTarget||'?'} total`;
-      if (g.type === 'total_time_min')  return `≥${g.config?.totalTargetMinutes||'?'}min total`;
-      if (g.type === 'total_time_max')  return `≤${g.config?.totalMaxMinutes||'?'}min total`;
-      return '';
-    }
+      document.getElementById('accountInfo').innerHTML = `
+        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${profile.name || '—'}</span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value">${authUser.email || '—'}</span></div>
+        <div class="info-row"><span class="info-label">Role</span><span class="info-value">${profile.role || '—'}</span></div>`;
 
-    if (goals.length) {
-      document.getElementById('goalsList').innerHTML = goals.map(g => `
-        <div class="goal-row">
-          <div class="goal-row-title">${g.title}</div>
-          ${goalTypePill(g.type)}
-          <div class="goal-config">${goalConfigLabel(g)}</div>
-        </div>`).join('');
-    } else {
-      document.getElementById('goalsList').innerHTML = `<div class="info-row"><span class="info-label">No goals set</span></div>`;
-    }
+      // Cohort
+      const { data: memberships } = await sb.from('cohort_members')
+        .select('cohort_id, cohorts(*)').eq('user_id', authUser.id);
+      let cohort = null;
+      if (memberships?.length) {
+        const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
+        const active = cohorts.find(c => { const d = getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+        cohort = active || cohorts.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+      }
 
-    function logout() {
-      db.clearSession();
-      window.location.href = 'index.html';
-    }
+      if (cohort) {
+        const { count } = await sb.from('cohort_members').select('*', { count: 'exact', head: true }).eq('cohort_id', cohort.id);
+        const day = getCohortDay(cohort.start_date);
+        const dayLabel = day >= 1 && day <= 21 ? `Day ${day} of 21` : day < 1 ? 'Upcoming' : 'Completed';
+        document.getElementById('cohortInfo').innerHTML = `
+          <div class="info-row"><span class="info-label">Cohort</span><span class="info-value">${cohort.name}</span></div>
+          <div class="info-row"><span class="info-label">Start Date</span><span class="info-value">${cohort.start_date}</span></div>
+          <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${dayLabel}</span></div>
+          <div class="info-row"><span class="info-label">Members</span><span class="info-value">${count || 0}</span></div>`;
+      } else {
+        document.getElementById('cohortInfo').innerHTML = `<div class="info-row"><span class="info-label">Cohort</span><span class="info-value">No active cohort</span></div>`;
+      }
+
+      // Goals
+      let goals = [];
+      if (cohort) {
+        const { data: goalsRaw } = await sb.from('goals')
+          .select('*').eq('user_id', authUser.id).eq('cohort_id', cohort.id).order('sort_order');
+        goals = goalsRaw || [];
+      }
+
+      function goalTypePill(type) {
+        const map = {
+          'daily_boolean':  ['boolean',   'Daily ✓'],
+          'weekly_count':   ['weekly',    'Weekly count'],
+          'daily_time':     ['time',      'Time (max/wk)'],
+          'daily_time_max': ['time',      'Time (max/wk)'],
+          'daily_time_min': ['time',      'Time (min/wk)'],
+          'milestone':      ['milestone', 'Milestone'],
+          'total_count':    ['milestone', '21-Day count'],
+          'total_time_min': ['time',      'Time (min/21d)'],
+          'total_time_max': ['time',      'Time (max/21d)'],
+        };
+        const [cls, label] = map[type] || ['boolean', type];
+        return `<span class="goal-type-pill pill-${cls}">${label}</span>`;
+      }
+
+      function goalConfigLabel(g) {
+        const c = g.config || {};
+        if (g.type === 'weekly_count')                              return `${c.weeklyTarget || 1}×/wk`;
+        if (g.type === 'daily_time' || g.type === 'daily_time_max') return `≤${c.weeklyMaxMinutes || '?'}min/wk`;
+        if (g.type === 'daily_time_min')                            return `≥${c.weeklyTargetMinutes || '?'}min/wk`;
+        if (g.type === 'total_count')                               return `${c.totalTarget || '?'} total`;
+        if (g.type === 'total_time_min')                            return `≥${c.totalTargetMinutes || '?'}min total`;
+        if (g.type === 'total_time_max')                            return `≤${c.totalMaxMinutes || '?'}min total`;
+        return '';
+      }
+
+      if (goals.length) {
+        document.getElementById('goalsList').innerHTML = goals.map(g => `
+          <div class="goal-row">
+            <div class="goal-row-title">${g.title}</div>
+            ${goalTypePill(g.type)}
+            <div class="goal-config">${goalConfigLabel(g)}</div>
+          </div>`).join('');
+      } else {
+        document.getElementById('goalsList').innerHTML = `<div class="info-row"><span class="info-label">No goals set</span></div>`;
+      }
+
+      // Stakes
+      if (cohort) {
+        const { data: stakes } = await sb.from('stakes')
+          .select('*').eq('user_id', authUser.id).eq('cohort_id', cohort.id).single();
+        if (stakes) {
+          document.getElementById('stakesList').innerHTML = `
+            <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">🏆 If I complete</span><span class="info-value" style="text-align:left;">${stakes.complete || '—'}</span></div>
+            <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">⚡ Slip #1</span><span class="info-value" style="text-align:left;">${stakes.r1 || '—'}</span></div>
+            <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">⚡ Slip #2</span><span class="info-value" style="text-align:left;">${stakes.r2 || '—'}</span></div>
+            <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span class="info-label">💀 Fail (3 strikes)</span><span class="info-value" style="text-align:left;">${stakes.fail || '—'}</span></div>`;
+        } else {
+          document.getElementById('stakesList').innerHTML = `<div class="info-row"><span class="info-label">No stakes set</span></div>`;
+        }
+      } else {
+        document.getElementById('stakesList').innerHTML = `<div class="info-row"><span class="info-label">No stakes set</span></div>`;
+      }
+    })();
+
+    async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
   </script>
 </body>
 </html>

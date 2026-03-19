@@ -220,85 +220,23 @@
     </a>
   </nav>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const ADMIN_EMAIL = 'thierry.muller@gmail.com';
+    const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const DUMMY_ADMIN_EMAIL = 'thierry.muller@gmail.com'; // kept for reference only
+
+    // ── Cache ────────────────────────────────────────────────────────────
+    const _c = {
+      userId: null, profile: null, cohort: null,
+      members: [], goals: {}, checkins: {}, redemptions: {}
+    };
 
     // ── Data layer ───────────────────────────────────────────────────────
     const db = {
-      get(k)   { try { return JSON.parse(localStorage.getItem('ft_'+k)); } catch(e){ return null; } },
-      set(k,v) { localStorage.setItem('ft_'+k, JSON.stringify(v)); },
-      getSession()   { return this.get('session'); },
-      clearSession() { localStorage.removeItem('ft_session'); },
-      getUsers()     { return this.get('users')     || {}; },
-      getCohorts()   { return this.get('cohorts')   || {}; },
-      getGoals()     { return this.get('goals')     || {}; },
-      getCheckins()  { return this.get('checkins')  || {}; },
-      getRedemptions(){ return this.get('redemptions') || {}; },
-      getUser(id)    { return this.getUsers()[id]   || null; },
-      getCohort(id)  { return this.getCohorts()[id] || null; },
-
-      seedIfEmpty() {
-        if (this.get('seeded_v8')) return;
-        this.set('users', {
-          'u_admin': { id:'u_admin', email:'thierry.muller@gmail.com', name:'Thierry', role:'admin' },
-          'u_alex':  { id:'u_alex',  email:'alex@example.com',  name:'Alex',  role:'member' },
-          'u_jack':  { id:'u_jack',  email:'jack@example.com',  name:'Jack',  role:'member' },
-          'u_ruben': { id:'u_ruben', email:'ruben@example.com', name:'Ruben', role:'member' },
-          'u_sara':  { id:'u_sara',  email:'sara@example.com',  name:'Sara',  role:'member' },
-          'u_james': { id:'u_james', email:'james@example.com', name:'James', role:'member' },
-          'u_priya': { id:'u_priya', email:'priya@example.com', name:'Priya', role:'member' },
-        });
-        this.set('cohorts', {
-          'c_04_26_01': { id:'c_04_26_01', name:'Mar 16 Cohort', startDate:'2026-03-16', memberIds:['u_admin','u_alex','u_jack','u_ruben'], createdBy:'u_admin', createdAt:new Date().toISOString() },
-          'c_04_26_02': { id:'c_04_26_02', name:'Apr 6 Cohort',   startDate:'2026-04-06', memberIds:['u_sara','u_james','u_priya'],          createdBy:'u_admin', createdAt:new Date().toISOString() },
-        });
-        const goals = {};
-        const add = (userId, cohortId, list) => list.forEach((g,i) => { goals[g.id] = { ...g, userId, cohortId, locked:true, createdAt:new Date().toISOString(), order:i }; });
-        add('u_admin','c_04_26_01',[{id:'g_t1',type:'weekly_count',title:'Meditate or Journal 10min',config:{weeklyTarget:5}},{id:'g_t2',type:'weekly_count',title:'Drink 2L of Water',config:{weeklyTarget:5}},{id:'g_t3',type:'weekly_count',title:'Plan Next Day Before Bed',config:{weeklyTarget:5}},{id:'g_t4',type:'weekly_count',title:'Exercise 45min+',config:{weeklyTarget:5}},{id:'g_t5',type:'weekly_count',title:'No-Fap Rule',config:{weeklyTarget:5}},{id:'g_t6',type:'daily_time_max',title:'Instagram',config:{weeklyMaxMinutes:70}},{id:'g_t7',type:'daily_time_max',title:'YouTube',config:{weeklyMaxMinutes:210}},{id:'g_t8',type:'weekly_count',title:'Get Feedback (4 people/wk)',config:{weeklyTarget:4}},{id:'g_t9',type:'milestone',title:'Build Focus Tracker',config:{}},{id:'g_t10',type:'milestone',title:'Collect 3 Video Testimonials',config:{}}]);
-        add('u_alex','c_04_26_01',[{id:'g_ax1',type:'weekly_count',title:'Drink 2L Water',config:{weeklyTarget:5}},{id:'g_ax2',type:'weekly_count',title:'30g+ Protein 4x/day',config:{weeklyTarget:5}},{id:'g_ax3',type:'weekly_count',title:'Chest Workout',config:{weeklyTarget:1}},{id:'g_ax4',type:'weekly_count',title:'Job Applications',config:{weeklyTarget:3}}]);
-        add('u_jack','c_04_26_01',[{id:'g_jk1',type:'weekly_count',title:'3 Rejections',config:{weeklyTarget:3}},{id:'g_jk2',type:'weekly_count',title:'Cold Outreach (1+/day)',config:{weeklyTarget:5}},{id:'g_jk3',type:'weekly_count',title:'Exercise 30min+',config:{weeklyTarget:4}},{id:'g_jk4',type:'weekly_count',title:'Laptop Out of Bedroom',config:{weeklyTarget:4}},{id:'g_jk5',type:'weekly_count',title:'The Office in Spanish (1 ep+)',config:{weeklyTarget:5}}]);
-        add('u_ruben','c_04_26_01',[{id:'g_rb1',type:'weekly_count',title:'Journal Within 4h of Waking',config:{weeklyTarget:5}},{id:'g_rb2',type:'weekly_count',title:'Set Alarm Before Bed',config:{weeklyTarget:5}},{id:'g_rb3',type:'weekly_count',title:'Stretching / Posture 5min',config:{weeklyTarget:5}},{id:'g_rb4',type:'weekly_count',title:'Breathwork',config:{weeklyTarget:1}}]);
-        add('u_sara','c_04_26_02',[{id:'g_s1',type:'daily_boolean',title:'Morning run',config:{}},{id:'g_s2',type:'weekly_count',title:'Yoga',config:{weeklyTarget:3}},{id:'g_s3',type:'milestone',title:'Write a chapter',config:{}}]);
-        add('u_james','c_04_26_02',[{id:'g_j1',type:'daily_boolean',title:'Cold shower',config:{}},{id:'g_j2',type:'daily_boolean',title:'No sugar',config:{}},{id:'g_j3',type:'weekly_count',title:'Gym',config:{weeklyTarget:5}}]);
-        add('u_priya','c_04_26_02',[{id:'g_p1',type:'daily_boolean',title:'Meditate',config:{}},{id:'g_p2',type:'daily_time_min',title:'Study Spanish',config:{weeklyTargetMinutes:120}},{id:'g_p3',type:'milestone',title:'Ship side project',config:{}}]);
-        this.set('goals', goals);
-        this.set('stakes', {
-          'u_admin_c_04_26_01': {complete:'Take a full day off — 100% not productive.',r1:'Run 5km with proof',r2:'Run 7km with proof + 100 push-ups on video',fail:'Run 10km with proof + 100 push-ups on video'},
-          'u_alex_c_04_26_01':  {complete:'',r1:'Wake up 6–8am next business day and work on most important challenge task',r2:'Wake up 6–8am next 2 business days and work on most important challenge task',fail:'Pay everyone $20 (total $60)'},
-          'u_jack_c_04_26_01':  {complete:'Tres Cruces sunrise',r1:'100 push-ups · teammates do 50 push-ups',r2:'50 press-ups · teammates do 20 pull-ups',fail:'100 push-ups + 50 pull-ups'},
-          'u_ruben_c_04_26_01': {complete:'[Reward TBD]',r1:'Run on treadmill for 15 minutes',r2:'Run on treadmill for 30 minutes',fail:'Run on treadmill for 45 minutes'},
-        });
-        const checkins = {}; const today = new Date(); today.setHours(0,0,0,0);
-        for (let i=1; i<=2; i++) { const d=new Date(today); d.setDate(d.getDate()-i); const ds=d.toISOString().split('T')[0];
-          checkins[`g_t1_${ds}`]={id:`g_t1_${ds}`,goalId:'g_t1',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_t2_${ds}`]={id:`g_t2_${ds}`,goalId:'g_t2',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_t3_${ds}`]={id:`g_t3_${ds}`,goalId:'g_t3',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_t4_${ds}`]={id:`g_t4_${ds}`,goalId:'g_t4',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_t5_${ds}`]={id:`g_t5_${ds}`,goalId:'g_t5',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_t6_${ds}`]={id:`g_t6_${ds}`,goalId:'g_t6',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:i===1?25:15,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_t7_${ds}`]={id:`g_t7_${ds}`,goalId:'g_t7',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:i===1?45:60,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_t8_${ds}`]={id:`g_t8_${ds}`,goalId:'g_t8',userId:'u_admin',cohortId:'c_04_26_01',date:ds,value:2,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_ax1_${ds}`]={id:`g_ax1_${ds}`,goalId:'g_ax1',userId:'u_alex',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_ax2_${ds}`]={id:`g_ax2_${ds}`,goalId:'g_ax2',userId:'u_alex',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_ax3_${ds}`]={id:`g_ax3_${ds}`,goalId:'g_ax3',userId:'u_alex',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===2) checkins[`g_ax4_${ds}`]={id:`g_ax4_${ds}`,goalId:'g_ax4',userId:'u_alex',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_jk1_${ds}`]={id:`g_jk1_${ds}`,goalId:'g_jk1',userId:'u_jack',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_jk2_${ds}`]={id:`g_jk2_${ds}`,goalId:'g_jk2',userId:'u_jack',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_jk3_${ds}`]={id:`g_jk3_${ds}`,goalId:'g_jk3',userId:'u_jack',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_jk4_${ds}`]={id:`g_jk4_${ds}`,goalId:'g_jk4',userId:'u_jack',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_jk5_${ds}`]={id:`g_jk5_${ds}`,goalId:'g_jk5',userId:'u_jack',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_rb1_${ds}`]={id:`g_rb1_${ds}`,goalId:'g_rb1',userId:'u_ruben',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_rb2_${ds}`]={id:`g_rb2_${ds}`,goalId:'g_rb2',userId:'u_ruben',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_rb3_${ds}`]={id:`g_rb3_${ds}`,goalId:'g_rb3',userId:'u_ruben',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_rb4_${ds}`]={id:`g_rb4_${ds}`,goalId:'g_rb4',userId:'u_ruben',cohortId:'c_04_26_01',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_s1_${ds}`]={id:`g_s1_${ds}`,goalId:'g_s1',userId:'u_sara',cohortId:'c_04_26_02',date:ds,value:true,updatedAt:d.toISOString(),overriddenBy:null};
-          if(i===1) checkins[`g_j1_${ds}`]={id:`g_j1_${ds}`,goalId:'g_j1',userId:'u_james',cohortId:'c_04_26_02',date:ds,value:true,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_j3_${ds}`]={id:`g_j3_${ds}`,goalId:'g_j3',userId:'u_james',cohortId:'c_04_26_02',date:ds,value:1,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_p1_${ds}`]={id:`g_p1_${ds}`,goalId:'g_p1',userId:'u_priya',cohortId:'c_04_26_02',date:ds,value:true,updatedAt:d.toISOString(),overriddenBy:null};
-          checkins[`g_p2_${ds}`]={id:`g_p2_${ds}`,goalId:'g_p2',userId:'u_priya',cohortId:'c_04_26_02',date:ds,value:30,updatedAt:d.toISOString(),overriddenBy:null};
-        }
-        this.set('checkins', checkins); this.set('seeded_v8', true);
-      },
+      // no-op — data comes from Supabase now
+      seedIfEmpty() {},
 
       getCohortDay(startDate, targetDate) {
         const s = new Date(startDate); s.setHours(0,0,0,0);
@@ -315,84 +253,68 @@
       getCohortDates(startDate) {
         return Array.from({length:21},(_,i)=>{ const d=new Date(startDate); d.setDate(d.getDate()+i); return d.toISOString().split('T')[0]; });
       },
-      getCurrentCohort(userId) {
-        const all = Object.values(this.getCohorts()).filter(c=>c.memberIds&&c.memberIds.includes(userId));
-        if (!all.length) return null;
-        const active = all.find(c=>{ const d=this.getCohortDay(c.startDate); return d>=1&&d<=21; });
-        return active || all.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate))[0];
+      // Cache-backed reads
+      getGoalsForUser(userId) { return _c.goals[userId] || []; },
+      getCheckin(goalId, date) {
+        const v = _c.checkins[`${goalId}_${date}`];
+        return v !== undefined ? { value: v } : null;
       },
-      getGoalsForUser(userId, cohortId) {
-        return Object.values(this.getGoals())
-          .filter(g=>g.userId===userId&&g.cohortId===cohortId)
-          .sort((a,b)=>a.order-b.order);
-      },
-      getCheckin(goalId, date) { return this.getCheckins()[`${goalId}_${date}`] || null; },
       getWeeklyTotal(goalId, weekDates) {
-        return weekDates.reduce((s,d)=>{ const c=this.getCheckin(goalId,d); return s+(c?Number(c.value)||0:0); },0);
+        return weekDates.reduce((s,d)=>{ const v=_c.checkins[`${goalId}_${d}`]; return s+(v!==undefined?Number(v)||0:0); },0);
       },
-      getRedemptionsForUser(userId, cohortId) {
-        return Object.values(this.getRedemptions())
-          .filter(r=>r.userId===userId&&r.cohortId===cohortId)
-          .sort((a,b)=>a.strikeNumber-b.strikeNumber);
-      },
-      getPendingRedemptions(userId, cohortId) {
-        return this.getRedemptionsForUser(userId,cohortId).filter(r=>r.status==='pending');
-      },
+      getRedemptionsForUser(userId) { return (_c.redemptions[userId]||[]).slice().sort((a,b)=>a.strikeNumber-b.strikeNumber); },
+      getPendingRedemptions(userId) { return this.getRedemptionsForUser(userId).filter(r=>r.status==='pending'); },
 
-      // Returns { status: 'on-track'|'off-track'|'no-data'|'pending', label }
       getGoalStatus(goal, cohort) {
         const today = new Date().toISOString().split('T')[0];
-        const cDay  = this.getCohortDay(cohort.startDate);
-
+        const cDay  = this.getCohortDay(cohort.start_date);
         if (goal.type === 'daily_boolean') {
           const c = this.getCheckin(goal.id, today);
           if (!c || !c.value) return { status: cDay > 1 ? 'pending' : 'no-data', label: '—' };
           return { status: 'on-track', label: '✓' };
         }
         if (goal.type === 'weekly_count') {
-          const wk      = this.getCohortWeekNum(cohort.startDate);
-          const wkDates = this.getWeekDates(cohort.startDate, wk);
-          const total   = this.getWeeklyTotal(goal.id, wkDates);
-          const target  = (goal.config && goal.config.weeklyTarget) || 1;
-          const elapsed = Math.min(7, this.getCohortDay(cohort.startDate, today) - (wk-1)*7);
-          const pace    = Math.round((elapsed/7)*target);
+          const wk = this.getCohortWeekNum(cohort.start_date);
+          const wkDates = this.getWeekDates(cohort.start_date, wk);
+          const total = this.getWeeklyTotal(goal.id, wkDates);
+          const target = (goal.config && goal.config.weeklyTarget) || 1;
+          const elapsed = Math.min(7, this.getCohortDay(cohort.start_date, today) - (wk-1)*7);
+          const pace = Math.round((elapsed/7)*target);
           return { status: total >= pace ? 'on-track' : 'off-track', label: `${total}/${target}` };
         }
         if (goal.type === 'daily_time' || goal.type === 'daily_time_max') {
-          const wk      = this.getCohortWeekNum(cohort.startDate);
-          const wkDates = this.getWeekDates(cohort.startDate, wk);
-          const total   = this.getWeeklyTotal(goal.id, wkDates);
-          const max     = (goal.config && goal.config.weeklyMaxMinutes) || 120;
+          const wk = this.getCohortWeekNum(cohort.start_date);
+          const wkDates = this.getWeekDates(cohort.start_date, wk);
+          const total = this.getWeeklyTotal(goal.id, wkDates);
+          const max = (goal.config && goal.config.weeklyMaxMinutes) || 120;
           return { status: total <= max ? 'on-track' : 'off-track', label: `${Math.round(total/60*10)/10}h` };
         }
         if (goal.type === 'daily_time_min') {
-          const wk      = this.getCohortWeekNum(cohort.startDate);
-          const wkDates = this.getWeekDates(cohort.startDate, wk);
-          const total   = this.getWeeklyTotal(goal.id, wkDates);
-          const target  = (goal.config && goal.config.weeklyTargetMinutes) || 60;
-          const elapsed = Math.min(7, this.getCohortDay(cohort.startDate, new Date().toISOString().split('T')[0]) - (wk-1)*7);
-          const pace    = Math.round((elapsed/7)*target);
+          const wk = this.getCohortWeekNum(cohort.start_date);
+          const wkDates = this.getWeekDates(cohort.start_date, wk);
+          const total = this.getWeeklyTotal(goal.id, wkDates);
+          const target = (goal.config && goal.config.weeklyTargetMinutes) || 60;
+          const elapsed = Math.min(7, this.getCohortDay(cohort.start_date, today) - (wk-1)*7);
+          const pace = Math.round((elapsed/7)*target);
           return { status: total >= pace ? 'on-track' : 'off-track', label: `${Math.round(total/60*10)/10}h` };
         }
         if (goal.type === 'milestone') {
-          // Check if done anytime during cohort
-          const dates = this.getCohortDates(cohort.startDate);
+          const dates = this.getCohortDates(cohort.start_date);
           const done  = dates.some(d => { const c=this.getCheckin(goal.id,d); return c&&c.value; });
           return done ? { status:'on-track', label:'✓' } : { status:'no-data', label:'—' };
         }
         return { status:'no-data', label:'—' };
       },
 
-      // Count days with at least one boolean goal unchecked (missed days)
-      getMissedDays(userId, cohortId, cohort) {
-        const today  = new Date(); today.setHours(0,0,0,0);
-        const dates  = this.getCohortDates(cohort.startDate);
-        const boolGs = this.getGoalsForUser(userId, cohortId).filter(g=>g.type==='daily_boolean');
+      getMissedDays(userId, cohort) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const dates = this.getCohortDates(cohort.start_date);
+        const boolGs = this.getGoalsForUser(userId).filter(g=>g.type==='daily_boolean');
         if (!boolGs.length) return 0;
         let missed = 0;
         for (const d of dates) {
           const dd = new Date(d); dd.setHours(0,0,0,0);
-          if (dd >= today) break; // don't count today or future
+          if (dd >= today) break;
           const allDone = boolGs.every(g => { const c=this.getCheckin(g.id,d); return c&&c.value; });
           if (!allDone) missed++;
         }
@@ -400,27 +322,81 @@
       },
     };
 
-    // ── Init ─────────────────────────────────────────────────────────────
-    db.seedIfEmpty();
-    const session = db.getSession();
-    if (!session?.userId) { window.location.href = 'index.html'; }
+    // ── Load data ─────────────────────────────────────────────────────────
+    async function loadData() {
+      const { data: { user: authUser } } = await sb.auth.getUser();
+      if (!authUser) { window.location.href = 'index.html'; return false; }
+      _c.userId = authUser.id;
 
-    const user   = db.getUser(session.userId);
-    const cohort = db.getCurrentCohort(session.userId);
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+      if (!profile) { window.location.href = 'index.html'; return false; }
+      _c.profile = profile;
 
-    document.getElementById('userNavLabel').textContent = user?.name?.split(' ')[0] || 'Me';
-    if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
+      // Get cohort for this user
+      const { data: memberships } = await sb.from('cohort_members')
+        .select('cohort_id, cohorts(*)').eq('user_id', authUser.id);
+      if (!memberships?.length) return true;
+      const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
+      const active = cohorts.find(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+      _c.cohort = active || cohorts.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+      if (!_c.cohort) return true;
+
+      // Get all members of cohort
+      const { data: memberRows } = await sb.from('cohort_members')
+        .select('user_id, profiles(*)').eq('cohort_id', _c.cohort.id);
+      _c.members = (memberRows || []).map(r => r.profiles).filter(Boolean);
+
+      // Goals for all members
+      const memberIds = _c.members.map(m => m.id);
+      const { data: goalsRaw } = await sb.from('goals')
+        .select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('sort_order');
+      _c.goals = {};
+      for (const g of (goalsRaw || [])) {
+        if (!_c.goals[g.user_id]) _c.goals[g.user_id] = [];
+        _c.goals[g.user_id].push({ id: g.id, userId: g.user_id, cohortId: g.cohort_id, type: g.type, title: g.title, config: g.config || {}, locked: g.locked, order: g.sort_order });
+      }
+
+      // Checkins for all goals
+      const goalIds = (goalsRaw || []).map(g => g.id);
+      if (goalIds.length) {
+        const { data: checkinsRaw } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', goalIds);
+        for (const c of (checkinsRaw || [])) _c.checkins[`${c.goal_id}_${c.date}`] = c.value;
+      }
+
+      // Redemptions for all members
+      const { data: redemptionsRaw } = await sb.from('redemptions')
+        .select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('strike_number');
+      _c.redemptions = {};
+      for (const r of (redemptionsRaw || [])) {
+        if (!_c.redemptions[r.user_id]) _c.redemptions[r.user_id] = [];
+        _c.redemptions[r.user_id].push({ id: r.id, userId: r.user_id, cohortId: r.cohort_id, weekNumber: r.week_number, strikeNumber: r.strike_number, status: r.status, reason: r.reason });
+      }
+      return true;
+    }
 
     // ── Render ───────────────────────────────────────────────────────────
-    let expanded = null; // must be declared before render() is called
+    let expanded = null;
 
-    if (!cohort) {
-      document.getElementById('content').innerHTML = '<div class="empty-state">No active cohort found.</div>';
-    } else {
-      const day = db.getCohortDay(cohort.startDate);
+    // ── Init ─────────────────────────────────────────────────────────────
+    (async () => {
+      const ok = await loadData();
+      if (!ok) return;
+
+      const cohort = _c.cohort;
+      const session = { userId: _c.userId, role: _c.profile?.role };
+
+      document.getElementById('userNavLabel').textContent = _c.profile?.name?.split(' ')[0] || 'Me';
+      if (_c.profile?.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
+
+      if (!cohort) {
+        document.getElementById('content').innerHTML = '<div class="empty-state">No active cohort found.</div>';
+        return;
+      }
+
+      const day = db.getCohortDay(cohort.start_date);
       document.getElementById('dayBadge').textContent = day>=1&&day<=21 ? `Day ${day}` : day<1 ? 'Upcoming' : 'Complete';
       render();
-    }
+    })();
 
     function render() {
       renderSummary();
@@ -428,11 +404,10 @@
     }
 
     function renderSummary() {
-      const members    = cohort.memberIds.map(id=>db.getUser(id)).filter(Boolean);
-      const atRisk     = members.filter(m => isAtRisk(m.id));
-      const onTrack    = members.filter(m => !isAtRisk(m.id));
-      const pending    = members.filter(m => db.getPendingRedemptions(m.id, cohort.id).length > 0);
-      const day        = db.getCohortDay(cohort.startDate);
+      const members = _c.members;
+      const atRisk  = members.filter(m => isAtRisk(m.id));
+      const onTrack = members.filter(m => !isAtRisk(m.id));
+      const pending = members.filter(m => db.getPendingRedemptions(m.id).length > 0);
 
       document.getElementById('summaryBar').innerHTML = `
         <div class="stat-item">
@@ -454,13 +429,13 @@
     }
 
     function isAtRisk(userId) {
-      const missed  = db.getMissedDays(userId, cohort.id, cohort);
-      const pending = db.getPendingRedemptions(userId, cohort.id).length;
+      const missed  = db.getMissedDays(userId, _c.cohort);
+      const pending = db.getPendingRedemptions(userId).length;
       return missed >= 2 || pending > 0;
     }
 
     function renderMembers() {
-      const members = cohort.memberIds.map(id=>db.getUser(id)).filter(Boolean);
+      const members = _c.members.slice();
       if (!members.length) {
         document.getElementById('content').innerHTML = '<div class="empty-state">No members yet.</div>';
         return;
@@ -480,27 +455,27 @@
     }
 
     function renderMemberCard(member) {
-      const goals      = db.getGoalsForUser(member.id, cohort.id);
-      const strikes    = db.getRedemptionsForUser(member.id, cohort.id);
-      const pending    = db.getPendingRedemptions(member.id, cohort.id);
-      const missed     = db.getMissedDays(member.id, cohort.id, cohort);
-      const atRisk     = isAtRisk(member.id);
-      const isSelf     = member.id === session.userId;
+      const goals       = db.getGoalsForUser(member.id);
+      const strikes     = db.getRedemptionsForUser(member.id);
+      const pending     = db.getPendingRedemptions(member.id);
+      const missed      = db.getMissedDays(member.id, _c.cohort);
+      const atRisk      = isAtRisk(member.id);
+      const isSelf      = member.id === _c.userId;
       const strikeCount = strikes.length;
-      const isOpen     = expanded === member.id;
+      const isOpen      = expanded === member.id;
 
       // Strike pips
       const pips = [1,2,3].map(n=>`<div class="strike-pip${n<=strikeCount?' active':''}"></div>`).join('');
 
       // Goal status pills
       const pills = goals.map(g => {
-        const s = db.getGoalStatus(g, cohort);
+        const s = db.getGoalStatus(g, _c.cohort);
         return `<div class="goal-pill ${s.status}"><span class="pill-label">${g.title}</span></div>`;
       }).join('');
 
       // Member detail (goals + redemptions)
       const detailGoals = goals.map(g => {
-        const s = db.getGoalStatus(g, cohort);
+        const s = db.getGoalStatus(g, _c.cohort);
         const statusClass = s.status==='on-track' ? 'on' : s.status==='off-track' ? 'off' : 'na';
         const statusText  = s.status==='on-track' ? '✓ On track' : s.status==='off-track' ? '✗ Off track' : s.status==='pending' ? '· Not yet' : '—';
         return `<div class="detail-goal-row">
@@ -548,7 +523,7 @@
       renderMembers();
     }
 
-    function logout() { db.clearSession(); window.location.href='index.html'; }
+    async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
   </script>
 </body>
 </html>

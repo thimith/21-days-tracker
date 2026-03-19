@@ -416,60 +416,67 @@
   <!-- Bottom nav -->
   <nav class="bottom-nav">
     <a class="nav-item active" href="app.html">
-      
+
       <span class="nav-label">Today</span>
     </a>
     <a class="nav-item" href="cohort.html">
-      
+
       <span class="nav-label">Cohort</span>
     </a>
     <a class="nav-item" id="adminNav" href="admin.html" style="display:none;">
-      
+
       <span class="nav-label">Admin</span>
     </a>
     <a class="nav-item" href="me.html">
-      
+
       <span class="nav-label" id="userNavLabel">Me</span>
     </a>
   </nav>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
     const ADMIN_EMAIL = 'thierry.muller@gmail.com';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // ══════════════════════════════════════════════════════════════════════
-    // DATA LAYER (canonical — duplicated across pages for self-containment)
+    // CACHE
+    // ══════════════════════════════════════════════════════════════════════
+    const _c = {
+      userId: null, profile: null,
+      cohort: null,
+      goals: [],
+      checkins: {},
+      stakes: null, redemptions: []
+    };
+
+    // ══════════════════════════════════════════════════════════════════════
+    // STATE
+    // ══════════════════════════════════════════════════════════════════════
+    let session, user, cohort;
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let addGoalFrame  = 'daily';
+    let addGoalMetric = 'boolean';
+    let addGoalTitle  = '';
+    let addFormOpen   = false;
+
+    // ══════════════════════════════════════════════════════════════════════
+    // DATA LAYER
     // ══════════════════════════════════════════════════════════════════════
     const db = {
-      get(k)   { try { return JSON.parse(localStorage.getItem('ft_'+k)); } catch(e){ return null; } },
-      set(k,v) { localStorage.setItem('ft_'+k, JSON.stringify(v)); },
-      uid()    { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); },
+      uid() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); },
 
-      getSession()  { return this.get('session'); },
-      setSession(s) { this.set('session', s); },
-      clearSession(){ localStorage.removeItem('ft_session'); },
-
-      getUsers()     { return this.get('users')     || {}; },
-      getCohorts()   { return this.get('cohorts')   || {}; },
-      getGoals()     { return this.get('goals')     || {}; },
-      getCheckins()  { return this.get('checkins')  || {}; },
-      getRedemptions(){ return this.get('redemptions') || {}; },
-
-      getUser(id)   { return this.getUsers()[id]   || null; },
-      getCohort(id) { return this.getCohorts()[id] || null; },
-
-      // Days since cohort start (1-indexed). targetDate defaults to today.
+      // ── Pure date helpers (unchanged) ──
       getCohortDay(startDate, targetDate) {
         const s = new Date(startDate); s.setHours(0,0,0,0);
         const t = targetDate ? new Date(targetDate) : new Date(); t.setHours(0,0,0,0);
         return Math.floor((t-s)/86400000)+1;
       },
-
-      // Week 1 = days 1-7, Week 2 = 8-14, Week 3 = 15-21
       getCohortWeekNum(startDate, date) {
         const day = this.getCohortDay(startDate, date);
         return Math.min(3, Math.max(1, Math.ceil(day/7)));
       },
-
       getWeekDates(startDate, weekNum) {
         const s = new Date(startDate);
         return Array.from({length:7}, (_,i) => {
@@ -477,7 +484,6 @@
           return d.toISOString().split('T')[0];
         });
       },
-
       getCohortDates(startDate) {
         return Array.from({length:21}, (_,i) => {
           const d = new Date(startDate); d.setDate(d.getDate()+i);
@@ -485,83 +491,67 @@
         });
       },
 
-      getCurrentCohort(userId) {
-        const all = Object.values(this.getCohorts())
-          .filter(c => c.memberIds && c.memberIds.includes(userId));
-        if (!all.length) return null;
-        const active = all.find(c => { const d=this.getCohortDay(c.startDate); return d>=1&&d<=21; });
-        return active || all.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate))[0];
+      // ── Cache reads ──
+      getGoalsForUser() { return _c.goals; },
+      getCheckin(goalId, date) {
+        const v = _c.checkins[`${goalId}_${date}`];
+        return v !== undefined ? { value: v } : null;
       },
-
-      getGoalsForUser(userId, cohortId) {
-        return Object.values(this.getGoals())
-          .filter(g => g.userId===userId && g.cohortId===cohortId)
-          .sort((a,b) => a.order-b.order);
-      },
-
-      areGoalsLocked(cohortId) {
-        const c = this.getCohort(cohortId);
-        return c ? this.getCohortDay(c.startDate) >= 2 : false;
-      },
-
-      getCheckin(goalId, date)   { return this.getCheckins()[`${goalId}_${date}`] || null; },
-      setCheckin(goalId, date, value, overriddenBy=null) {
-        const checkins = this.getCheckins();
-        const goal = this.getGoals()[goalId];
-        if (!goal) return;
-        checkins[`${goalId}_${date}`] = {
-          id:`${goalId}_${date}`, goalId,
-          userId:goal.userId, cohortId:goal.cohortId,
-          date, value,
-          updatedAt:new Date().toISOString(), overriddenBy
-        };
-        this.set('checkins', checkins);
-      },
-
       getWeeklyTotal(goalId, weekDates) {
         return weekDates.reduce((s,d) => {
-          const c=this.getCheckin(goalId,d); return s+(c?Number(c.value)||0:0);
+          const v = _c.checkins[`${goalId}_${d}`];
+          return s + (v !== undefined ? Number(v)||0 : 0);
         }, 0);
       },
-
-      // A day is "done" if all daily_boolean goals are checked
-      isDayDone(userId, cohortId, date) {
-        const gs = this.getGoalsForUser(userId, cohortId).filter(g=>g.type==='daily_boolean');
+      areGoalsLocked() {
+        return _c.cohort ? this.getCohortDay(_c.cohort.startDate) >= 2 : false;
+      },
+      getPendingRedemptions() {
+        return _c.redemptions.filter(r => r.status === 'pending');
+      },
+      getRedemptionsForUser() { return _c.redemptions; },
+      getStakes() { return _c.stakes; },
+      isDayDone(uid, cid, date) {
+        const gs = _c.goals.filter(g => g.type === 'daily_boolean');
         if (!gs.length) return false;
-        return gs.every(g => { const c=this.getCheckin(g.id,date); return c&&c.value===true; });
+        return gs.every(g => !!_c.checkins[`${g.id}_${date}`]);
       },
-      isDayPartial(userId, cohortId, date) {
-        const gs = this.getGoalsForUser(userId, cohortId).filter(g=>g.type==='daily_boolean');
-        return gs.some(g => { const c=this.getCheckin(g.id,date); return c&&c.value===true; });
-      },
-
-      getRedemptionsForUser(userId, cohortId) {
-        return Object.values(this.getRedemptions())
-          .filter(r=>r.userId===userId&&r.cohortId===cohortId)
-          .sort((a,b)=>a.strikeNumber-b.strikeNumber);
-      },
-      getPendingRedemptions(userId, cohortId) {
-        return this.getRedemptionsForUser(userId,cohortId).filter(r=>r.status==='pending');
-      },
-      markRedemptionDone(id) {
-        const r=this.getRedemptions();
-        if(r[id]){ r[id].status='done'; r[id].completedAt=new Date().toISOString(); this.set('redemptions',r); }
+      isDayPartial(uid, cid, date) {
+        const gs = _c.goals.filter(g => g.type === 'daily_boolean');
+        return gs.some(g => !!_c.checkins[`${g.id}_${date}`]);
       },
 
-      getStakes(userId, cohortId) { return (this.get('stakes')||{})[`${userId}_${cohortId}`] || null; },
-
+      // ── Cache writes + async Supabase saves ──
+      setCheckin(goalId, date, value) {
+        const v = typeof value === 'boolean' ? (value ? 1 : 0) : (parseInt(value)||0);
+        _c.checkins[`${goalId}_${date}`] = v;
+        sb.from('checkins').upsert({
+          goal_id: goalId, date, value: v, user_id: _c.userId
+        }, { onConflict: 'goal_id,date' }).then(() => {});
+      },
       upsertGoal(g) {
-        const gs=this.getGoals(); gs[g.id]=g; this.set('goals',gs);
+        const idx = _c.goals.findIndex(x => x.id === g.id);
+        if (idx >= 0) _c.goals[idx] = g; else _c.goals.push(g);
+        sb.from('goals').upsert({
+          id: g.id, user_id: g.userId, cohort_id: g.cohortId,
+          type: g.type, title: g.title, config: g.config,
+          locked: g.locked, sort_order: g.order
+        }).then(() => {});
       },
       deleteGoal(id) {
-        const gs=this.getGoals(); delete gs[id]; this.set('goals',gs);
+        _c.goals = _c.goals.filter(g => g.id !== id);
+        sb.from('goals').delete().eq('id', id).then(() => {});
+      },
+      markRedemptionDone(id) {
+        const r = _c.redemptions.find(x => x.id === id);
+        if (r) r.status = 'done';
+        sb.from('redemptions').update({ status: 'done' }).eq('id', id).then(() => {});
       },
 
-      // Evaluate and create redemption records for missed targets
       evalRedemptions(userId, cohortId) {
-        const cohort = this.getCohort(cohortId);
-        if (!cohort) return;
-        const currentDay = this.getCohortDay(cohort.startDate);
+        const cohortObj = _c.cohort;
+        if (!cohortObj) return;
+        const currentDay = this.getCohortDay(cohortObj.startDate);
         if (currentDay < 2) return;
 
         const today = new Date(); today.setHours(0,0,0,0);
@@ -569,40 +559,38 @@
         const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-        const goals   = this.getGoalsForUser(userId, cohortId);
-        const existing = this.getRedemptionsForUser(userId, cohortId);
+        const goals = _c.goals;
+        const existing = _c.redemptions;
         if (existing.length >= 3) return;
 
-        // Collect failures grouped by week number (deduplicate: 1 strike per week)
         const failuresByWeek = {};
-        const addF = (wk, msg) => { if(!failuresByWeek[wk]) failuresByWeek[wk]=[]; failuresByWeek[wk].push(msg); };
+        const addF = (wk, msg) => { if (!failuresByWeek[wk]) failuresByWeek[wk]=[]; failuresByWeek[wk].push(msg); };
 
         for (const g of goals) {
           if (g.type === 'daily_boolean') {
             const yDay = currentDay - 1;
             if (yDay >= 1 && yDay <= 21) {
-              const c = this.getCheckin(g.id, yesterdayStr);
-              if (!c || !c.value) addF(this.getCohortWeekNum(cohort.startDate, yesterdayStr), `Missed: ${g.title}`);
+              const v = _c.checkins[`${g.id}_${yesterdayStr}`];
+              if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `Missed: ${g.title}`);
             }
           } else if (g.type === 'weekly_count') {
-            // Check at start of each new week
             if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
               const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
-              const wkDates = this.getWeekDates(cohort.startDate, prevWk);
+              const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total < (g.config.weeklyTarget||1))
                 addF(prevWk, `${g.title}: ${total}/${g.config.weeklyTarget} sessions`);
             }
           } else if (g.type === 'daily_time_max' || g.type === 'daily_time') {
-            const wk = this.getCohortWeekNum(cohort.startDate);
-            const wkDates = this.getWeekDates(cohort.startDate, wk);
+            const wk = this.getCohortWeekNum(cohortObj.startDate);
+            const wkDates = this.getWeekDates(cohortObj.startDate, wk);
             const total = this.getWeeklyTotal(g.id, wkDates);
             if (total > (g.config.weeklyMaxMinutes||120))
               addF(wk, `${g.title}: over weekly limit`);
           } else if (g.type === 'daily_time_min') {
             if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
               const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
-              const wkDates = this.getWeekDates(cohort.startDate, prevWk);
+              const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total < (g.config.weeklyTargetMinutes||60))
                 addF(prevWk, `${g.title}: ${total}min/${g.config.weeklyTargetMinutes}min target`);
@@ -610,21 +598,16 @@
           }
         }
 
-        const allR = this.getRedemptions();
-
-        // Real-time: remove/update pending redemption for current week if violations changed
-        const currentWk = this.getCohortWeekNum(cohort.startDate);
+        const currentWk = this.getCohortWeekNum(cohortObj.startDate);
         const pendingCurrent = existing.find(r => r.status === 'pending' && r.weekNumber === currentWk);
         if (pendingCurrent) {
           if (!failuresByWeek[currentWk]) {
-            // Violation cleared — remove the redemption
-            delete allR[pendingCurrent.id];
-            this.set('redemptions', allR);
+            _c.redemptions = _c.redemptions.filter(r => r.id !== pendingCurrent.id);
+            sb.from('redemptions').delete().eq('id', pendingCurrent.id).then(() => {});
             return;
           } else {
-            // Still failing — update reason in case goals changed
-            allR[pendingCurrent.id].reason = [...new Set(failuresByWeek[currentWk])].join(' · ');
-            this.set('redemptions', allR);
+            pendingCurrent.reason = [...new Set(failuresByWeek[currentWk])].join(' · ');
+            sb.from('redemptions').update({ reason: pendingCurrent.reason }).eq('id', pendingCurrent.id).then(() => {});
             return;
           }
         }
@@ -633,64 +616,141 @@
         for (const [wkStr, reasons] of Object.entries(failuresByWeek)) {
           if (count >= 3) break;
           const wk = parseInt(wkStr);
-          if (existing.some(r=>r.weekNumber===wk)) continue;
+          if (existing.some(r => r.weekNumber === wk)) continue;
           count++;
           const id = `r_${this.uid()}`;
-          allR[id] = {
+          const rec = {
             id, userId, cohortId,
             triggeredDate: todayStr,
             reason: [...new Set(reasons)].join(' · '),
             strikeNumber: count,
-            status: 'pending', completedAt: null,
-            weekNumber: wk
+            weekNumber: wk,
+            status: 'pending'
           };
+          _c.redemptions.push(rec);
+          sb.from('redemptions').insert({
+            id, user_id: userId, cohort_id: cohortId,
+            week_number: wk, strike_number: count,
+            reason: rec.reason, status: 'pending'
+          }).then(() => {});
         }
-        this.set('redemptions', allR);
       },
     };
 
     // ══════════════════════════════════════════════════════════════════════
-    // STATE
+    // LOAD DATA
     // ══════════════════════════════════════════════════════════════════════
-    let session, user, cohort;
-    let selectedDate = new Date().toISOString().split('T')[0];
-    let addGoalFrame  = 'daily';    // daily | weekly | milestone
-    let addGoalMetric = 'boolean';  // boolean | count | min_time | max_time
-    let addGoalTitle  = '';
-    let addFormOpen   = false;
+    async function loadData() {
+      // 1. Auth
+      const { data: { user: authUser } } = await sb.auth.getUser();
+      if (!authUser) { window.location.href = 'index.html'; return; }
+      _c.userId = authUser.id;
+
+      // 2. Profile
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', _c.userId).single();
+      _c.profile = profile;
+
+      // 3. Cohort
+      const { data: memberships } = await sb.from('cohort_members')
+        .select('cohort_id, cohorts(*)')
+        .eq('user_id', _c.userId);
+
+      if (memberships?.length) {
+        const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
+        const active = cohorts.find(c => {
+          const d = db.getCohortDay(c.start_date);
+          return d >= 1 && d <= 21;
+        });
+        const picked = active || cohorts.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0];
+        if (picked) {
+          _c.cohort = { ...picked, startDate: picked.start_date };
+        }
+      }
+
+      if (!_c.cohort) return;
+
+      // 4. Goals
+      const { data: goalsRaw } = await sb.from('goals')
+        .select('*')
+        .eq('user_id', _c.userId)
+        .eq('cohort_id', _c.cohort.id)
+        .order('sort_order');
+
+      _c.goals = (goalsRaw || []).map(g => ({
+        id: g.id, userId: g.user_id, cohortId: g.cohort_id,
+        type: g.type, title: g.title, config: g.config || {},
+        locked: g.locked, order: g.sort_order
+      }));
+
+      // 5. Checkins
+      if (_c.goals.length) {
+        const goalIds = _c.goals.map(g => g.id);
+        const { data: checkinsRaw } = await sb.from('checkins')
+          .select('goal_id, date, value')
+          .in('goal_id', goalIds);
+
+        _c.checkins = {};
+        for (const c of (checkinsRaw || [])) {
+          _c.checkins[`${c.goal_id}_${c.date}`] = c.value;
+        }
+      }
+
+      // 6. Stakes
+      const { data: stakesRaw } = await sb.from('stakes')
+        .select('*')
+        .eq('user_id', _c.userId)
+        .eq('cohort_id', _c.cohort.id)
+        .single();
+      _c.stakes = stakesRaw || null;
+
+      // 7. Redemptions
+      const { data: redemptionsRaw } = await sb.from('redemptions')
+        .select('*')
+        .eq('user_id', _c.userId)
+        .eq('cohort_id', _c.cohort.id)
+        .order('strike_number');
+
+      _c.redemptions = (redemptionsRaw || []).map(r => ({
+        id: r.id, userId: r.user_id, cohortId: r.cohort_id,
+        weekNumber: r.week_number, strikeNumber: r.strike_number,
+        reason: r.reason, status: r.status
+      }));
+    }
 
     // ══════════════════════════════════════════════════════════════════════
     // INIT
     // ══════════════════════════════════════════════════════════════════════
-    session = db.getSession();
-    if (!session?.userId) { window.location.href = 'index.html'; }
+    (async () => {
+      await loadData();
 
-    user   = db.getUser(session.userId);
-    cohort = db.getCurrentCohort(session.userId);
+      session = { userId: _c.userId, role: _c.profile?.role };
+      user    = _c.profile;
+      cohort  = _c.cohort;
 
-    if (cohort) db.evalRedemptions(session.userId, cohort.id);
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
 
-    // Header setup
-    const currentDay = cohort ? db.getCohortDay(cohort.startDate) : 0;
-    const badge = document.getElementById('dayBadge');
-    if (!cohort) {
-      badge.textContent = 'No cohort';
-    } else if (currentDay < 1) {
-      badge.textContent = 'Upcoming'; badge.classList.add('upcoming');
-    } else if (currentDay > 21) {
-      badge.textContent = 'Complete'; badge.classList.add('complete');
-    } else {
-      badge.textContent = `Day ${currentDay}`;
-    }
-    document.getElementById('userAvatar').textContent = (user?.name||'?')[0].toUpperCase();
-    document.getElementById('userNavLabel').textContent = user?.name?.split(' ')[0] || 'Me';
-    if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
+      // Header setup
+      const currentDay = cohort ? db.getCohortDay(cohort.startDate) : 0;
+      const badge = document.getElementById('dayBadge');
+      if (!cohort) {
+        badge.textContent = 'No cohort';
+      } else if (currentDay < 1) {
+        badge.textContent = 'Upcoming'; badge.classList.add('upcoming');
+      } else if (currentDay > 21) {
+        badge.textContent = 'Complete'; badge.classList.add('complete');
+      } else {
+        badge.textContent = `Day ${currentDay}`;
+      }
+      document.getElementById('userAvatar').textContent = (user?.name||'?')[0].toUpperCase();
+      document.getElementById('userNavLabel').textContent = user?.name?.split(' ')[0] || 'Me';
+      if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
 
-    if (!cohort) {
-      document.getElementById('content').innerHTML = '<div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div>';
-    } else {
-      render();
-    }
+      if (!cohort) {
+        document.getElementById('content').innerHTML = '<div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div>';
+      } else {
+        render();
+      }
+    })();
 
     // ══════════════════════════════════════════════════════════════════════
     // RENDER
@@ -735,17 +795,17 @@
     }
 
     function renderContent() {
-      const goals   = db.getGoalsForUser(session.userId, cohort.id);
-      const locked  = db.areGoalsLocked(cohort.id);
-      const pending = db.getPendingRedemptions(session.userId, cohort.id);
-      const strikes = db.getRedemptionsForUser(session.userId, cohort.id).length;
+      const goals   = db.getGoalsForUser();
+      const locked  = db.areGoalsLocked();
+      const pending = db.getPendingRedemptions();
+      const strikes = db.getRedemptionsForUser().length;
       const html    = [];
 
       // ── Redemption banner ──
       if (pending.length) {
         const r = pending[0];
         const pips = [1,2,3].map(n=>`<div class="strike-pip${n<=strikes?' active':''}"></div>`).join('');
-        const stakes = db.getStakes(session.userId, cohort.id);
+        const stakes = db.getStakes();
         const taskKey = r.strikeNumber === 1 ? 'r1' : r.strikeNumber === 2 ? 'r2' : 'fail';
         const taskText = stakes?.[taskKey] || '';
         html.push(`
@@ -991,7 +1051,7 @@
             </div>
           </div>`;
       }
-      // ── 21-day count goal ─────────────────────────────────────────────────
+
       if (g.type === 'total_count') {
         const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
         const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
@@ -1019,7 +1079,6 @@
           </div>`;
       }
 
-      // ── 21-day min time goal ──────────────────────────────────────────────
       if (g.type === 'total_time_min') {
         const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
         const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
@@ -1048,7 +1107,6 @@
           </div>`;
       }
 
-      // ── 21-day max time goal ──────────────────────────────────────────────
       if (g.type === 'total_time_max') {
         const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
         const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
@@ -1082,7 +1140,7 @@
 
     function checkFailed() {
       if (!cohort) return;
-      const r = db.getRedemptionsForUser(session.userId, cohort.id);
+      const r = db.getRedemptionsForUser();
       if (r.length >= 3) {
         document.body.insertAdjacentHTML('beforeend',`
           <div class="failed-overlay">
@@ -1151,7 +1209,7 @@
     function saveGoal() {
       const title = addGoalTitle.trim();
       if (!title) return;
-      const goals = db.getGoalsForUser(session.userId, cohort.id);
+      const goals = db.getGoalsForUser();
       if (goals.length >= 10) { alert('Max 10 goals per cohort.'); return; }
       const config = {};
       let type;
@@ -1178,7 +1236,7 @@
       renderContent();
     }
 
-    function logout() { db.clearSession(); window.location.href='index.html'; }
+    async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
   </script>
 </body>
 </html>

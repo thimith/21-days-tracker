@@ -35,8 +35,6 @@
       padding-bottom: calc(72px + env(safe-area-inset-bottom));
       -webkit-font-smoothing: antialiased;
     }
-
-    /* ── Header ── */
     .header {
       background: var(--card); border-bottom: 1px solid var(--border);
       padding: 0 20px; height: 56px;
@@ -45,67 +43,23 @@
     }
     .header-logo { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 900; color: var(--text); letter-spacing: -0.02em; text-decoration: none; }
     .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
-    .admin-badge {
-      font-size: 0.68rem; font-weight: 800; color: var(--orange);
-      background: var(--orange-lt); padding: 3px 9px; border-radius: 100px;
-      text-transform: uppercase; letter-spacing: 0.07em;
-    }
-
-    /* ── Tabs ── */
-    .tab-bar {
-      background: var(--card); border-bottom: 1px solid var(--border);
-      display: flex; overflow-x: auto; scrollbar-width: none;
-      position: sticky; top: 56px; z-index: 99;
-    }
+    .admin-badge { font-size: 0.68rem; font-weight: 800; color: var(--orange); background: var(--orange-lt); padding: 3px 9px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.07em; }
+    .tab-bar { background: var(--card); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; scrollbar-width: none; position: sticky; top: 56px; z-index: 99; }
     .tab-bar::-webkit-scrollbar { display: none; }
-    .tab-btn {
-      flex-shrink: 0; padding: 12px 20px;
-      font-family: inherit; font-size: 0.82rem; font-weight: 700;
-      color: var(--muted); background: none; border: none;
-      border-bottom: 2.5px solid transparent; cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-      white-space: nowrap;
-    }
+    .tab-btn { flex-shrink: 0; padding: 12px 20px; font-family: inherit; font-size: 0.82rem; font-weight: 700; color: var(--muted); background: none; border: none; border-bottom: 2.5px solid transparent; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
     .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
-
-    /* ── Content ── */
     .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
     .tab-panel { display: none; }
     .tab-panel.active { display: flex; flex-direction: column; gap: 12px; }
-
-    /* ── Cards ── */
-    .card {
-      background: var(--card); border-radius: 16px;
-      padding: 18px; box-shadow: var(--shadow);
-    }
-    .card-title {
-      font-size: 0.85rem; font-weight: 800; color: var(--text);
-      letter-spacing: -0.01em; margin-bottom: 14px;
-    }
-    .card-title small {
-      font-size: 0.72rem; font-weight: 500; color: var(--muted);
-      margin-left: 6px; letter-spacing: 0;
-    }
-
-    /* ── Form elements ── */
+    .card { background: var(--card); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+    .card-title { font-size: 0.85rem; font-weight: 800; color: var(--text); letter-spacing: -0.01em; margin-bottom: 14px; }
+    .card-title small { font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: 0; }
     .form-field { margin-bottom: 12px; }
-    .form-label {
-      display: block; font-size: 0.7rem; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px;
-    }
-    .form-input, .form-select {
-      width: 100%; padding: 11px 13px;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.92rem; font-family: inherit; color: var(--text);
-      background: var(--bg); outline: none; transition: border-color 0.2s;
-      -webkit-appearance: none;
-    }
+    .form-label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+    .form-input, .form-select { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.92rem; font-family: inherit; color: var(--text); background: var(--bg); outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
     .form-input:focus, .form-select:focus { border-color: var(--orange); }
     .form-input:disabled { opacity: 0.5; }
-    .btn {
-      padding: 11px 20px; font-family: inherit; font-size: 0.88rem; font-weight: 700;
-      border-radius: 10px; cursor: pointer; border: none; transition: all 0.15s;
-    }
+    .btn { padding: 11px 20px; font-family: inherit; font-size: 0.88rem; font-weight: 700; border-radius: 10px; cursor: pointer; border: none; transition: all 0.15s; }
     .btn.primary { background: var(--orange); color: #fff; }
     .btn.primary:hover  { background: var(--orange-dk); }
     .btn.primary:active { transform: scale(0.97); }
@@ -113,133 +67,59 @@
     .btn.danger  { background: var(--red-lt); color: var(--red); }
     .btn.full { width: 100%; }
     .btn-row { display: flex; gap: 8px; }
-
-    /* ── Member list ── */
-    .member-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 11px 0; border-bottom: 1px solid var(--border);
-    }
+    .member-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
     .member-row:last-child { border-bottom: none; }
-    .member-avatar {
-      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-      background: var(--orange-lt); color: var(--orange);
-      font-size: 0.88rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .member-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: var(--orange-lt); color: var(--orange); font-size: 0.88rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
     .member-info { flex: 1; min-width: 0; }
     .member-name { font-size: 0.88rem; font-weight: 700; color: var(--text); }
     .member-email { font-size: 0.74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .member-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .icon-btn {
-      width: 30px; height: 30px; border-radius: 8px;
-      border: none; cursor: pointer; font-size: 0.8rem;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
-    }
+    .icon-btn { width: 30px; height: 30px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
     .icon-btn.edit   { background: var(--blue-lt); color: var(--blue); }
     .icon-btn.remove { background: var(--red-lt);  color: var(--red); }
-
-    /* Strike badges */
     .strikes-row { display: flex; gap: 4px; align-items: center; margin-top: 2px; }
     .strike-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
     .strike-pip.active { background: var(--red); }
-    .redemption-status {
-      font-size: 0.7rem; font-weight: 700;
-      padding: 2px 7px; border-radius: 6px;
-    }
+    .redemption-status { font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
     .redemption-status.pending { background: var(--red-lt); color: var(--red); }
     .redemption-status.clear   { background: var(--green-lt); color: var(--green); }
-
-    /* Override goal cards */
-    .override-goal-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 0; border-bottom: 1px solid var(--border);
-    }
+    .override-goal-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .override-goal-row:last-child { border-bottom: none; }
     .override-goal-name { flex: 1; font-size: 0.88rem; color: var(--text); font-weight: 500; }
-    .override-input {
-      width: 70px; padding: 7px 8px;
-      border: 1.5px solid var(--border); border-radius: 8px;
-      font-size: 0.88rem; font-family: inherit; color: var(--text);
-      background: var(--bg); text-align: center; outline: none;
-      transition: border-color 0.2s;
-    }
+    .override-input { width: 70px; padding: 7px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem; font-family: inherit; color: var(--text); background: var(--bg); text-align: center; outline: none; transition: border-color 0.2s; }
     .override-input:focus { border-color: var(--orange); }
-    .override-toggle {
-      width: 44px; height: 26px; border-radius: 100px;
-      border: none; cursor: pointer; position: relative;
-      transition: background 0.2s; flex-shrink: 0;
-    }
+    .override-toggle { width: 44px; height: 26px; border-radius: 100px; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
     .override-toggle.on  { background: var(--green); }
     .override-toggle.off { background: var(--border); }
-    .toggle-knob {
-      position: absolute; top: 3px;
-      width: 20px; height: 20px; border-radius: 50%;
-      background: white;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-      transition: left 0.2s cubic-bezier(0.34,1.56,0.64,1);
-    }
+    .toggle-knob { position: absolute; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: left 0.2s cubic-bezier(0.34,1.56,0.64,1); }
     .override-toggle.on  .toggle-knob { left: 21px; }
     .override-toggle.off .toggle-knob { left: 3px; }
-
-    /* Goals edit panel */
     .goals-list { display: flex; flex-direction: column; gap: 8px; }
-    .goal-edit-row {
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 12px; background: var(--bg); border-radius: 10px;
-    }
+    .goal-edit-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg); border-radius: 10px; }
     .goal-edit-name { flex: 1; font-size: 0.88rem; color: var(--text); font-weight: 600; }
     .goal-edit-type { font-size: 0.72rem; color: var(--muted); }
-    .goal-edit-config { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
-
-    /* Cohort card */
-    .cohort-card {
-      background: var(--card); border-radius: 14px;
-      padding: 14px 16px; box-shadow: var(--shadow);
-      display: flex; align-items: center; gap: 12px;
-      cursor: pointer; transition: transform 0.1s;
-    }
+    .cohort-card { background: var(--card); border-radius: 14px; padding: 14px 16px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; cursor: pointer; transition: transform 0.1s; }
     .cohort-card:active { transform: scale(0.985); }
     .cohort-card.selected { border: 2px solid var(--orange); }
     .cohort-info { flex: 1; }
     .cohort-name  { font-size: 0.92rem; font-weight: 700; color: var(--text); margin-bottom: 2px; }
     .cohort-meta  { font-size: 0.74rem; color: var(--muted); }
-    .cohort-day-badge {
-      font-size: 0.7rem; font-weight: 800;
-      padding: 3px 9px; border-radius: 100px;
-      background: var(--orange-lt); color: var(--orange);
-    }
-
-    /* Success / error flash */
-    .flash {
-      padding: 10px 14px; border-radius: 10px;
-      font-size: 0.82rem; font-weight: 600;
-      display: none;
-    }
+    .cohort-day-badge { font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 100px; background: var(--orange-lt); color: var(--orange); }
+    .flash { padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; display: none; }
     .flash.success { background: var(--green-lt); color: var(--green); display: block; }
     .flash.error   { background: var(--red-lt);   color: var(--red);   display: block; }
-
-    /* ── Bottom nav ── */
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--card); border-top: 1px solid var(--border);
-      display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom)); z-index: 100;
-    }
-    .nav-item {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; gap: 2px; padding: 6px 0;
-      cursor: pointer; text-decoration: none;
-    }
+    .invite-link-box { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 0.78rem; color: var(--text); word-break: break-all; font-family: monospace; margin-bottom: 10px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom)); z-index: 100; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; cursor: pointer; text-decoration: none; }
     .nav-icon  { font-size: 1.3rem; line-height: 1; }
     .nav-label { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
     .nav-item.active .nav-label { color: var(--orange); }
-
     .empty-state { text-align: center; padding: 32px 16px; font-size: 0.84rem; color: var(--muted); line-height: 1.6; }
     .divider { height: 1px; background: var(--border); margin: 2px 0; }
-    .section-label {
-      font-size: 0.68rem; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
-    }
+    .section-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+    .loading-state { text-align: center; padding: 32px; color: var(--muted); font-size: 0.84rem; }
+    .stakes-input { width: 100%; padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.86rem; color: var(--text); background: var(--bg); outline: none; transition: border-color 0.2s; resize: vertical; min-height: 60px; }
+    .stakes-input:focus { border-color: var(--orange); }
   </style>
 </head>
 <body>
@@ -248,186 +128,122 @@
     <div class="admin-badge">Admin</div>
   </div>
 
-  <!-- Tab bar -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('members')">Members</button>
     <button class="tab-btn"        onclick="switchTab('goals')">Goals</button>
+    <button class="tab-btn"        onclick="switchTab('stakes')">Stakes</button>
     <button class="tab-btn"        onclick="switchTab('override')">Override</button>
     <button class="tab-btn"        onclick="switchTab('cohorts')">Cohorts</button>
   </div>
 
   <div class="content">
-    <!-- ── Tab: Members ── -->
-    <div class="tab-panel active" id="tab-members"></div>
-
-    <!-- ── Tab: Goals ── -->
+    <div class="tab-panel active" id="tab-members"><div class="loading-state">Loading…</div></div>
     <div class="tab-panel" id="tab-goals"></div>
-
-    <!-- ── Tab: Override ── -->
+    <div class="tab-panel" id="tab-stakes"></div>
     <div class="tab-panel" id="tab-override"></div>
-
-    <!-- ── Tab: Cohorts ── -->
     <div class="tab-panel" id="tab-cohorts"></div>
   </div>
 
   <nav class="bottom-nav">
-    <a class="nav-item" href="app.html">
-      <span class="nav-label">Today</span>
-    </a>
-    <a class="nav-item" href="cohort.html">
-      <span class="nav-label">Cohort</span>
-    </a>
-    <a class="nav-item active" href="admin.html">
-      <span class="nav-label">Admin</span>
-    </a>
-    <a class="nav-item" href="me.html">
-      <span class="nav-label">Me</span>
-    </a>
+    <a class="nav-item" href="app.html"><span class="nav-label">Today</span></a>
+    <a class="nav-item" href="cohort.html"><span class="nav-label">Cohort</span></a>
+    <a class="nav-item active" href="admin.html"><span class="nav-label">Admin</span></a>
+    <a class="nav-item" href="me.html"><span class="nav-label">Me</span></a>
   </nav>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const ADMIN_EMAIL = 'thierry.muller@gmail.com';
+    const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ── Data layer ───────────────────────────────────────────────────────
-    const db = {
-      get(k)   { try { return JSON.parse(localStorage.getItem('ft_'+k)); } catch(e){ return null; } },
-      set(k,v) { localStorage.setItem('ft_'+k, JSON.stringify(v)); },
-      uid()    { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); },
-      getSession()   { return this.get('session'); },
-      clearSession() { localStorage.removeItem('ft_session'); },
-      getUsers()     { return this.get('users')     || {}; },
-      getCohorts()   { return this.get('cohorts')   || {}; },
-      getGoals()     { return this.get('goals')     || {}; },
-      getCheckins()  { return this.get('checkins')  || {}; },
-      getRedemptions(){ return this.get('redemptions') || {}; },
-      getUser(id)    { return this.getUsers()[id]   || null; },
-      getCohort(id)  { return this.getCohorts()[id] || null; },
-
-      getCohortDay(startDate, targetDate) {
-        const s = new Date(startDate); s.setHours(0,0,0,0);
-        const t = targetDate ? new Date(targetDate) : new Date(); t.setHours(0,0,0,0);
-        return Math.floor((t-s)/86400000)+1;
-      },
-      getCurrentCohort(userId) {
-        const all = Object.values(this.getCohorts()).filter(c=>c.memberIds&&c.memberIds.includes(userId));
-        if (!all.length) return null;
-        const active = all.find(c=>{ const d=this.getCohortDay(c.startDate); return d>=1&&d<=21; });
-        return active || all.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate))[0];
-      },
-      getGoalsForUser(userId, cohortId) {
-        return Object.values(this.getGoals())
-          .filter(g=>g.userId===userId&&g.cohortId===cohortId)
-          .sort((a,b)=>a.order-b.order);
-      },
-      getCheckin(goalId, date) { return this.getCheckins()[`${goalId}_${date}`] || null; },
-      setCheckin(goalId, date, value, overriddenBy=null) {
-        const cs=this.getCheckins(), g=this.getGoals()[goalId]; if(!g) return;
-        cs[`${goalId}_${date}`]={ id:`${goalId}_${date}`,goalId,userId:g.userId,cohortId:g.cohortId,date,value,updatedAt:new Date().toISOString(),overriddenBy };
-        this.set('checkins',cs);
-      },
-      upsertGoal(g) { const gs=this.getGoals(); gs[g.id]=g; this.set('goals',gs); },
-      deleteGoal(id){ const gs=this.getGoals(); delete gs[id]; this.set('goals',gs); },
-      getRedemptionsForUser(userId, cohortId) {
-        return Object.values(this.getRedemptions())
-          .filter(r=>r.userId===userId&&r.cohortId===cohortId)
-          .sort((a,b)=>a.strikeNumber-b.strikeNumber);
-      },
-      clearRedemptions(userId, cohortId) {
-        const r = this.getRedemptions();
-        Object.keys(r).forEach(k=>{ if(r[k].userId===userId&&r[k].cohortId===cohortId) delete r[k]; });
-        this.set('redemptions', r);
-      },
-      upsertUser(u) { const us=this.getUsers(); us[u.id]=u; this.set('users',us); },
-      upsertCohort(c){ const cs=this.getCohorts(); cs[c.id]=c; this.set('cohorts',cs); },
-      seedIfEmpty() {
-        if (this.get('seeded_v8')) return;
-        this.set('users', {
-          'u_admin': { id:'u_admin', email:'thierry.muller@gmail.com', name:'Thierry', role:'admin' },
-          'u_alex':  { id:'u_alex',  email:'alex@example.com',  name:'Alex',  role:'member' },
-          'u_jack':  { id:'u_jack',  email:'jack@example.com',  name:'Jack',  role:'member' },
-          'u_ruben': { id:'u_ruben', email:'ruben@example.com', name:'Ruben', role:'member' },
-          'u_sara':  { id:'u_sara',  email:'sara@example.com',  name:'Sara',  role:'member' },
-          'u_james': { id:'u_james', email:'james@example.com', name:'James', role:'member' },
-          'u_priya': { id:'u_priya', email:'priya@example.com', name:'Priya', role:'member' },
-        });
-        this.set('cohorts', {
-          'c_04_26_01': { id:'c_04_26_01', name:'Mar 16 Cohort', startDate:'2026-03-16', memberIds:['u_admin','u_alex','u_jack','u_ruben'], createdBy:'u_admin', createdAt:new Date().toISOString() },
-          'c_04_26_02': { id:'c_04_26_02', name:'Apr 6 Cohort',   startDate:'2026-04-06', memberIds:['u_sara','u_james','u_priya'],          createdBy:'u_admin', createdAt:new Date().toISOString() },
-        });
-        const goals = {};
-        const add = (userId, cohortId, list) => list.forEach((g,i) => { goals[g.id] = { ...g, userId, cohortId, locked:true, createdAt:new Date().toISOString(), order:i }; });
-        add('u_admin','c_04_26_01',[{id:'g_t1',type:'weekly_count',title:'Meditate or Journal 10min',config:{weeklyTarget:5}},{id:'g_t2',type:'weekly_count',title:'Drink 2L of Water',config:{weeklyTarget:5}},{id:'g_t3',type:'weekly_count',title:'Plan Next Day Before Bed',config:{weeklyTarget:5}},{id:'g_t4',type:'weekly_count',title:'Exercise 45min+',config:{weeklyTarget:5}},{id:'g_t5',type:'weekly_count',title:'No-Fap Rule',config:{weeklyTarget:5}},{id:'g_t6',type:'daily_time_max',title:'Instagram',config:{weeklyMaxMinutes:70}},{id:'g_t7',type:'daily_time_max',title:'YouTube',config:{weeklyMaxMinutes:210}},{id:'g_t8',type:'weekly_count',title:'Get Feedback (4 people/wk)',config:{weeklyTarget:4}},{id:'g_t9',type:'milestone',title:'Build Focus Tracker',config:{}},{id:'g_t10',type:'milestone',title:'Collect 3 Video Testimonials',config:{}}]);
-        add('u_alex','c_04_26_01',[{id:'g_ax1',type:'weekly_count',title:'Drink 2L Water',config:{weeklyTarget:5}},{id:'g_ax2',type:'weekly_count',title:'30g+ Protein 4x/day',config:{weeklyTarget:5}},{id:'g_ax3',type:'weekly_count',title:'Chest Workout',config:{weeklyTarget:1}},{id:'g_ax4',type:'weekly_count',title:'Job Applications',config:{weeklyTarget:3}}]);
-        add('u_jack','c_04_26_01',[{id:'g_jk1',type:'weekly_count',title:'3 Rejections',config:{weeklyTarget:3}},{id:'g_jk2',type:'weekly_count',title:'Cold Outreach (1+/day)',config:{weeklyTarget:5}},{id:'g_jk3',type:'weekly_count',title:'Exercise 30min+',config:{weeklyTarget:4}},{id:'g_jk4',type:'weekly_count',title:'Laptop Out of Bedroom',config:{weeklyTarget:4}},{id:'g_jk5',type:'weekly_count',title:'The Office in Spanish (1 ep+)',config:{weeklyTarget:5}}]);
-        add('u_ruben','c_04_26_01',[{id:'g_rb1',type:'weekly_count',title:'Journal Within 4h of Waking',config:{weeklyTarget:5}},{id:'g_rb2',type:'weekly_count',title:'Set Alarm Before Bed',config:{weeklyTarget:5}},{id:'g_rb3',type:'weekly_count',title:'Stretching / Posture 5min',config:{weeklyTarget:5}},{id:'g_rb4',type:'weekly_count',title:'Breathwork',config:{weeklyTarget:1}}]);
-        add('u_sara','c_04_26_02',[{id:'g_s1',type:'daily_boolean',title:'Morning run',config:{}},{id:'g_s2',type:'weekly_count',title:'Yoga',config:{weeklyTarget:3}},{id:'g_s3',type:'milestone',title:'Write a chapter',config:{}}]);
-        add('u_james','c_04_26_02',[{id:'g_j1',type:'daily_boolean',title:'Cold shower',config:{}},{id:'g_j2',type:'daily_boolean',title:'No sugar',config:{}},{id:'g_j3',type:'weekly_count',title:'Gym',config:{weeklyTarget:5}}]);
-        add('u_priya','c_04_26_02',[{id:'g_p1',type:'daily_boolean',title:'Meditate',config:{}},{id:'g_p2',type:'daily_time_min',title:'Study Spanish',config:{weeklyTargetMinutes:120}},{id:'g_p3',type:'milestone',title:'Ship side project',config:{}}]);
-        this.set('goals', goals);
-        this.set('stakes', {
-          'u_admin_c_04_26_01': {complete:'Take a full day off — 100% not productive.',r1:'Run 5km with proof',r2:'Run 7km with proof + 100 push-ups on video',fail:'Run 10km with proof + 100 push-ups on video'},
-          'u_alex_c_04_26_01':  {complete:'',r1:'Wake up 6–8am next business day and work on most important challenge task',r2:'Wake up 6–8am next 2 business days and work on most important challenge task',fail:'Pay everyone $20 (total $60)'},
-          'u_jack_c_04_26_01':  {complete:'Tres Cruces sunrise',r1:'100 push-ups · teammates do 50 push-ups',r2:'50 press-ups · teammates do 20 pull-ups',fail:'100 push-ups + 50 pull-ups'},
-          'u_ruben_c_04_26_01': {complete:'[Reward TBD]',r1:'Run on treadmill for 15 minutes',r2:'Run on treadmill for 30 minutes',fail:'Run on treadmill for 45 minutes'},
-        });
-        this.set('seeded_v8', true);
-      },
+    // ── Cache ─────────────────────────────────────────────────────────────
+    const _ac = {
+      userId: null, profile: null,
+      cohorts: [],          // [{id, name, start_date, memberCount}]
+      activeCohort: null,   // the admin's current active cohort
     };
 
-    // ── Auth guard ───────────────────────────────────────────────────────
-    db.seedIfEmpty();
-    const session = db.getSession();
-    if (!session?.userId) { window.location.href='index.html'; }
-    if (session.role !== 'admin') { window.location.href='app.html'; }
+    // ── Date helpers ──────────────────────────────────────────────────────
+    function uid() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
+    function getCohortDay(startDate, targetDate) {
+      const s = new Date(startDate); s.setHours(0,0,0,0);
+      const t = targetDate ? new Date(targetDate) : new Date(); t.setHours(0,0,0,0);
+      return Math.floor((t-s)/86400000)+1;
+    }
 
-    const cohort = db.getCurrentCohort(session.userId);
-
-    // ── Tab state ────────────────────────────────────────────────────────
-    let activeTab          = 'members';
-    let membersCohortId    = cohort?.id || null;
-    let overrideMemberId   = null;
-    let overrideDate       = new Date().toISOString().split('T')[0];
-    let goalsMemberId      = null;
-    let addGoalFormOpen    = false;
-    let addGoalFrame       = 'daily';    // daily | weekly | milestone
-    let addGoalMetric      = 'boolean';  // boolean | count | min_time | max_time
-    let addGoalTitle       = '';
-    let newMemberEmail     = '';
+    // ── Tab state ─────────────────────────────────────────────────────────
+    let activeTab        = 'members';
+    let membersCohortId  = null;
+    let overrideMemberId = null;
+    let overrideDate     = new Date().toISOString().split('T')[0];
+    let goalsMemberId    = null;
+    let goalsMemberCohortId = null;
+    let addGoalFormOpen  = false;
+    let addGoalFrame     = 'daily';
+    let addGoalMetric    = 'boolean';
+    let addGoalTitle     = '';
+    let stakesMemberId   = null;
+    let stakesCohortId   = null;
 
     function switchTab(tab) {
       activeTab = tab;
-      document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-        b.classList.toggle('active', ['members','goals','override','cohorts'][i]===tab);
+      document.querySelectorAll('.tab-btn').forEach((b,i) => {
+        b.classList.toggle('active', ['members','goals','stakes','override','cohorts'][i] === tab);
       });
-      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
       renderTab(tab);
     }
 
-    function renderTab(tab) {
-      if (tab==='members')  renderMembers();
-      if (tab==='goals')    renderGoals();
-      if (tab==='override') renderOverride();
-      if (tab==='cohorts')  renderCohorts();
+    async function renderTab(tab) {
+      if (tab === 'members')  await renderMembers();
+      if (tab === 'goals')    await renderGoals();
+      if (tab === 'stakes')   await renderStakes();
+      if (tab === 'override') await renderOverride();
+      if (tab === 'cohorts')  await renderCohorts();
     }
 
     // ════════════════════════════════════════════════════════════════════
     // TAB: MEMBERS
     // ════════════════════════════════════════════════════════════════════
-    function renderMembers() {
-      const allCohorts = Object.values(db.getCohorts()).sort((a,b)=>new Date(b.startDate)-new Date(a.startDate));
-      if (!allCohorts.length) { document.getElementById('tab-members').innerHTML='<div class="empty-state">No cohorts found.</div>'; return; }
-      if (!membersCohortId) membersCohortId = allCohorts[0].id;
-      const mc = db.getCohort(membersCohortId);
-      if (!mc) { membersCohortId = allCohorts[0].id; return renderMembers(); }
+    async function renderMembers() {
+      const el = document.getElementById('tab-members');
+      el.innerHTML = '<div class="loading-state">Loading…</div>';
 
-      const cohortOptions = allCohorts.map(c=>`<option value="${c.id}"${c.id===membersCohortId?' selected':''}>${c.name}</option>`).join('');
-      const members = (mc.memberIds||[]).map(id=>db.getUser(id)).filter(Boolean);
+      const { data: cohortsRaw } = await sb.from('cohorts').select('*').order('start_date', { ascending: false });
+      const cohorts = cohortsRaw || [];
+
+      if (!cohorts.length) { el.innerHTML = '<div class="empty-state">No cohorts yet. Create one in the Cohorts tab.</div>'; return; }
+      if (!membersCohortId) membersCohortId = (_ac.activeCohort?.id || cohorts[0].id);
+
+      const mc = cohorts.find(c => c.id === membersCohortId) || cohorts[0];
+      membersCohortId = mc.id;
+
+      // Load members of this cohort
+      const { data: memberRows } = await sb.from('cohort_members')
+        .select('user_id, profiles(id, name, role)')
+        .eq('cohort_id', mc.id);
+      const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
+
+      // Load redemptions for these members
+      const memberIds = members.map(m => m.id);
+      let redemptionsMap = {};
+      if (memberIds.length) {
+        const { data: rRaw } = await sb.from('redemptions')
+          .select('*').eq('cohort_id', mc.id).in('user_id', memberIds);
+        for (const r of (rRaw || [])) {
+          if (!redemptionsMap[r.user_id]) redemptionsMap[r.user_id] = [];
+          redemptionsMap[r.user_id].push(r);
+        }
+      }
+
+      const cohortOptions = cohorts.map(c => `<option value="${c.id}"${c.id === mc.id ? ' selected' : ''}>${c.name}</option>`).join('');
 
       const rows = members.map(m => {
-        const redemptions = db.getRedemptionsForUser(m.id, mc.id);
-        const pending     = redemptions.filter(r=>r.status==='pending');
-        const pips        = [1,2,3].map(n=>`<div class="strike-pip${n<=redemptions.length?' active':''}"></div>`).join('');
+        const redemptions = redemptionsMap[m.id] || [];
+        const pending     = redemptions.filter(r => r.status === 'pending');
+        const pips        = [1,2,3].map(n => `<div class="strike-pip${n<=redemptions.length?' active':''}"></div>`).join('');
         const status      = pending.length
           ? `<span class="redemption-status pending">${pending.length} pending</span>`
           : `<span class="redemption-status clear">Clear</span>`;
@@ -436,120 +252,160 @@
             <div class="member-avatar">${m.name[0].toUpperCase()}</div>
             <div class="member-info">
               <div class="member-name">${m.name}</div>
-              <div class="member-email">${m.email}</div>
               <div class="strikes-row">${pips} ${status}</div>
             </div>
             <div class="member-actions">
-              <button class="icon-btn remove" onclick="removeMember('${m.id}')" title="Remove from cohort">✕</button>
+              <button class="icon-btn remove" onclick="removeMember('${m.id}')" title="Remove">✕</button>
               <button class="icon-btn" style="background:var(--red-lt);color:var(--red);" onclick="clearStrikes('${m.id}')" title="Clear strikes">↺</button>
             </div>
           </div>`;
       }).join('');
 
-      document.getElementById('tab-members').innerHTML = `
+      el.innerHTML = `
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
             <div class="card-title" style="margin-bottom:0;">Members</div>
-            <select class="form-input" style="width:auto;font-size:0.8rem;padding:6px 10px;" onchange="membersCohortId=this.value;renderMembers()">
+            <select class="form-input" style="width:auto;font-size:0.8rem;padding:6px 10px;"
+              onchange="membersCohortId=this.value;renderMembers()">
               ${cohortOptions}
             </select>
           </div>
-          <div class="member-count-line" style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;">${members.length} member${members.length!==1?'s':''} · starts ${mc.startDate}</div>
-          <div>${rows || '<div class="empty-state">No members in this cohort yet.</div>'}</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;">${members.length} member${members.length!==1?'s':''} · starts ${mc.start_date}</div>
+          <div>${rows || '<div class="empty-state">No members yet.</div>'}</div>
         </div>
         <div class="card">
           <div class="card-title">Invite Member</div>
           <div class="form-field">
+            <label class="form-label">Full name</label>
+            <input class="form-input" id="inviteName" placeholder="First name" />
+          </div>
+          <div class="form-field">
             <label class="form-label">Email address</label>
             <input class="form-input" id="inviteEmail" type="email" placeholder="member@email.com" />
           </div>
-          <div class="form-field">
-            <label class="form-label">Display name</label>
-            <input class="form-input" id="inviteName" placeholder="First name" />
-          </div>
+          <div id="inviteLinkBox" style="display:none;" class="invite-link-box"></div>
           <div id="inviteFlash" class="flash"></div>
-          <button class="btn primary full" style="margin-top:4px;" onclick="inviteMember()">Send Invite</button>
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn primary full" onclick="inviteMember()">Generate Invite Link</button>
+            <button class="btn secondary" id="copyInviteBtn" style="display:none;" onclick="copyInviteLink()">Copy</button>
+          </div>
         </div>`;
     }
 
-    function inviteMember() {
-      const email = document.getElementById('inviteEmail')?.value?.trim().toLowerCase();
+    let _pendingInviteLink = '';
+
+    async function inviteMember() {
       const name  = document.getElementById('inviteName')?.value?.trim();
+      const email = document.getElementById('inviteEmail')?.value?.trim().toLowerCase();
       const flash = document.getElementById('inviteFlash');
+      const linkBox = document.getElementById('inviteLinkBox');
       flash.className = 'flash';
+      linkBox.style.display = 'none';
+      document.getElementById('copyInviteBtn').style.display = 'none';
 
-      const mc = db.getCohort(membersCohortId);
-      if (!email || !name) { flash.textContent='Fill in both fields.'; flash.className='flash error'; return; }
-      if (!mc)             { flash.textContent='No cohort selected.';  flash.className='flash error'; return; }
-      if ((mc.memberIds||[]).length >= 10) { flash.textContent='Cohort is full (10 max).'; flash.className='flash error'; return; }
+      if (!name || !email) { flash.textContent = 'Fill in both fields.'; flash.className = 'flash error'; return; }
+      if (!membersCohortId) { flash.textContent = 'No cohort selected.'; flash.className = 'flash error'; return; }
 
-      // Check if user already exists
-      let user = Object.values(db.getUsers()).find(u=>u.email===email);
-      if (!user) {
-        user = { id:`u_${db.uid()}`, email, name, role:'member' };
-        db.upsertUser(user);
-      }
-      if (!mc.memberIds) mc.memberIds = [];
-      if (!mc.memberIds.includes(user.id)) {
-        mc.memberIds.push(user.id);
-        db.upsertCohort(mc);
-      }
-      flash.textContent = `${name} added to ${mc.name}.`;
+      // Create invite record
+      const { data: invite, error } = await sb.from('invites')
+        .insert({ name, email, cohort_id: membersCohortId })
+        .select().single();
+
+      if (error || !invite) { flash.textContent = error?.message || 'Failed to create invite.'; flash.className = 'flash error'; return; }
+
+      const base = window.location.origin + window.location.pathname.replace('admin.html', '');
+      _pendingInviteLink = `${base}index.html?invite=${invite.token}`;
+
+      linkBox.textContent = _pendingInviteLink;
+      linkBox.style.display = 'block';
+      document.getElementById('copyInviteBtn').style.display = 'flex';
+      flash.textContent = `Invite created for ${name}. Share the link above.`;
       flash.className = 'flash success';
+      document.getElementById('inviteName').value = '';
       document.getElementById('inviteEmail').value = '';
-      document.getElementById('inviteName').value  = '';
-      setTimeout(()=>renderMembers(), 1200);
     }
 
-    function removeMember(userId) {
-      const mc = db.getCohort(membersCohortId);
-      if (!mc) return;
+    function copyInviteLink() {
+      navigator.clipboard.writeText(_pendingInviteLink).then(() => {
+        const btn = document.getElementById('copyInviteBtn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+
+    async function removeMember(userId) {
       if (!confirm('Remove this member from the cohort?')) return;
-      mc.memberIds = mc.memberIds.filter(id=>id!==userId);
-      db.upsertCohort(mc);
+      await sb.from('cohort_members').delete().eq('cohort_id', membersCohortId).eq('user_id', userId);
       renderMembers();
     }
 
-    function clearStrikes(userId) {
-      if (!membersCohortId) return;
+    async function clearStrikes(userId) {
       if (!confirm('Clear all redemption strikes for this member?')) return;
-      db.clearRedemptions(userId, membersCohortId);
+      await sb.from('redemptions').delete().eq('cohort_id', membersCohortId).eq('user_id', userId);
       renderMembers();
     }
 
     // ════════════════════════════════════════════════════════════════════
     // TAB: GOALS
     // ════════════════════════════════════════════════════════════════════
-    function renderGoals() {
-      if (!cohort) { document.getElementById('tab-goals').innerHTML='<div class="empty-state">No active cohort.</div>'; return; }
-      const members = cohort.memberIds.map(id=>db.getUser(id)).filter(Boolean);
+    async function renderGoals() {
+      const el = document.getElementById('tab-goals');
+      el.innerHTML = '<div class="loading-state">Loading…</div>';
+
+      // Load all cohorts + members for selector
+      const { data: cohortsRaw } = await sb.from('cohorts').select('*').order('start_date', { ascending: false });
+      const cohorts = cohortsRaw || [];
+      if (!cohorts.length) { el.innerHTML = '<div class="empty-state">No cohorts yet.</div>'; return; }
+
+      if (!goalsMemberCohortId) goalsMemberCohortId = (_ac.activeCohort?.id || cohorts[0].id);
+      const mc = cohorts.find(c => c.id === goalsMemberCohortId) || cohorts[0];
+      goalsMemberCohortId = mc.id;
+
+      const { data: memberRows } = await sb.from('cohort_members')
+        .select('user_id, profiles(id, name)').eq('cohort_id', mc.id);
+      const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
+
+      const cohortOptions = cohorts.map(c => `<option value="${c.id}"${c.id === mc.id ? ' selected' : ''}>${c.name}</option>`).join('');
 
       const memberPicker = `
         <div class="card">
           <div class="card-title">Select Member</div>
           <div class="form-field">
+            <label class="form-label">Cohort</label>
+            <select class="form-select" onchange="goalsMemberCohortId=this.value;goalsMemberId=null;renderGoals()">
+              ${cohortOptions}
+            </select>
+          </div>
+          <div class="form-field">
             <select class="form-select" onchange="goalsMemberId=this.value;renderGoals()">
               <option value="">— choose member —</option>
-              ${members.map(m=>`<option value="${m.id}"${goalsMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
+              ${members.map(m => `<option value="${m.id}"${goalsMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
             </select>
           </div>
         </div>`;
 
-      if (!goalsMemberId) {
-        document.getElementById('tab-goals').innerHTML = memberPicker;
-        return;
-      }
+      if (!goalsMemberId) { el.innerHTML = memberPicker; return; }
 
-      const goals  = db.getGoalsForUser(goalsMemberId, cohort.id);
-      const member = db.getUser(goalsMemberId);
+      // Load goals for this member
+      const { data: goalsRaw } = await sb.from('goals')
+        .select('*').eq('user_id', goalsMemberId).eq('cohort_id', mc.id).order('sort_order');
+      const goals = (goalsRaw || []).map(g => ({
+        id: g.id, userId: g.user_id, cohortId: g.cohort_id,
+        type: g.type, title: g.title, config: g.config || {},
+        locked: g.locked, order: g.sort_order
+      }));
+
+      const member = members.find(m => m.id === goalsMemberId);
+
       const typeLabel = { daily_boolean:'Daily ✓', weekly_count:'Weekly count', daily_time:'Max time', daily_time_max:'Max time', daily_time_min:'Min time', milestone:'21-day goal', total_count:'21-day count', total_time_min:'21-day min time', total_time_max:'21-day max time' };
       const configLabel = g => {
-        if (g.type==='weekly_count')  return `${g.config.weeklyTarget}x/week`;
-        if (g.type==='daily_time' || g.type==='daily_time_max') return `max ${(g.config.weeklyMaxMinutes/60).toFixed(1)}h/week`;
-        if (g.type==='daily_time_min') return `min ${(g.config.weeklyTargetMinutes/60).toFixed(1)}h/week`;
-        if (g.type==='total_count')    return `${g.config.totalTarget} total`;
-        if (g.type==='total_time_min') return `≥${g.config.totalTargetMinutes}min total`;
-        if (g.type==='total_time_max') return `≤${g.config.totalMaxMinutes}min total`;
+        const c = g.config || {};
+        if (g.type==='weekly_count')  return `${c.weeklyTarget}x/week`;
+        if (g.type==='daily_time' || g.type==='daily_time_max') return `max ${((c.weeklyMaxMinutes||0)/60).toFixed(1)}h/week`;
+        if (g.type==='daily_time_min') return `min ${((c.weeklyTargetMinutes||0)/60).toFixed(1)}h/week`;
+        if (g.type==='total_count')    return `${c.totalTarget} total`;
+        if (g.type==='total_time_min') return `≥${c.totalTargetMinutes}min total`;
+        if (g.type==='total_time_max') return `≤${c.totalMaxMinutes}min total`;
         return '';
       };
 
@@ -557,13 +413,13 @@
         <div class="goal-edit-row">
           <div style="flex:1;min-width:0;">
             <div class="goal-edit-name">${g.title}</div>
-            <div class="goal-edit-type">${typeLabel[g.type]||g.type} ${configLabel(g)?'· '+configLabel(g):''}</div>
+            <div class="goal-edit-type">${typeLabel[g.type]||g.type}${configLabel(g) ? ' · '+configLabel(g) : ''}</div>
           </div>
           <button class="icon-btn remove" onclick="adminDeleteGoal('${g.id}')">✕</button>
         </div>`).join('');
 
-      // Add goal form
-      const pillStyle = (sel) => `style="padding:5px 11px;border-radius:100px;font-size:0.76rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.15s;${sel?'background:var(--orange);color:#fff;border-color:var(--orange);':'background:var(--bg);color:var(--muted);border-color:var(--border);'}"`;
+      const pillStyle = sel => `style="padding:5px 11px;border-radius:100px;font-size:0.76rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.15s;${sel?'background:var(--orange);color:#fff;border-color:var(--orange);':'background:var(--bg);color:var(--muted);border-color:var(--border);'}"`;
+
       const addForm = addGoalFormOpen ? `
         <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
           <div class="form-field">
@@ -573,16 +429,16 @@
           <div class="form-field">
             <label class="form-label">Time frame</label>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button ${pillStyle(addGoalFrame==='daily')} onclick="addGoalFrame='daily';renderGoals()">Daily</button>
-              <button ${pillStyle(addGoalFrame==='weekly')} onclick="addGoalFrame='weekly';renderGoals()">Weekly</button>
+              <button ${pillStyle(addGoalFrame==='daily')}   onclick="addGoalFrame='daily';renderGoals()">Daily</button>
+              <button ${pillStyle(addGoalFrame==='weekly')}  onclick="addGoalFrame='weekly';renderGoals()">Weekly</button>
               <button ${pillStyle(addGoalFrame==='milestone')} onclick="addGoalFrame='milestone';renderGoals()">21 Days</button>
             </div>
           </div>
           <div class="form-field">
             <label class="form-label">Type</label>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button ${pillStyle(addGoalMetric==='boolean')} onclick="addGoalMetric='boolean';renderGoals()">Yes / No</button>
-              <button ${pillStyle(addGoalMetric==='count')} onclick="addGoalMetric='count';renderGoals()">Count</button>
+              <button ${pillStyle(addGoalMetric==='boolean')}  onclick="addGoalMetric='boolean';renderGoals()">Yes / No</button>
+              <button ${pillStyle(addGoalMetric==='count')}    onclick="addGoalMetric='count';renderGoals()">Count</button>
               <button ${pillStyle(addGoalMetric==='min_time')} onclick="addGoalMetric='min_time';renderGoals()">Min time</button>
               <button ${pillStyle(addGoalMetric==='max_time')} onclick="addGoalMetric='max_time';renderGoals()">Max time</button>
             </div>
@@ -595,26 +451,30 @@
           </div>
         </div>` : `<button class="btn secondary full" style="margin-top:12px;" onclick="addGoalFormOpen=true;renderGoals()">+ Add Goal</button>`;
 
-      document.getElementById('tab-goals').innerHTML = `
+      el.innerHTML = `
         ${memberPicker}
         <div class="card">
           <div class="card-title">${member?.name}'s Goals <small>${goals.length}/10</small></div>
-          <div class="goals-list">${goalRows||'<div class="empty-state" style="padding:16px 0;">No goals yet.</div>'}</div>
+          <div class="goals-list">${goalRows || '<div class="empty-state" style="padding:16px 0;">No goals yet.</div>'}</div>
           ${addForm}
         </div>`;
     }
 
-    function adminDeleteGoal(goalId) {
+    async function adminDeleteGoal(goalId) {
       if (!confirm('Delete this goal?')) return;
-      db.deleteGoal(goalId);
+      await sb.from('goals').delete().eq('id', goalId);
       renderGoals();
     }
 
-    function adminSaveGoal() {
+    async function adminSaveGoal() {
       const title = addGoalTitle.trim();
       if (!title || !goalsMemberId) return;
-      const goals = db.getGoalsForUser(goalsMemberId, cohort.id);
-      if (goals.length >= 10) { alert('Max 10 goals.'); return; }
+
+      // Check goal count
+      const { count } = await sb.from('goals').select('*', { count: 'exact', head: true })
+        .eq('user_id', goalsMemberId).eq('cohort_id', goalsMemberCohortId);
+      if (count >= 10) { alert('Max 10 goals.'); return; }
+
       const config = {};
       let type;
       if (addGoalFrame === 'milestone') {
@@ -624,15 +484,17 @@
         if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('agTime')?.value)||300; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
-        if (addGoalMetric === 'count')    { type = 'weekly_count'; config.weeklyTarget = parseInt(document.getElementById('agCount')?.value)||3; }
-        if (addGoalMetric === 'min_time') { type = 'daily_time_min'; config.weeklyTargetMinutes = parseInt(document.getElementById('agTime')?.value)||60; }
-        if (addGoalMetric === 'max_time') { type = 'daily_time_max'; config.weeklyMaxMinutes    = parseInt(document.getElementById('agTime')?.value)||120; }
+        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('agCount')?.value)||3; }
+        if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('agTime')?.value)||60; }
+        if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('agTime')?.value)||120; }
       }
-      db.upsertGoal({
-        id:`g_${db.uid()}`, type, title, config,
-        userId:goalsMemberId, cohortId:cohort.id,
-        locked:false, createdAt:new Date().toISOString(), order:goals.length
+
+      await sb.from('goals').insert({
+        id: `g_${uid()}`, type, title, config,
+        user_id: goalsMemberId, cohort_id: goalsMemberCohortId,
+        locked: false, sort_order: count || 0
       });
+
       addGoalFormOpen = false;
       addGoalFrame    = 'daily';
       addGoalMetric   = 'boolean';
@@ -641,18 +503,118 @@
     }
 
     // ════════════════════════════════════════════════════════════════════
+    // TAB: STAKES
+    // ════════════════════════════════════════════════════════════════════
+    async function renderStakes() {
+      const el = document.getElementById('tab-stakes');
+      el.innerHTML = '<div class="loading-state">Loading…</div>';
+
+      const { data: cohortsRaw } = await sb.from('cohorts').select('*').order('start_date', { ascending: false });
+      const cohorts = cohortsRaw || [];
+      if (!cohorts.length) { el.innerHTML = '<div class="empty-state">No cohorts yet.</div>'; return; }
+
+      if (!stakesCohortId) stakesCohortId = (_ac.activeCohort?.id || cohorts[0].id);
+      const mc = cohorts.find(c => c.id === stakesCohortId) || cohorts[0];
+      stakesCohortId = mc.id;
+
+      const { data: memberRows } = await sb.from('cohort_members')
+        .select('user_id, profiles(id, name)').eq('cohort_id', mc.id);
+      const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
+
+      const cohortOptions = cohorts.map(c => `<option value="${c.id}"${c.id === mc.id ? ' selected' : ''}>${c.name}</option>`).join('');
+
+      const memberPicker = `
+        <div class="form-field">
+          <label class="form-label">Cohort</label>
+          <select class="form-select" onchange="stakesCohortId=this.value;stakesMemberId=null;renderStakes()">
+            ${cohortOptions}
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Member</label>
+          <select class="form-select" onchange="stakesMemberId=this.value;renderStakes()">
+            <option value="">— choose member —</option>
+            ${members.map(m => `<option value="${m.id}"${stakesMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
+          </select>
+        </div>`;
+
+      if (!stakesMemberId) {
+        el.innerHTML = `<div class="card"><div class="card-title">Stakes</div>${memberPicker}</div>`;
+        return;
+      }
+
+      const member = members.find(m => m.id === stakesMemberId);
+
+      // Load existing stakes
+      const { data: existing } = await sb.from('stakes')
+        .select('*').eq('user_id', stakesMemberId).eq('cohort_id', mc.id).single();
+
+      el.innerHTML = `
+        <div class="card">
+          <div class="card-title">${member?.name}'s Stakes</div>
+          ${memberPicker}
+          <div style="margin-top:8px;">
+            <div class="form-field">
+              <label class="form-label">🏆 If I complete</label>
+              <textarea class="stakes-input" id="stkComplete" placeholder="Reward if they succeed…">${existing?.complete||''}</textarea>
+            </div>
+            <div class="form-field">
+              <label class="form-label">⚡ Slip #1 task</label>
+              <textarea class="stakes-input" id="stkR1" placeholder="What they do after first slip…">${existing?.r1||''}</textarea>
+            </div>
+            <div class="form-field">
+              <label class="form-label">⚡ Slip #2 task</label>
+              <textarea class="stakes-input" id="stkR2" placeholder="What they do after second slip…">${existing?.r2||''}</textarea>
+            </div>
+            <div class="form-field">
+              <label class="form-label">💀 Fail (3 strikes)</label>
+              <textarea class="stakes-input" id="stkFail" placeholder="Consequence for failing…">${existing?.fail||''}</textarea>
+            </div>
+            <div id="stakesFlash" class="flash"></div>
+            <button class="btn primary full" style="margin-top:4px;" onclick="saveStakes()">Save Stakes</button>
+          </div>
+        </div>`;
+    }
+
+    async function saveStakes() {
+      const complete = document.getElementById('stkComplete').value.trim();
+      const r1       = document.getElementById('stkR1').value.trim();
+      const r2       = document.getElementById('stkR2').value.trim();
+      const fail     = document.getElementById('stkFail').value.trim();
+
+      const { error } = await sb.from('stakes').upsert({
+        user_id: stakesMemberId, cohort_id: stakesCohortId,
+        complete, r1, r2, fail
+      }, { onConflict: 'user_id,cohort_id' });
+
+      const flash = document.getElementById('stakesFlash');
+      if (error) { flash.textContent = error.message; flash.className = 'flash error'; }
+      else { flash.textContent = 'Stakes saved.'; flash.className = 'flash success'; setTimeout(() => flash.className = 'flash', 2500); }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
     // TAB: OVERRIDE
     // ════════════════════════════════════════════════════════════════════
-    function renderOverride() {
-      if (!cohort) { document.getElementById('tab-override').innerHTML='<div class="empty-state">No active cohort.</div>'; return; }
-      const members = cohort.memberIds.map(id=>db.getUser(id)).filter(Boolean);
+    async function renderOverride() {
+      const el = document.getElementById('tab-override');
+      el.innerHTML = '<div class="loading-state">Loading…</div>';
+
+      const { data: cohortsRaw } = await sb.from('cohorts').select('*').order('start_date', { ascending: false });
+      const cohorts = cohortsRaw || [];
+      if (!cohorts.length) { el.innerHTML = '<div class="empty-state">No cohorts yet.</div>'; return; }
+
+      const activeCohort = cohorts.find(c => { const d = getCohortDay(c.start_date); return d >= 1 && d <= 21; }) || cohorts[0];
+
+      const { data: memberRows } = await sb.from('cohort_members')
+        .select('user_id, profiles(id, name)').eq('cohort_id', activeCohort.id);
+      const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
 
       const memberPicker = `
         <div class="form-field">
           <label class="form-label">Member</label>
           <select class="form-select" onchange="overrideMemberId=this.value;renderOverride()">
             <option value="">— choose member —</option>
-            ${members.map(m=>`<option value="${m.id}"${overrideMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
+            ${members.map(m => `<option value="${m.id}"${overrideMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
           </select>
         </div>`;
 
@@ -665,35 +627,44 @@
 
       let goalRows = '';
       if (overrideMemberId) {
-        const goals = db.getGoalsForUser(overrideMemberId, cohort.id);
+        const { data: goalsRaw } = await sb.from('goals')
+          .select('*').eq('user_id', overrideMemberId).eq('cohort_id', activeCohort.id).order('sort_order');
+        const goals = goalsRaw || [];
+
+        // Load checkins for this date
+        const goalIds = goals.map(g => g.id);
+        const checkinMap = {};
+        if (goalIds.length) {
+          const { data: cRaw } = await sb.from('checkins')
+            .select('goal_id,value').in('goal_id', goalIds).eq('date', overrideDate);
+          for (const c of (cRaw || [])) checkinMap[c.goal_id] = c.value;
+        }
+
         goalRows = goals.map(g => {
-          const c = db.getCheckin(g.id, overrideDate);
-          if (g.type==='daily_boolean' || g.type==='milestone') {
-            const on = !!(c?.value);
+          const val = checkinMap[g.id] ?? null;
+          if (g.type === 'daily_boolean' || g.type === 'milestone') {
+            const on = !!(val);
             return `
               <div class="override-goal-row">
                 <div class="override-goal-name">${g.title}</div>
-                <button class="override-toggle${on?' on':' off'}" onclick="overrideToggle('${g.id}','${overrideDate}',${!on})">
+                <button class="override-toggle${on?' on':' off'}" onclick="overrideToggle('${g.id}','${overrideDate}',${!on},'${overrideMemberId}')">
                   <div class="toggle-knob"></div>
                 </button>
               </div>`;
           }
-          if (g.type==='weekly_count' || g.type==='daily_time' || g.type==='daily_time_min' || g.type==='daily_time_max') {
-            const val = c ? Number(c.value)||0 : 0;
-            const unit = g.type==='weekly_count' ? 'sessions' : 'min';
-            return `
-              <div class="override-goal-row">
-                <div class="override-goal-name">${g.title}</div>
-                <input class="override-input" type="number" min="0" value="${val}" placeholder="0"
-                  onchange="overrideValue('${g.id}','${overrideDate}',this.value)" />
-                <span style="font-size:0.72rem;color:var(--muted);white-space:nowrap;">${unit}</span>
-              </div>`;
-          }
-          return '';
+          const numVal = val !== null ? Number(val) : 0;
+          const unit = g.type === 'weekly_count' || g.type === 'total_count' ? 'sessions' : 'min';
+          return `
+            <div class="override-goal-row">
+              <div class="override-goal-name">${g.title}</div>
+              <input class="override-input" type="number" min="0" value="${numVal}" placeholder="0"
+                onchange="overrideValue('${g.id}','${overrideDate}',this.value,'${overrideMemberId}')" />
+              <span style="font-size:0.72rem;color:var(--muted);white-space:nowrap;">${unit}</span>
+            </div>`;
         }).join('');
       }
 
-      document.getElementById('tab-override').innerHTML = `
+      el.innerHTML = `
         <div class="card">
           <div class="card-title">Override Check-in</div>
           ${memberPicker}
@@ -708,38 +679,52 @@
         </div>`;
     }
 
-    function overrideToggle(goalId, date, newVal) {
-      db.setCheckin(goalId, date, newVal, session.userId);
-      flash('overrideFlash', 'Saved.', 'success');
+    async function overrideToggle(goalId, date, newVal, userId) {
+      const v = newVal ? 1 : 0;
+      await sb.from('checkins').upsert({ goal_id: goalId, date, value: v, user_id: userId }, { onConflict: 'goal_id,date' });
+      flashEl('overrideFlash', 'Saved.', 'success');
       renderOverride();
     }
 
-    function overrideValue(goalId, date, val) {
-      db.setCheckin(goalId, date, parseInt(val)||0, session.userId);
-      flash('overrideFlash', 'Saved.', 'success');
+    async function overrideValue(goalId, date, val, userId) {
+      const v = parseInt(val) || 0;
+      await sb.from('checkins').upsert({ goal_id: goalId, date, value: v, user_id: userId }, { onConflict: 'goal_id,date' });
+      flashEl('overrideFlash', 'Saved.', 'success');
     }
 
     // ════════════════════════════════════════════════════════════════════
     // TAB: COHORTS
     // ════════════════════════════════════════════════════════════════════
-    function renderCohorts() {
-      const cohorts = Object.values(db.getCohorts()).sort((a,b)=>new Date(b.startDate)-new Date(a.startDate));
+    async function renderCohorts() {
+      const el = document.getElementById('tab-cohorts');
+      el.innerHTML = '<div class="loading-state">Loading…</div>';
+
+      const { data: cohortsRaw } = await sb.from('cohorts').select('*').order('start_date', { ascending: false });
+      const cohorts = cohortsRaw || [];
+
+      // Get member counts
+      const countMap = {};
+      for (const c of cohorts) {
+        const { count } = await sb.from('cohort_members').select('*', { count: 'exact', head: true }).eq('cohort_id', c.id);
+        countMap[c.id] = count || 0;
+      }
 
       const cohortCards = cohorts.map(c => {
-        const day     = db.getCohortDay(c.startDate);
-        const dayText = day<1 ? 'Upcoming' : day>21 ? 'Complete' : `Day ${day}`;
-        const members = c.memberIds?.length||0;
+        const day     = getCohortDay(c.start_date);
+        const dayText = day < 1 ? 'Upcoming' : day > 21 ? 'Complete' : `Day ${day}`;
+        const members = countMap[c.id] || 0;
+        const isActive = _ac.activeCohort?.id === c.id;
         return `
-          <div class="cohort-card${c.id===cohort?.id?' selected':''}">
+          <div class="cohort-card${isActive?' selected':''}">
             <div class="cohort-info">
               <div class="cohort-name">${c.name}</div>
-              <div class="cohort-meta">Starts ${c.startDate} · ${members} member${members!==1?'s':''}</div>
+              <div class="cohort-meta">Starts ${c.start_date} · ${members} member${members!==1?'s':''}</div>
             </div>
             <div class="cohort-day-badge">${dayText}</div>
           </div>`;
       }).join('');
 
-      document.getElementById('tab-cohorts').innerHTML = `
+      el.innerHTML = `
         <div class="card">
           <div class="card-title">All Cohorts</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
@@ -761,40 +746,60 @@
         </div>`;
     }
 
-    function createCohort() {
+    async function createCohort() {
       const name      = document.getElementById('newCohortName')?.value?.trim();
       const startDate = document.getElementById('newCohortDate')?.value;
-      const flashEl   = document.getElementById('newCohortFlash');
-      flashEl.className = 'flash';
+      const flashEl2  = document.getElementById('newCohortFlash');
+      flashEl2.className = 'flash';
 
-      if (!name || !startDate) { flashEl.textContent='Fill in all fields.'; flashEl.className='flash error'; return; }
+      if (!name || !startDate) { flashEl2.textContent = 'Fill in all fields.'; flashEl2.className = 'flash error'; return; }
 
-      const id = `c_${db.uid()}`;
-      db.upsertCohort({
-        id, name, startDate,
-        memberIds: [session.userId],
-        createdBy: session.userId,
-        createdAt: new Date().toISOString()
-      });
-      flashEl.textContent = `${name} created.`;
-      flashEl.className = 'flash success';
+      const id = `c_${uid()}`;
+      const { error } = await sb.from('cohorts').insert({ id, name, start_date: startDate });
+      if (error) { flashEl2.textContent = error.message; flashEl2.className = 'flash error'; return; }
+
+      // Add admin to new cohort
+      await sb.from('cohort_members').insert({ cohort_id: id, user_id: _ac.userId });
+
+      flashEl2.textContent = `${name} created.`;
+      flashEl2.className = 'flash success';
       document.getElementById('newCohortName').value = '';
-      setTimeout(()=>renderCohorts(), 1000);
+      setTimeout(() => renderCohorts(), 1000);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────
-    function flash(id, msg, type) {
+    function flashEl(id, msg, type) {
       const el = document.getElementById(id);
       if (!el) return;
       el.textContent = msg;
       el.className = `flash ${type}`;
-      setTimeout(()=>{ el.className='flash'; }, 2500);
+      setTimeout(() => { el.className = 'flash'; }, 2500);
     }
 
-    function logout() { db.clearSession(); window.location.href='index.html'; }
+    async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
-    // ── Initial render ────────────────────────────────────────────────────
-    renderMembers();
+    // ── Init ─────────────────────────────────────────────────────────────
+    (async () => {
+      const { data: { user: authUser } } = await sb.auth.getUser();
+      if (!authUser) { window.location.href = 'index.html'; return; }
+      _ac.userId = authUser.id;
+
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+      if (!profile || profile.role !== 'admin') { window.location.href = 'app.html'; return; }
+      _ac.profile = profile;
+
+      // Find admin's active cohort
+      const { data: memberships } = await sb.from('cohort_members')
+        .select('cohort_id, cohorts(*)').eq('user_id', authUser.id);
+      if (memberships?.length) {
+        const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
+        const active = cohorts.find(c => { const d = getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+        _ac.activeCohort = active || cohorts.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+        if (_ac.activeCohort) membersCohortId = _ac.activeCohort.id;
+      }
+
+      await renderMembers();
+    })();
   </script>
 </body>
 </html>
