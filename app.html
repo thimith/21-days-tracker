@@ -179,13 +179,21 @@
     .goal-card {
       background: var(--card);
       border-radius: 14px;
-      padding: 11px 14px;
+      padding: 11px 14px 11px 32px;
       box-shadow: var(--shadow);
-      transition: transform 0.12s;
+      transition: transform 0.12s, opacity 0.12s;
       position: relative;
       overflow: hidden;
     }
     .goal-card.is-done { background: var(--green-lt); }
+    .dnd-handle {
+      position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+      color: var(--border); font-size: 1.1rem; line-height: 1;
+      cursor: grab; user-select: none; touch-action: none;
+    }
+    .dnd-handle:active { cursor: grabbing; color: var(--muted); }
+    .goal-card.dnd-dragging { opacity: 0.35; }
+    .goal-card.dnd-over { transform: translateY(-3px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
     .goal-card.is-tappable { cursor: pointer; }
     .goal-card.is-tappable:active { transform: scale(0.985); }
     .goal-type-tag {
@@ -555,6 +563,21 @@
           locked: g.locked, sort_order: g.order
         }).then(() => {});
       },
+      reorderGoals(fromId, toId) {
+        const fromIdx = _c.goals.findIndex(g => g.id === fromId);
+        const toIdx   = _c.goals.findIndex(g => g.id === toId);
+        if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+        const [moved] = _c.goals.splice(fromIdx, 1);
+        _c.goals.splice(toIdx, 0, moved);
+        _c.goals.forEach((g, i) => { g.order = i; });
+        // Persist new order in bulk
+        const rows = _c.goals.map(g => ({
+          id: g.id, user_id: g.userId, cohort_id: g.cohortId,
+          type: g.type, title: g.title, config: g.config,
+          locked: g.locked, sort_order: g.order
+        }));
+        sb.from('goals').upsert(rows).then(() => {});
+      },
       deleteGoal(id) {
         _c.goals = _c.goals.filter(g => g.id !== id);
         sb.from('goals').delete().eq('id', id).then(() => {});
@@ -842,7 +865,7 @@
       }
 
       const daily     = goals.filter(g => ['daily_boolean','daily_time','daily_time_min','daily_time_max'].includes(g.type));
-      const weekly    = goals.filter(g => g.type === 'weekly_count');
+      const weekly    = goals.filter(g => ['weekly_count','weekly_time_min','weekly_time_max'].includes(g.type));
       const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
 
       if (daily.length) {
@@ -904,9 +927,15 @@
       }
 
       document.getElementById('content').innerHTML = html.join('');
+      initGoalDragDrop();
     }
 
     function renderGoalCard(g, date, locked) {
+      const html = _renderGoalCardInner(g, date, locked);
+      return html.replace('<div class="goal-card', `<div data-goal-id="${g.id}" data-goal-type="${g.type}" class="goal-card`);
+    }
+
+    function _renderGoalCardInner(g, date, locked) {
       const isFuture = date > localDateStr();
       const c = db.getCheckin(g.id, date);
       const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
@@ -1025,6 +1054,53 @@
           </div>`;
       }
 
+      if (g.type === 'weekly_time_max') {
+        const wk      = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDates = db.getWeekDates(cohort.startDate, wk);
+        const wkTotal = db.getWeeklyTotal(g.id, wkDates);
+        const maxMin  = g.config.weeklyMaxMinutes || 120;
+        const over    = wkTotal > maxMin;
+        const todayV  = c ? Number(c.value)||'' : '';
+        return `
+          <div class="goal-card">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
+              <div class="goal-title">${g.title}</div>
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
+                value="${todayV}" placeholder=""
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">min</span>
+              <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'weekly_time_min') {
+        const wk      = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDates = db.getWeekDates(cohort.startDate, wk);
+        const wkTotal = db.getWeeklyTotal(g.id, wkDates);
+        const target  = g.config.weeklyTargetMinutes || 60;
+        const elapsed = Math.min(7, db.getCohortDay(cohort.startDate, date) - (wk-1)*7);
+        const met     = elapsed >= 7 ? wkTotal >= target : true;
+        const todayV  = c ? Number(c.value)||'' : '';
+        return `
+          <div class="goal-card">
+            ${deleteBtn}
+            <div class="time-inline-row">${renameBtn}
+              <div class="goal-title">${g.title}</div>
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
+                value="${todayV}" placeholder=""
+                oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
+                ${isFuture?'disabled':''} />
+              <span class="time-unit">min</span>
+              <span class="time-counter${met?'':' over'}">${met?'':'⚠ '}${wkTotal}/${target}</span>
+            </div>
+          </div>`;
+      }
+
       if (g.type === 'milestone') {
         const done = !!(c?.value);
         return `
@@ -1111,6 +1187,82 @@
       }
 
       return '';
+    }
+
+    // ── Drag-and-drop goal reordering ────────────────────────────────────
+    const _dndGroups = {
+      daily:     ['daily_boolean','daily_time','daily_time_min','daily_time_max'],
+      weekly:    ['weekly_count','weekly_time_min','weekly_time_max'],
+      milestone: ['milestone','total_count','total_time_min','total_time_max'],
+    };
+    function _dndGroup(type) {
+      for (const [g, types] of Object.entries(_dndGroups)) if (types.includes(type)) return g;
+      return null;
+    }
+
+    let _dnd = null;
+
+    function initGoalDragDrop() {
+      document.querySelectorAll('[data-goal-id]').forEach(card => {
+        // Add handle if not already present
+        if (!card.querySelector('.dnd-handle')) {
+          const h = document.createElement('span');
+          h.className = 'dnd-handle';
+          h.textContent = '⠿';
+          h.addEventListener('click', e => e.stopPropagation());
+          card.insertBefore(h, card.firstChild);
+        }
+
+        // Pointer-based drag (works on touch + mouse)
+        const handle = card.querySelector('.dnd-handle');
+        handle.addEventListener('pointerdown', e => {
+          e.stopPropagation();
+          _dnd = { goalId: card.dataset.goalId, type: card.dataset.goalType, card, clone: null };
+
+          // Create visual clone
+          const rect = card.getBoundingClientRect();
+          const clone = card.cloneNode(true);
+          clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;pointer-events:none;z-index:9999;margin:0;box-shadow:0 8px 32px rgba(0,0,0,0.18);transform:scale(1.02);`;
+          document.body.appendChild(clone);
+          _dnd.clone = clone;
+          _dnd.offsetX = e.clientX - rect.left;
+          _dnd.offsetY = e.clientY - rect.top;
+
+          card.classList.add('dnd-dragging');
+          handle.setPointerCapture(e.pointerId);
+        });
+
+        handle.addEventListener('pointermove', e => {
+          if (!_dnd || !_dnd.clone) return;
+          _dnd.clone.style.left = (e.clientX - _dnd.offsetX) + 'px';
+          _dnd.clone.style.top  = (e.clientY - _dnd.offsetY) + 'px';
+
+          // Highlight target
+          _dnd.clone.style.pointerEvents = 'none';
+          const el = document.elementFromPoint(e.clientX, e.clientY);
+          _dnd.clone.style.pointerEvents = 'none';
+          const target = el?.closest('[data-goal-id]');
+          document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
+          if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type)) {
+            target.classList.add('dnd-over');
+          }
+        });
+
+        handle.addEventListener('pointerup', e => {
+          if (!_dnd) return;
+          _dnd.clone?.remove();
+          _dnd.card.classList.remove('dnd-dragging');
+          document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
+
+          const el = document.elementFromPoint(e.clientX, e.clientY);
+          const target = el?.closest('[data-goal-id]');
+          if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type)) {
+            db.reorderGoals(_dnd.goalId, target.dataset.goalId);
+            renderContent();
+          }
+          _dnd = null;
+        });
+      });
     }
 
     function checkFailed() {
@@ -1239,7 +1391,7 @@
       const title = addGoalTitle.trim();
       if (!title) return;
       const goals = db.getGoalsForUser();
-      if (goals.length >= 10) { alert('Max 10 goals per cohort.'); return; }
+      if (goals.length >= 15) { alert('Max 15 goals per cohort.'); return; }
       const config = {};
       let type;
       if (addGoalFrame === 'milestone') {
@@ -1247,11 +1399,16 @@
         if (addGoalMetric === 'count')    { type = 'total_count';    config.totalTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||10; }
         if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
         if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||300; }
+      } else if (addGoalFrame === 'weekly') {
+        if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
+        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
+        if (addGoalMetric === 'min_time') { type = 'weekly_time_min'; config.weeklyTargetMinutes   = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
+        if (addGoalMetric === 'max_time') { type = 'weekly_time_max'; config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
-        if (addGoalMetric === 'count')    { type = 'weekly_count'; config.weeklyTarget = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
-        if (addGoalMetric === 'min_time') { type = 'daily_time_min'; config.weeklyTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
-        if (addGoalMetric === 'max_time') { type = 'daily_time_max'; config.weeklyMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
+        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
+        if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
+        if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       }
       db.upsertGoal({
         id:`g_${db.uid()}`, type, title, config,

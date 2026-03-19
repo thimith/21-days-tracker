@@ -298,14 +298,14 @@
           if (elapsed >= 7 && total < target) return { status: 'off-track', label: `${total}/${target}` };
           return { status: 'on-track', label: `${total}/${target}` };
         }
-        if (goal.type === 'daily_time' || goal.type === 'daily_time_max') {
+        if (goal.type === 'daily_time' || goal.type === 'daily_time_max' || goal.type === 'weekly_time_max') {
           const wk = this.getCohortWeekNum(cohort.start_date);
           const wkDates = this.getWeekDates(cohort.start_date, wk);
           const total = this.getWeeklyTotal(goal.id, wkDates);
           const max = (goal.config && goal.config.weeklyMaxMinutes) || 120;
           return { status: total <= max ? 'on-track' : 'off-track', label: `${Math.round(total/60*10)/10}h` };
         }
-        if (goal.type === 'daily_time_min') {
+        if (goal.type === 'daily_time_min' || goal.type === 'weekly_time_min') {
           const wk = this.getCohortWeekNum(cohort.start_date);
           const wkDates = this.getWeekDates(cohort.start_date, wk);
           const total = this.getWeeklyTotal(goal.id, wkDates);

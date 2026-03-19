@@ -530,7 +530,7 @@
       // Check goal count
       const { count } = await sb.from('goals').select('*', { count: 'exact', head: true })
         .eq('user_id', goalsMemberId).eq('cohort_id', goalsMemberCohortId);
-      if (count >= 10) { alert('Max 10 goals.'); return; }
+      if (count >= 15) { alert('Max 15 goals.'); return; }
 
       const config = {};
       let type;
@@ -539,6 +539,11 @@
         if (addGoalMetric === 'count')    { type = 'total_count';    config.totalTarget        = parseInt(document.getElementById('agCount')?.value)||10; }
         if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = parseInt(document.getElementById('agTime')?.value)||120; }
         if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('agTime')?.value)||300; }
+      } else if (addGoalFrame === 'weekly') {
+        if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
+        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('agCount')?.value)||3; }
+        if (addGoalMetric === 'min_time') { type = 'weekly_time_min'; config.weeklyTargetMinutes   = parseInt(document.getElementById('agTime')?.value)||60; }
+        if (addGoalMetric === 'max_time') { type = 'weekly_time_max'; config.weeklyMaxMinutes      = parseInt(document.getElementById('agTime')?.value)||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
         if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('agCount')?.value)||3; }
