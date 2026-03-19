@@ -99,14 +99,6 @@
     .member-top {
       display: flex; align-items: center; gap: 10px;
     }
-    .member-avatar {
-      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-      background: var(--orange-lt); color: var(--orange);
-      font-size: 0.82rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .member-avatar.at-risk { background: var(--red-lt);   color: var(--red); }
-    .member-avatar.good    { background: var(--green-lt); color: var(--green); }
     .member-name {
       font-size: 0.86rem; font-weight: 700; color: var(--text);
       letter-spacing: -0.01em; flex: 1; min-width: 0;
@@ -385,6 +377,8 @@
     let expanded = null;
 
     // ── Init ─────────────────────────────────────────────────────────────
+    document.getElementById('content').innerHTML = '<div class="empty-state">Loading…</div>';
+
     (async () => {
       const ok = await loadData();
       if (!ok) return;
@@ -516,7 +510,6 @@
       return `
         <div class="member-card ${cardClass}" onclick="toggleExpand('${member.id}')">
           <div class="member-top">
-            <div class="member-avatar ${avatarClass}">${member.name[0].toUpperCase()}</div>
             <div class="member-name">${member.name}${isSelf?' <span class="member-meta-inline">(you)</span>':''}<span class="member-meta-inline">· ${strikeCount} strike${strikeCount!==1?'s':''}</span></div>
             <div class="member-right">
               ${badge}
