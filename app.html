@@ -189,8 +189,13 @@
       position: relative;
     }
     .goal-card.is-done { background: var(--green-lt); }
-    .goal-card.dnd-dragging { opacity: 0.35; }
-    .goal-card.dnd-over { transform: translateY(-3px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .dnd-placeholder {
+      border-radius: 14px;
+      background: rgba(255,85,0,0.07);
+      border: 2px dashed rgba(255,85,0,0.28);
+      flex-shrink: 0;
+      transition: height 0.12s ease;
+    }
     .goal-card.is-tappable { cursor: pointer; }
     .goal-card.is-tappable:not(.editing):active { transform: scale(0.985); }
     .goal-card.editing { z-index: 10; }
@@ -587,12 +592,18 @@
           locked: g.locked, sort_order: g.order
         }).then(() => {});
       },
-      reorderGoals(fromId, toId) {
+      reorderGoals(fromId, insertBeforeId) {
+        // insertBeforeId: null = move to end of array
         const fromIdx = _c.goals.findIndex(g => g.id === fromId);
-        const toIdx   = _c.goals.findIndex(g => g.id === toId);
-        if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+        if (fromIdx < 0) return;
         const [moved] = _c.goals.splice(fromIdx, 1);
-        _c.goals.splice(toIdx, 0, moved);
+        if (!insertBeforeId) {
+          _c.goals.push(moved);
+        } else {
+          const toIdx = _c.goals.findIndex(g => g.id === insertBeforeId);
+          if (toIdx < 0) { _c.goals.push(moved); }
+          else { _c.goals.splice(toIdx, 0, moved); }
+        }
         _c.goals.forEach((g, i) => { g.order = i; });
         // Persist new order in bulk
         const rows = _c.goals.map(g => ({
@@ -1274,72 +1285,112 @@
       return null;
     }
 
-    let _dnd = null;
-    let _editCardId = null;    // goalId of the card currently in edit mode
-    let _suppressTap = false;  // suppress the card's action after a long-press
+    let _dnd         = null;
+    let _editCardId  = null;
+    let _suppressTap = false;
+    let _lpReady     = null;  // { card, pointerId, startX, startY } — post-long-press, pre-drag
 
     function _exitEditMode() {
       if (!_editCardId) return;
       const prev = document.querySelector(`[data-goal-id="${_editCardId}"]`);
-      if (prev) {
-        prev.classList.remove('editing');
-        prev.querySelector('.goal-edit-overlay')?.remove();
-      }
+      if (prev) { prev.classList.remove('editing'); prev.querySelector('.goal-edit-overlay')?.remove(); }
       _editCardId = null;
     }
 
-    // Exit edit mode when tapping outside any goal card, or onto a different card
     document.addEventListener('pointerdown', e => {
       if (!_editCardId) return;
       const tapped = e.target.closest('[data-goal-id]');
       if (!tapped || tapped.dataset.goalId !== _editCardId) _exitEditMode();
     }, { capture: true });
 
-    function _attachDragToHandle(handle, card) {
-      handle.addEventListener('pointerdown', e => {
-        e.stopPropagation();
-        _dnd = { goalId: card.dataset.goalId, type: card.dataset.goalType, card, clone: null };
-        const rect = card.getBoundingClientRect();
-        const clone = card.cloneNode(true);
-        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;pointer-events:none;z-index:9999;margin:0;box-shadow:0 8px 32px rgba(0,0,0,0.18);transform:scale(1.03);`;
-        document.body.appendChild(clone);
-        _dnd.clone = clone;
-        _dnd.offsetX = e.clientX - rect.left;
-        _dnd.offsetY = e.clientY - rect.top;
-        card.classList.add('dnd-dragging');
-        handle.setPointerCapture(e.pointerId);
-      });
-      handle.addEventListener('pointermove', e => {
-        if (!_dnd?.clone) return;
+    // ── Drag engine ───────────────────────────────────────────────────────
+    function _startDragNow(card, pointerId, startX, startY) {
+      _exitEditMode(); // remove overlay (card is about to be hidden)
+      const rect = card.getBoundingClientRect();
+
+      const clone = card.cloneNode(true);
+      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;`
+        + `opacity:0.92;pointer-events:none;z-index:9999;margin:0;`
+        + `box-shadow:0 12px 40px rgba(0,0,0,0.22);transform:scale(1.04);transition:transform 0.12s;`;
+      document.body.appendChild(clone);
+
+      const ph = document.createElement('div');
+      ph.className = 'dnd-placeholder';
+      ph.style.height = rect.height + 'px';
+      card.after(ph);
+      card.style.display = 'none';
+
+      _dnd = {
+        goalId: card.dataset.goalId, type: card.dataset.goalType,
+        card, clone, placeholder: ph,
+        offsetX: startX - rect.left, offsetY: startY - rect.top,
+      };
+
+      function onMove(e) {
+        if (!_dnd) return;
         _dnd.clone.style.left = (e.clientX - _dnd.offsetX) + 'px';
         _dnd.clone.style.top  = (e.clientY - _dnd.offsetY) + 'px';
-        _dnd.clone.style.pointerEvents = 'none';
-        const el = document.elementFromPoint(e.clientX, e.clientY);
-        _dnd.clone.style.pointerEvents = 'none';
-        const target = el?.closest('[data-goal-id]');
-        document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
-        if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type))
-          target.classList.add('dnd-over');
-      });
-      handle.addEventListener('pointerup', e => {
-        if (!_dnd) return;
-        _dnd.clone?.remove();
-        _dnd.card.classList.remove('dnd-dragging');
-        document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
-        const el = document.elementFromPoint(e.clientX, e.clientY);
-        const target = el?.closest('[data-goal-id]');
-        if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type)) {
-          db.reorderGoals(_dnd.goalId, target.dataset.goalId);
-          renderContent();
-        }
-        _dnd = null;
-      });
+        _movePlaceholder(e.clientX, e.clientY);
+      }
+      function onUp()     { cleanup(); _endDrag(); }
+      function onCancel() { cleanup(); _cancelDrag(); }
+      function cleanup() {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup',   onUp);
+        document.removeEventListener('pointercancel', onCancel);
+      }
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup',   onUp);
+      document.addEventListener('pointercancel', onCancel);
     }
 
-    function _enterEditMode(card) {
-      if (_editCardId === card.dataset.goalId) return; // already editing
-      _exitEditMode();
+    function _movePlaceholder(clientX, clientY) {
+      if (!_dnd) return;
+      const { clone, placeholder, card, type } = _dnd;
+      clone.style.pointerEvents = 'none';
+      placeholder.style.pointerEvents = 'none';
+      const el = document.elementFromPoint(clientX, clientY);
+      clone.style.pointerEvents = '';
+      placeholder.style.pointerEvents = '';
+      if (!el) return;
+      const target = el.closest('[data-goal-id]');
+      if (!target || target === card || _dndGroup(target.dataset.goalType) !== _dndGroup(type)) return;
+      const mid = target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
+      if (clientY < mid) target.before(placeholder);
+      else               target.after(placeholder);
+    }
 
+    function _nextGoalEl(el) {
+      let s = el.nextElementSibling;
+      while (s) { if (s.dataset?.goalId) return s; s = s.nextElementSibling; }
+      return null;
+    }
+
+    function _endDrag() {
+      if (!_dnd) return;
+      const { card, clone, placeholder, goalId } = _dnd;
+      const insertBeforeEl = _nextGoalEl(placeholder);
+      const insertBeforeId = insertBeforeEl?.dataset?.goalId || null;
+      clone.remove();
+      placeholder.remove();
+      card.style.display = '';
+      _dnd = null;
+      db.reorderGoals(goalId, insertBeforeId);
+      renderContent();
+    }
+
+    function _cancelDrag() {
+      if (!_dnd) return;
+      const { card, clone, placeholder } = _dnd;
+      clone.remove(); placeholder.remove(); card.style.display = '';
+      _dnd = null;
+      renderContent();
+    }
+
+    // ── Edit mode (overlay: rename + drag handle) ─────────────────────────
+    function _enterEditMode(card) {
+      if (_editCardId === card.dataset.goalId) return;
+      _exitEditMode();
       const goalId = card.dataset.goalId;
       const goal   = _c.goals.find(g => g.id === goalId);
       const currentTitle = goal?.title || card.querySelector('.goal-title')?.textContent || '';
@@ -1347,7 +1398,6 @@
       card.classList.add('editing');
       _editCardId = goalId;
 
-      // Build overlay
       const overlay = document.createElement('div');
       overlay.className = 'goal-edit-overlay';
 
@@ -1355,7 +1405,12 @@
       handle.className = 'ov-handle';
       handle.textContent = '⠿';
       handle.addEventListener('click', e => e.stopPropagation());
-      _attachDragToHandle(handle, card);
+      // Handle pointerdown also starts drag immediately
+      handle.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        _lpReady = null;
+        _startDragNow(card, e.pointerId, e.clientX, e.clientY);
+      });
 
       const input = document.createElement('input');
       input.className = 'goal-edit-input';
@@ -1385,30 +1440,45 @@
       }
     }
 
+    // ── Per-card long-press + ready-to-drag listeners ─────────────────────
     function initGoalDragDrop() {
       document.querySelectorAll('[data-goal-id]').forEach(card => {
-        let _lpTimer = null, _lpStartX = 0, _lpStartY = 0;
+        let _lpTimer = null, _lpStartX = 0, _lpStartY = 0, _lpPointerId = null;
 
         card.addEventListener('pointerdown', e => {
           if (e.target.closest('button,input,.ov-handle,.goal-edit-overlay')) return;
-          _lpStartX = e.clientX; _lpStartY = e.clientY;
+          _lpStartX = e.clientX; _lpStartY = e.clientY; _lpPointerId = e.pointerId;
           _lpTimer = setTimeout(() => {
             _lpTimer = null;
             _suppressTap = true;
             _enterEditMode(card);
+            // Mark as ready — drag activates on first movement
+            _lpReady = { card, pointerId: _lpPointerId, startX: _lpStartX, startY: _lpStartY };
           }, 480);
         });
 
         card.addEventListener('pointermove', e => {
-          if (!_lpTimer) return;
-          if (Math.abs(e.clientX - _lpStartX) > 6 || Math.abs(e.clientY - _lpStartY) > 6) {
-            clearTimeout(_lpTimer); _lpTimer = null;
+          const dx = e.clientX - _lpStartX, dy = e.clientY - _lpStartY;
+          // Cancel timer if scrolling
+          if (_lpTimer && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+            clearTimeout(_lpTimer); _lpTimer = null; return;
+          }
+          // Activate drag on first movement after long-press
+          if (_lpReady?.card === card && !_dnd && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+            const { pointerId, startX, startY } = _lpReady;
+            _lpReady = null;
+            _startDragNow(card, pointerId, startX, startY);
           }
         });
 
-        const cancelLp = () => { if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; } };
-        card.addEventListener('pointerup',     cancelLp);
-        card.addEventListener('pointercancel', cancelLp);
+        card.addEventListener('pointerup', () => {
+          if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
+          if (_lpReady?.card === card) _lpReady = null; // lifted without dragging → keep edit mode
+        });
+        card.addEventListener('pointercancel', () => {
+          if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
+          _lpReady = null;
+        });
 
         card.addEventListener('click', e => {
           if (_suppressTap) { e.stopImmediatePropagation(); _suppressTap = false; }
