@@ -246,26 +246,28 @@
       members: [], goals: {}, checkins: {}, redemptions: {}
     };
 
+    const localDateStr   = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const parseLocalDate = s => { const [y,m,dd] = s.split('-').map(Number); return new Date(y, m-1, dd); };
+
     // ── Data layer ───────────────────────────────────────────────────────
     const db = {
       // no-op — data comes from Supabase now
       seedIfEmpty() {},
 
       getCohortDay(startDate, targetDate) {
-        const parseLocal = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-        const s = parseLocal(startDate);
-        const t = targetDate ? parseLocal(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
+        const s = parseLocalDate(startDate);
+        const t = targetDate ? parseLocalDate(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
         return Math.floor((t-s)/86400000)+1;
       },
       getCohortWeekNum(startDate, date) {
         return Math.min(3, Math.max(1, Math.ceil(this.getCohortDay(startDate,date)/7)));
       },
       getWeekDates(startDate, weekNum) {
-        const s = new Date(startDate);
-        return Array.from({length:7},(_,i)=>{ const d=new Date(s); d.setDate(d.getDate()+(weekNum-1)*7+i); return d.toISOString().split('T')[0]; });
+        const s = parseLocalDate(startDate);
+        return Array.from({length:7},(_,i)=>{ const d=new Date(s); d.setDate(d.getDate()+(weekNum-1)*7+i); return localDateStr(d); });
       },
       getCohortDates(startDate) {
-        return Array.from({length:21},(_,i)=>{ const d=new Date(startDate); d.setDate(d.getDate()+i); return d.toISOString().split('T')[0]; });
+        return Array.from({length:21},(_,i)=>{ const d=parseLocalDate(startDate); d.setDate(d.getDate()+i); return localDateStr(d); });
       },
       // Cache-backed reads
       getGoalsForUser(userId) { return _c.goals[userId] || []; },
@@ -280,7 +282,7 @@
       getPendingRedemptions(userId) { return this.getRedemptionsForUser(userId).filter(r=>r.status==='pending'); },
 
       getGoalStatus(goal, cohort) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = localDateStr();
         const cDay  = this.getCohortDay(cohort.start_date);
         if (goal.type === 'daily_boolean') {
           const c = this.getCheckin(goal.id, today);

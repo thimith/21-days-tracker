@@ -183,11 +183,10 @@
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-
+    const parseLocalDate = s => { const [y,m,dd] = s.split("-").map(Number); return new Date(y, m-1, dd); };
     function getCohortDay(startDate, targetDate) {
-      const parseLocal = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-      const s = parseLocal(startDate);
-      const t = targetDate ? parseLocal(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
+      const s = parseLocalDate(startDate);
+      const t = targetDate ? parseLocalDate(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
       return Math.floor((t-s)/86400000)+1;
     }
 

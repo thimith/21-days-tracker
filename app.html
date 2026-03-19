@@ -470,7 +470,9 @@
     // STATE
     // ══════════════════════════════════════════════════════════════════════
     let session, user, cohort;
-    let selectedDate = new Date().toISOString().split('T')[0];
+    const localDateStr  = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const parseLocalDate = s => { const [y,m,dd] = s.split('-').map(Number); return new Date(y, m-1, dd); };
+    let selectedDate = localDateStr();
     let addGoalFrame  = 'daily';
     let addGoalMetric = 'boolean';
     let addGoalTitle  = '';
@@ -484,9 +486,8 @@
 
       // ── Pure date helpers (unchanged) ──
       getCohortDay(startDate, targetDate) {
-        const parseLocal = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-        const s = parseLocal(startDate);
-        const t = targetDate ? parseLocal(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
+        const s = parseLocalDate(startDate);
+        const t = targetDate ? parseLocalDate(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
         return Math.floor((t-s)/86400000)+1;
       },
       getCohortWeekNum(startDate, date) {
@@ -494,16 +495,16 @@
         return Math.min(3, Math.max(1, Math.ceil(day/7)));
       },
       getWeekDates(startDate, weekNum) {
-        const s = new Date(startDate);
+        const s = parseLocalDate(startDate);
         return Array.from({length:7}, (_,i) => {
           const d = new Date(s); d.setDate(d.getDate()+(weekNum-1)*7+i);
-          return d.toISOString().split('T')[0];
+          return localDateStr(d);
         });
       },
       getCohortDates(startDate) {
         return Array.from({length:21}, (_,i) => {
-          const d = new Date(startDate); d.setDate(d.getDate()+i);
-          return d.toISOString().split('T')[0];
+          const d = parseLocalDate(startDate); d.setDate(d.getDate()+i);
+          return localDateStr(d);
         });
       },
 
@@ -571,9 +572,9 @@
         if (currentDay < 2) return;
 
         const today = new Date(); today.setHours(0,0,0,0);
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = localDateStr(today);
         const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = localDateStr(yesterday);
 
         const goals = _c.goals;
         const existing = _c.redemptions;
@@ -779,7 +780,7 @@
 
     function renderDots() {
       const dates    = db.getCohortDates(cohort.startDate);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDateStr();
       const day      = db.getCohortDay(cohort.startDate);
       const pct      = Math.max(0, Math.min(100, Math.round(((Math.min(day,21)-1)/21)*100)));
 
@@ -800,7 +801,7 @@
       const tabs  = [];
       for (let i=6; i>=0; i--) {
         const d  = new Date(today); d.setDate(d.getDate()-i);
-        const ds = d.toISOString().split('T')[0];
+        const ds = localDateStr(d);
         const cd = db.getCohortDay(cohort.startDate, ds);
         if (cd < 1 || cd > 21) continue;
         const label = i===0 ? 'Today' : d.toLocaleDateString('en',{weekday:'short'});
@@ -906,7 +907,7 @@
     }
 
     function renderGoalCard(g, date, locked) {
-      const isFuture = date > new Date().toISOString().split('T')[0];
+      const isFuture = date > localDateStr();
       const c = db.getCheckin(g.id, date);
       const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
       const deleteBtn = !locked ? `<button class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
