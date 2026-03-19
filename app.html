@@ -1063,7 +1063,9 @@
     function _renderGoalCardInner(g, date, locked) {
       const isFuture = date > localDateStr();
       const c = db.getCheckin(g.id, date);
-      const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
+      const accentColor = g.config?.color || '';
+      const ctrStyle = accentColor ? ` style="background:${accentColor};color:#fff;padding:2px 8px;border-radius:99px;"` : '';
+      const typeLabel ={ daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
       const deleteBtn = !locked ? `<button type="button" class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
 
       if (g.type === 'daily_boolean') {
@@ -1129,7 +1131,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}">${wkTotal}/${maxMin}</span>
+              <span class="time-counter${over?' over':''}"${ctrStyle}>${wkTotal}/${maxMin}</span>
             </div>
             <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
@@ -1155,7 +1157,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${met?' met':''}">${met?'✓ ':''}${wkTotal}/${target}</span>
+              <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${wkTotal}/${target}</span>
             </div>
             <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
@@ -1181,7 +1183,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+              <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
             </div>
             <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
@@ -1207,7 +1209,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+              <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
             </div>
             <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
@@ -1232,7 +1234,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${met?'':' over'}">${met?'':'⚠ '}${wkTotal}/${target}</span>
+              <span class="time-counter${met?'':' over'}"${ctrStyle}>${met?'':'⚠ '}${wkTotal}/${target}</span>
             </div>
           </div>`;
       }
@@ -1273,7 +1275,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">today</span>
-              <span class="time-counter${met?' met':''}">${met?'✓ ':''}${total}/${target}</span>
+              <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}</span>
             </div>
           </div>`;
       }
@@ -1295,7 +1297,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${met?' met':''}">${met?'✓ ':''}${total}/${target}min</span>
+              <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}min</span>
             </div>
           </div>`;
       }
@@ -1317,7 +1319,7 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${total}/${maxMin}min</span>
+              <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${total}/${maxMin}min</span>
             </div>
           </div>`;
       }
