@@ -1231,6 +1231,8 @@
         const elapsed = Math.min(7, db.getCohortDay(cohort.startDate, date) - (wk-1)*7);
         const met     = elapsed >= 7 ? wkTotal >= target : true;
         const todayV  = c ? Number(c.value)||'' : '';
+        const pct      = Math.min(100, target > 0 ? (wkTotal / target * 100) : 0);
+        const barColor = wkTotal >= target ? 'var(--green)' : 'var(--orange)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1242,7 +1244,10 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${met?'':' over'}"${ctrStyle}>${met?'':'⚠ '}${wkTotal}/${target}</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${met?'':' over'}"${ctrStyle}>${met?'':'⚠ '}${wkTotal}/${target}</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
           </div>`;
       }
@@ -1272,6 +1277,8 @@
         const target   = g.config.totalTarget || 10;
         const met      = total >= target;
         const todayV   = c ? Number(c.value)||'' : '';
+        const pct      = Math.min(100, target > 0 ? (total / target * 100) : 0);
+        const barColor = met ? 'var(--green)' : 'var(--orange)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1283,7 +1290,10 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">today</span>
-              <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
           </div>`;
       }
@@ -1294,6 +1304,8 @@
         const target   = g.config.totalTargetMinutes || 120;
         const met      = total >= target;
         const todayV   = c ? Number(c.value)||'' : '';
+        const pct      = Math.min(100, target > 0 ? (total / target * 100) : 0);
+        const barColor = met ? 'var(--green)' : 'var(--orange)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1305,7 +1317,10 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}min</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}min</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
           </div>`;
       }
@@ -1316,6 +1331,8 @@
         const maxMin   = g.config.totalMaxMinutes || 300;
         const over     = total > maxMin;
         const todayV   = c ? Number(c.value)||'' : '';
+        const pct      = Math.min(100, maxMin > 0 ? (total / maxMin * 100) : 0);
+        const barColor = over ? 'var(--red)' : 'var(--green)';
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1327,7 +1344,10 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${total}/${maxMin}min</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${total}/${maxMin}min</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
           </div>`;
       }
