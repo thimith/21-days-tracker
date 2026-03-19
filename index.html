@@ -196,41 +196,45 @@
     });
 
     async function redirectUser(user) {
-      const { data: p } = await sb.from('profiles').select('role').eq('id', user.id).single();
-      window.location.href = p?.role === 'admin' ? 'admin.html' : 'app.html';
+      // Use email to determine role — no DB query needed
+      window.location.href = user.email === ADMIN_EMAIL ? 'admin.html' : 'app.html';
     }
 
-    async function handleNewSignIn(session) {
-      const user = session.user;
-      const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    async function handleNewSignIn(sessionData) {
+      const user = sessionData.user;
+      if (!user) { window.location.href = 'index.html'; return; }
 
-      if (!profile) {
-        // New user — check for pending invite
-        const token = localStorage.getItem('ft_pending_invite');
-        let prefillName = '';
-        let cohortId = null;
+      // Check for existing profile with a 4s timeout fallback
+      const { data: profile } = await Promise.race([
+        sb.from('profiles').select('id, role').eq('id', user.id).single(),
+        new Promise(resolve => setTimeout(() => resolve({ data: null }), 4000))
+      ]);
 
-        if (token) {
-          const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
-          if (invite && !invite.used) {
-            prefillName = invite.name || '';
-            cohortId = invite.cohort_id;
-          }
-        }
-
-        // Show profile setup form
-        _pendingUser = user;
-        _pendingCohortId = cohortId;
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('successState').style.display = 'none';
-        const setup = document.getElementById('profileSetup');
-        setup.classList.add('active');
-        document.getElementById('setupName').value = prefillName;
-        document.getElementById('setupEmail').value = user.email;
-        document.getElementById('setupName').focus();
-      } else {
+      if (profile) {
+        // Existing user — redirect
         window.location.href = profile.role === 'admin' ? 'admin.html' : 'app.html';
+        return;
       }
+
+      // New user — check for pending invite
+      const token = localStorage.getItem('ft_pending_invite');
+      let prefillName = '';
+      let cohortId = null;
+      if (token) {
+        const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
+        if (invite && !invite.used) { prefillName = invite.name || ''; cohortId = invite.cohort_id; }
+      }
+
+      // Show profile setup form
+      _pendingUser = user;
+      _pendingCohortId = cohortId;
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('successState').style.display = 'none';
+      const setup = document.getElementById('profileSetup');
+      setup.classList.add('active');
+      document.getElementById('setupName').value = prefillName;
+      document.getElementById('setupEmail').value = user.email;
+      document.getElementById('setupName').focus();
     }
 
     async function submitProfile() {
