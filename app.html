@@ -1030,7 +1030,7 @@
           <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleBoolean('${g.id}','${date}')">
             ${deleteBtn}
             <div class="bool-row">
-              ${renameBtn}<div class="goal-title">${g.title}</div>
+              <div class="goal-title">${g.title}</div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
                   <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1053,7 +1053,7 @@
           <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`toggleSession('${g.id}','${date}')`:''}" style="${isFuture?'cursor:default':''}">
             ${deleteBtn}
             <div class="bool-row">
-              ${renameBtn}<div class="goal-title">${g.title}</div>
+              <div class="goal-title">${g.title}</div>
               <div class="session-inline">
                 <div class="session-dots-row">${pips}</div>
                 <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week</div>
