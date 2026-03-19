@@ -135,13 +135,11 @@
     .date-tab.active { background: var(--orange); color: #fff; border-color: var(--orange); }
     .date-tab:not(.active):hover { border-color: var(--orange); color: var(--orange); }
 
-    /* ── Content ─────────────────────────────────────────────────────────── */
-    .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-    .content-wrap { overflow-x: hidden; }
-    @keyframes slideInFromLeft  { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes slideInFromRight { from { transform: translateX( 40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    .slide-back    { animation: slideInFromRight 0.22s cubic-bezier(0.25,0.46,0.45,0.94); }
-    .slide-forward { animation: slideInFromLeft  0.22s cubic-bezier(0.25,0.46,0.45,0.94); }
+    /* ── Pager ───────────────────────────────────────────────────────────── */
+    .pager-wrap { overflow: hidden; width: 100%; }
+    .pager-track { display: flex; will-change: transform; transition: transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94); }
+    .pager-track.no-anim { transition: none !important; }
+    .day-page { min-width: 100%; flex-shrink: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 
     /* ── Redemption card ─────────────────────────────────────────────────── */
     .redemption-card {
@@ -439,7 +437,7 @@
   <div class="date-tabs" id="dateTabs"></div>
 
   <!-- Main content -->
-  <div class="content-wrap"><div class="content" id="content"></div></div>
+  <div class="pager-wrap" id="pagerWrap"><div class="pager-track" id="pagerTrack"></div></div>
 
   <!-- Bottom nav -->
   <nav class="bottom-nav">
@@ -825,31 +823,12 @@
 
 
       if (!cohort) {
-        document.getElementById('content').innerHTML = '<div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div>';
+        document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
       } else {
         render();
       }
     })();
 
-    // ── Swipe gesture to navigate days ────────────────────────────────────
-    (() => {
-      let _tx = null, _ty = null;
-      document.addEventListener('touchstart', e => {
-        _tx = e.touches[0].clientX;
-        _ty = e.touches[0].clientY;
-      }, { passive: true });
-      document.addEventListener('touchend', e => {
-        if (_tx === null || !cohort) return;
-        const dx = e.changedTouches[0].clientX - _tx;
-        const dy = e.changedTouches[0].clientY - _ty;
-        _tx = _ty = null;
-        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // too short or vertical
-        const dates = db.getCohortDates(cohort.startDate);
-        const idx = dates.indexOf(selectedDate);
-        if (dx > 0 && idx > 0)                  selectDate(dates[idx - 1]); // swipe right → go back
-        if (dx < 0 && idx < dates.length - 1)   selectDate(dates[idx + 1]); // swipe left  → go forward
-      }, { passive: true });
-    })();
 
     // ══════════════════════════════════════════════════════════════════════
     // RENDER
@@ -857,7 +836,7 @@
     function render() {
       renderDots();
       renderDateTabs();
-      renderContent();
+      renderPager();
       checkFailed();
     }
 
@@ -906,7 +885,8 @@
       document.getElementById('dateTabs').innerHTML = tabs.join('');
     }
 
-    function renderContent() {
+    // Builds the inner HTML for a single day page
+    function _buildDayHTML(date) {
       const goals   = db.getGoalsForUser();
       const locked  = db.areGoalsLocked();
       const pending = db.getPendingRedemptions();
@@ -943,15 +923,15 @@
 
       if (daily.length) {
         html.push('<div class="goal-group-label">Daily</div>');
-        daily.forEach(g => html.push(renderGoalCard(g, selectedDate, locked)));
+        daily.forEach(g => html.push(renderGoalCard(g, date, locked)));
       }
       if (weekly.length) {
         html.push('<div class="goal-group-label">Weekly</div>');
-        weekly.forEach(g => html.push(renderGoalCard(g, selectedDate, locked)));
+        weekly.forEach(g => html.push(renderGoalCard(g, date, locked)));
       }
       if (milestone.length) {
         html.push('<div class="goal-group-label">21-Day</div>');
-        milestone.forEach(g => html.push(renderGoalCard(g, selectedDate, locked)));
+        milestone.forEach(g => html.push(renderGoalCard(g, date, locked)));
       }
 
       // ── Goal setup (pre Day-2) ──
@@ -959,7 +939,7 @@
         html.push(`
           <div class="setup-banner">
             <div class="setup-banner-title">⚙ Goal Setup</div>
-            <div class="setup-banner-sub">Add up to 10 goals. Locks at midnight tonight.</div>
+            <div class="setup-banner-sub">Add up to 15 goals. Locks at midnight tonight.</div>
             <div class="add-form${addFormOpen?' open':''}" id="addForm">
               <div class="form-field">
                 <label class="form-label">Goal name</label>
@@ -983,11 +963,11 @@
                 </div>
               </div>
               <div class="form-field" id="cfgCountField" style="${addGoalMetric==='count'?'':'display:none'}">
-                <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':'Sessions per week'}</label>
+                <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
                 <input class="form-input" id="cfgCountVal" type="number" inputmode="numeric" min="1" max="63" onwheel="this.blur()" />
               </div>
               <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
-                <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':'Weekly maximum (minutes)')}</label>
+                <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':addGoalFrame==='daily'?'Daily minimum (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':addGoalFrame==='daily'?'Daily maximum (minutes)':'Weekly maximum (minutes)')}</label>
                 <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" />
               </div>
               <div class="form-row">
@@ -999,14 +979,14 @@
           </div>`);
       }
 
-      const contentEl = document.getElementById('content');
-      contentEl.innerHTML = html.join('');
-      if (_slideDir) {
-        contentEl.classList.remove('slide-back', 'slide-forward');
-        void contentEl.offsetWidth; // force reflow
-        contentEl.classList.add(_slideDir === 'back' ? 'slide-back' : 'slide-forward');
-        _slideDir = null;
-      }
+      return html.join('');
+    }
+
+    // Re-renders only the current selected day's page (called after interactions)
+    function renderContent() {
+      const pageEl = document.querySelector(`.day-page[data-date="${selectedDate}"]`);
+      if (!pageEl) return;
+      pageEl.innerHTML = _buildDayHTML(selectedDate);
       initGoalDragDrop();
     }
 
@@ -1346,6 +1326,109 @@
       });
     }
 
+    // ── Horizontal day pager ──────────────────────────────────────────────
+    let _pageIdx   = 0;
+    let _pgDates   = [];
+
+    function goToPage(idx, animated) {
+      const track = document.getElementById('pagerTrack');
+      const wrap  = document.getElementById('pagerWrap');
+      if (!animated) track.classList.add('no-anim');
+      track.style.transform = `translateX(${-idx * wrap.clientWidth}px)`;
+      if (!animated) { void track.offsetWidth; track.classList.remove('no-anim'); }
+      _pageIdx = idx;
+    }
+
+    function _onPageChanged(idx) {
+      if (idx < 0 || idx >= _pgDates.length) return;
+      _pageIdx    = idx;
+      selectedDate = _pgDates[idx];
+      renderDateTabs();
+      renderDots();
+      // Keep active tab scrolled into view
+      const tabsEl = document.getElementById('dateTabs');
+      const active = tabsEl.querySelector('.date-tab.active');
+      if (active) tabsEl.scrollLeft = active.offsetLeft - tabsEl.clientWidth / 2 + active.clientWidth / 2;
+    }
+
+    function selectDate(date) {
+      const idx = _pgDates.indexOf(date);
+      if (idx < 0) return;
+      selectedDate = date;
+      goToPage(idx, true);
+      renderDateTabs();
+      const tabsEl = document.getElementById('dateTabs');
+      const active = tabsEl.querySelector('.date-tab.active');
+      if (active) tabsEl.scrollLeft = active.offsetLeft - tabsEl.clientWidth / 2 + active.clientWidth / 2;
+    }
+
+    function renderPager() {
+      _pgDates = db.getCohortDates(cohort.startDate);
+      const track = document.getElementById('pagerTrack');
+
+      // Build all 21 pages at once
+      track.innerHTML = _pgDates.map(d =>
+        `<div class="day-page" data-date="${d}">${_buildDayHTML(d)}</div>`
+      ).join('');
+
+      // Snap to current date (no animation)
+      const idx = Math.max(0, _pgDates.indexOf(selectedDate));
+      _pageIdx = idx;
+      goToPage(idx, false);
+
+      initGoalDragDrop();
+      _initPagerTouch();
+    }
+
+    function _initPagerTouch() {
+      const wrap  = document.getElementById('pagerWrap');
+      const track = document.getElementById('pagerTrack');
+      let _sx, _sy, _horizontal, _startIdx;
+
+      // Remove old listeners by cloning (safe because pagerWrap is replaced on each renderPager)
+      wrap.addEventListener('touchstart', e => {
+        _sx         = e.touches[0].clientX;
+        _sy         = e.touches[0].clientY;
+        _horizontal = null;
+        _startIdx   = _pageIdx;
+        track.classList.add('no-anim');
+      }, { passive: true });
+
+      wrap.addEventListener('touchmove', e => {
+        const dx = e.touches[0].clientX - _sx;
+        const dy = e.touches[0].clientY - _sy;
+
+        if (_horizontal === null) {
+          if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+          _horizontal = Math.abs(dx) >= Math.abs(dy);
+          if (!_horizontal) { track.classList.remove('no-anim'); return; }
+        }
+        if (!_horizontal) return;
+
+        e.preventDefault();
+        const pageW = wrap.clientWidth;
+        const max   = (_pgDates.length - 1) * pageW;
+        let raw = _startIdx * pageW - dx;
+        // rubber-band at edges
+        if (raw < 0)    raw = raw * 0.25;
+        if (raw > max)  raw = max + (raw - max) * 0.25;
+        track.style.transform = `translateX(${-raw}px)`;
+      }, { passive: false });
+
+      wrap.addEventListener('touchend', e => {
+        track.classList.remove('no-anim');
+        if (!_horizontal) return;
+        const dx   = e.changedTouches[0].clientX - _sx;
+        const dt   = e.timeStamp - (e.target._tsStart || e.timeStamp);
+        let newIdx = _startIdx;
+        // Fast flick OR dragged past threshold
+        if (dx < -40 && _startIdx < _pgDates.length - 1) newIdx = _startIdx + 1;
+        if (dx >  40 && _startIdx > 0)                    newIdx = _startIdx - 1;
+        goToPage(newIdx, true);
+        _onPageChanged(newIdx);
+      }, { passive: true });
+    }
+
     function checkFailed() {
       if (!cohort) return;
       const r = db.getRedemptionsForUser();
@@ -1364,13 +1447,6 @@
     // ══════════════════════════════════════════════════════════════════════
     // INTERACTIONS
     // ══════════════════════════════════════════════════════════════════════
-    let _slideDir = null;
-    function selectDate(date) {
-      _slideDir = date < selectedDate ? 'back' : 'forward';
-      selectedDate = date;
-      renderDateTabs();
-      renderContent();
-    }
 
     function toggleBoolean(goalId, date) {
       const c = db.getCheckin(goalId, date);
