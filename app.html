@@ -185,21 +185,30 @@
       border-radius: 14px;
       padding: 11px 14px 11px 32px;
       box-shadow: var(--shadow);
-      transition: transform 0.12s, opacity 0.12s;
+      transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s, opacity 0.12s;
       position: relative;
-      overflow: hidden;
     }
     .goal-card.is-done { background: var(--green-lt); }
     .dnd-handle {
       position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
-      color: var(--border); font-size: 1.1rem; line-height: 1;
+      color: var(--muted); font-size: 1.1rem; line-height: 1;
       cursor: grab; user-select: none; touch-action: none;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.18s;
     }
-    .dnd-handle:active { cursor: grabbing; color: var(--muted); }
+    .dnd-handle:active { cursor: grabbing; }
     .goal-card.dnd-dragging { opacity: 0.35; }
     .goal-card.dnd-over { transform: translateY(-3px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
     .goal-card.is-tappable { cursor: pointer; }
     .goal-card.is-tappable:active { transform: scale(0.985); }
+    .goal-card.editing {
+      transform: scale(1.025);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+      z-index: 10;
+    }
+    .goal-card.editing .dnd-handle { opacity: 1; pointer-events: auto; }
+    .goal-card.editing .goal-delete { opacity: 1; pointer-events: auto; }
+    .goal-card.editing .goal-rename-btn { opacity: 1; pointer-events: auto; }
     .goal-type-tag {
       font-size: 0.47rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.1em;
@@ -351,7 +360,8 @@
       font-size: 0.8rem; font-weight: 700;
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
+      transition: background 0.15s, opacity 0.18s;
+      opacity: 0; pointer-events: none;
     }
     .goal-delete:hover { background: rgba(255,59,48,0.2); }
     .goal-rename-btn {
@@ -361,7 +371,8 @@
       font-size: 0.8rem;
       border: 1px solid var(--border); cursor: pointer;
       display: inline-flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
+      transition: background 0.15s, opacity 0.18s;
+      opacity: 0; pointer-events: none;
     }
     .goal-rename-btn:hover { background: var(--border); }
 
@@ -986,6 +997,7 @@
 
     // Re-renders only the current selected day's page (called after interactions)
     function renderContent() {
+      _editCardId = null; // exit edit mode on any re-render
       const pageEl = document.querySelector(`.day-page[data-date="${selectedDate}"]`);
       if (!pageEl) return;
       pageEl.innerHTML = _buildDayHTML(selectedDate);
@@ -1264,6 +1276,21 @@
     }
 
     let _dnd = null;
+    let _editCardId = null;    // goalId of the card currently in edit mode
+    let _suppressTap = false;  // suppress the card's action after a long-press
+
+    function _exitEditMode() {
+      if (!_editCardId) return;
+      const prev = document.querySelector(`[data-goal-id="${_editCardId}"]`);
+      if (prev) prev.classList.remove('editing');
+      _editCardId = null;
+    }
+
+    // Exit edit mode when tapping anywhere outside a goal card
+    document.addEventListener('pointerdown', e => {
+      if (!_editCardId) return;
+      if (!e.target.closest('[data-goal-id]')) _exitEditMode();
+    }, { capture: true });
 
     function initGoalDragDrop() {
       document.querySelectorAll('[data-goal-id]').forEach(card => {
@@ -1276,16 +1303,52 @@
           card.insertBefore(h, card.firstChild);
         }
 
-        // Pointer-based drag (works on touch + mouse)
+        // Long-press to enter edit mode
+        let _lpTimer = null;
+        let _lpStartX = 0, _lpStartY = 0;
+
+        card.addEventListener('pointerdown', e => {
+          // Only start long-press on the card itself (not on interactive children)
+          if (e.target.closest('button,input,.dnd-handle')) return;
+          _lpStartX = e.clientX; _lpStartY = e.clientY;
+          _lpTimer = setTimeout(() => {
+            _lpTimer = null;
+            _suppressTap = true;
+            // Exit previous edit card
+            if (_editCardId && _editCardId !== card.dataset.goalId) _exitEditMode();
+            card.classList.add('editing');
+            _editCardId = card.dataset.goalId;
+            // Brief haptic-style scale bounce
+            card.style.transition = 'transform 0.15s, box-shadow 0.15s';
+          }, 480);
+        });
+
+        card.addEventListener('pointermove', e => {
+          if (!_lpTimer) return;
+          const dx = e.clientX - _lpStartX, dy = e.clientY - _lpStartY;
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) { clearTimeout(_lpTimer); _lpTimer = null; }
+        });
+
+        const cancelLp = () => { if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; } };
+        card.addEventListener('pointerup', cancelLp);
+        card.addEventListener('pointercancel', cancelLp);
+
+        // Suppress the tap action for a brief moment after long-press fires
+        card.addEventListener('click', e => {
+          if (_suppressTap) { e.stopImmediatePropagation(); _suppressTap = false; }
+        }, { capture: true });
+
+        // Pointer-based drag — only when card is in edit mode
         const handle = card.querySelector('.dnd-handle');
         handle.addEventListener('pointerdown', e => {
+          if (_editCardId !== card.dataset.goalId) return; // guard
           e.stopPropagation();
           _dnd = { goalId: card.dataset.goalId, type: card.dataset.goalType, card, clone: null };
 
           // Create visual clone
           const rect = card.getBoundingClientRect();
           const clone = card.cloneNode(true);
-          clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;pointer-events:none;z-index:9999;margin:0;box-shadow:0 8px 32px rgba(0,0,0,0.18);transform:scale(1.02);`;
+          clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;pointer-events:none;z-index:9999;margin:0;box-shadow:0 8px 32px rgba(0,0,0,0.18);transform:scale(1.03);`;
           document.body.appendChild(clone);
           _dnd.clone = clone;
           _dnd.offsetX = e.clientX - rect.left;
@@ -1300,7 +1363,6 @@
           _dnd.clone.style.left = (e.clientX - _dnd.offsetX) + 'px';
           _dnd.clone.style.top  = (e.clientY - _dnd.offsetY) + 'px';
 
-          // Highlight target
           _dnd.clone.style.pointerEvents = 'none';
           const el = document.elementFromPoint(e.clientX, e.clientY);
           _dnd.clone.style.pointerEvents = 'none';
