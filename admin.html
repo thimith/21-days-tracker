@@ -251,10 +251,11 @@
           <div class="member-row">
             <div class="member-avatar">${m.name[0].toUpperCase()}</div>
             <div class="member-info">
-              <div class="member-name">${m.name}</div>
+              <div class="member-name" id="mname-${m.id}">${m.name}</div>
               <div class="strikes-row">${pips} ${status}</div>
             </div>
             <div class="member-actions">
+              <button class="icon-btn" onclick="editMemberName('${m.id}')" title="Edit name">✎</button>
               <button class="icon-btn remove" onclick="removeMember('${m.id}')" title="Remove">✕</button>
               <button class="icon-btn" style="background:var(--red-lt);color:var(--red);" onclick="clearStrikes('${m.id}')" title="Clear strikes">↺</button>
             </div>
@@ -331,6 +332,27 @@
         btn.textContent = 'Copied!';
         setTimeout(() => btn.textContent = 'Copy', 2000);
       });
+    }
+
+    async function editMemberName(userId) {
+      const nameEl = document.getElementById(`mname-${userId}`);
+      if (!nameEl) return;
+      const current = nameEl.textContent;
+      const input = document.createElement('input');
+      input.style.cssText = 'font-size:0.88rem;font-weight:700;font-family:inherit;color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--orange);outline:none;padding:0;width:140px;';
+      input.value = current;
+      nameEl.replaceWith(input);
+      input.focus(); input.select();
+      const commit = async () => {
+        const newName = input.value.trim();
+        if (newName && newName !== current) {
+          const { error } = await sb.from('profiles').update({ name: newName }).eq('id', userId);
+          if (error) { alert('Failed: ' + error.message); renderMembers(); return; }
+        }
+        renderMembers();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') renderMembers(); });
     }
 
     async function removeMember(userId) {

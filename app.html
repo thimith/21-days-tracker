@@ -9,6 +9,7 @@
   <link rel="manifest" href="manifest.json">
   <title>Focus Tribe</title>
   <style>
+    html { font-size: 120%; }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
       --orange:    #FF5500;
@@ -32,7 +33,7 @@
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
       background: var(--bg);
       min-height: 100dvh;
-      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      padding-bottom: calc(94px + env(safe-area-inset-bottom));
       -webkit-font-smoothing: antialiased;
     }
 
@@ -224,28 +225,25 @@
     .session-count-label strong { color: var(--text); }
 
     /* Daily time */
-    .time-title-row { display: flex; align-items: center; gap: 10px; }
-    .time-bar-inline { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-    .time-bar-inline-label { font-size: 0.68rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
-    .time-bar-inline-label.over { color: var(--red); }
-    .time-bar-inline-label.met  { color: var(--green); }
-    .time-bar-inline-track { width: 72px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .time-bar-inline-fill { height: 100%; background: var(--orange); border-radius: 3px; transition: width 0.3s; }
-    .time-bar-inline-fill.over { background: var(--red); }
-    .time-bar-inline-fill.met  { background: var(--green); }
-    .time-area { margin-top: 12px; }
-    .time-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    /* Single-line time card */
+    .time-inline-row { display: flex; align-items: center; gap: 8px; }
+    .time-counter { font-size: 0.75rem; font-weight: 700; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .time-counter.over { color: var(--red); }
+    .time-counter.met  { color: var(--green); }
     .time-input {
-      width: 76px; padding: 9px 10px;
+      width: 64px; padding: 7px 8px;
       border: 1.5px solid var(--border); border-radius: 10px;
       font-size: 1rem; font-family: inherit; font-weight: 700;
       color: var(--text); background: var(--bg);
-      text-align: center; outline: none;
+      text-align: center; outline: none; flex-shrink: 0;
       transition: border-color 0.2s;
+      -moz-appearance: textfield;
     }
+    .time-input::-webkit-outer-spin-button,
+    .time-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .time-input:focus { border-color: var(--orange); }
     .time-input:disabled { opacity: 0.5; }
-    .time-unit { font-size: 0.84rem; color: var(--muted); }
+    .time-unit { font-size: 0.84rem; color: var(--muted); flex-shrink: 0; }
     .time-bar-wrap {}
     .time-bar-labels {
       display: flex; justify-content: space-between;
@@ -342,23 +340,33 @@
       transition: background 0.15s;
     }
     .goal-delete:hover { background: rgba(255,59,48,0.2); }
+    .goal-rename-btn {
+      position: absolute; top: 12px; right: 14px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--bg); color: var(--muted);
+      font-size: 0.85rem; font-weight: 700;
+      border: 1px solid var(--border); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .goal-rename-btn:hover { background: var(--border); }
 
     /* ── Bottom nav ──────────────────────────────────────────────────────── */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: var(--card); border-top: 1px solid var(--border);
       display: flex;
-      padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+      padding: 10px 0 max(10px, env(safe-area-inset-bottom));
       z-index: 100;
     }
     .nav-item {
       flex: 1; display: flex; flex-direction: column;
-      align-items: center; gap: 2px; padding: 6px 0;
+      align-items: center; gap: 2px; padding: 10px 0;
       cursor: pointer; text-decoration: none; transition: opacity 0.15s;
     }
     .nav-icon { display: none; }
     .nav-label {
-      font-size: 0.75rem; font-weight: 600; color: var(--muted);
+      font-size: 0.7rem; font-weight: 600; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.06em;
     }
     .nav-item.active .nav-label { color: var(--orange); }
@@ -469,8 +477,9 @@
 
       // ── Pure date helpers (unchanged) ──
       getCohortDay(startDate, targetDate) {
-        const s = new Date(startDate); s.setHours(0,0,0,0);
-        const t = targetDate ? new Date(targetDate) : new Date(); t.setHours(0,0,0,0);
+        const parseLocal = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+        const s = parseLocal(startDate);
+        const t = targetDate ? parseLocal(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
         return Math.floor((t-s)/86400000)+1;
       },
       getCohortWeekNum(startDate, date) {
@@ -742,7 +751,7 @@
         badge.textContent = `Day ${currentDay}`;
       }
       document.getElementById('userAvatar').textContent = (user?.name||'?')[0].toUpperCase();
-      document.getElementById('userNavLabel').textContent = user?.name?.split(' ')[0] || 'Me';
+      // 'Me' label stays as "Me"
       if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
 
       if (!cohort) {
@@ -870,16 +879,14 @@
                   <button class="type-pill${addGoalMetric==='max_time'?' sel':''}" onclick="setAddMetric(this,'max_time')">Max time</button>
                 </div>
               </div>
-              ${addGoalMetric==='count' ? `
-              <div class="form-field">
-                <label class="form-label">${addGoalFrame==='milestone'?'Total sessions over 21 days':'Sessions per week'}</label>
-                <input class="form-input" id="cfgCountVal" type="number" min="1" max="63" placeholder="${addGoalFrame==='milestone'?'e.g. 10':'e.g. 4'}" />
-              </div>` : ''}
-              ${addGoalMetric==='min_time'||addGoalMetric==='max_time' ? `
-              <div class="form-field">
-                <label class="form-label">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':'Weekly maximum (minutes)')}</label>
-                <input class="form-input" id="cfgTimeVal" type="number" min="1" placeholder="e.g. 120 = 2h" />
-              </div>` : ''}
+              <div class="form-field" id="cfgCountField" style="${addGoalMetric==='count'?'':'display:none'}">
+                <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':'Sessions per week'}</label>
+                <input class="form-input" id="cfgCountVal" type="number" inputmode="numeric" min="1" max="63" onwheel="this.blur()" />
+              </div>
+              <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
+                <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':'Weekly maximum (minutes)')}</label>
+                <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" />
+              </div>
               <div class="form-row">
                 <button class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
                 <button class="btn-xs pri" onclick="saveGoal()">Add Goal</button>
@@ -896,7 +903,9 @@
       const isFuture = date > new Date().toISOString().split('T')[0];
       const c = db.getCheckin(g.id, date);
       const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
-      const delBtn = !locked ? `<button class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
+      const delBtn = !locked
+        ? `<button class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>`
+        : `<button class="goal-rename-btn" onclick="startRenameGoal(event,'${g.id}',this)" title="Rename">✎</button>`;
 
       if (g.type === 'daily_boolean') {
         const done = !!(c?.value);
@@ -942,33 +951,24 @@
       }
 
       if (g.type === 'daily_time') {
-        const wk       = db.getCohortWeekNum(cohort.startDate, date);
-        const wkDates  = db.getWeekDates(cohort.startDate, wk);
-        const wkTotal  = db.getWeeklyTotal(g.id, wkDates);
-        const maxMin   = g.config.weeklyMaxMinutes || 120;
-        const pct      = Math.min(100, Math.round((wkTotal/maxMin)*100));
-        const over     = wkTotal > maxMin;
-        const todayV   = c ? Number(c.value)||'' : '';
-        const wkMin    = wkTotal;
-        const maxM     = maxMin;
+        const wk      = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDates = db.getWeekDates(cohort.startDate, wk);
+        const wkTotal = db.getWeeklyTotal(g.id, wkDates);
+        const maxMin  = g.config.weeklyMaxMinutes || 120;
+        const over    = wkTotal > maxMin;
+        const todayV  = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
             ${delBtn}
-            <div class="time-title-row">
+            <div class="time-inline-row">
               <div class="goal-title">${g.title}</div>
-              <div class="time-bar-inline">
-                <div class="time-bar-inline-label${over?' over':''}">${wkMin}/${maxM}min</div>
-                <div class="time-bar-inline-track">
-                  <div class="time-bar-inline-fill${over?' over':''}" style="width:${pct}%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="time-input-row" style="margin-top:9px;">
-              <input class="time-input" type="number" min="0" max="1440"
-                value="${todayV}" placeholder="0"
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
+                value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
-              <span class="time-unit">min today</span>
+              <span class="time-unit">min</span>
+              <span class="time-counter${over?' over':''}">${wkTotal}/${maxMin}</span>
             </div>
           </div>`;
       }
@@ -978,27 +978,20 @@
         const wkDates = db.getWeekDates(cohort.startDate, wk);
         const wkTotal = db.getWeeklyTotal(g.id, wkDates);
         const target  = g.config.weeklyTargetMinutes || 60;
-        const pct     = Math.min(100, Math.round((wkTotal/target)*100));
         const met     = wkTotal >= target;
         const todayV  = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
             ${delBtn}
-            <div class="time-title-row">
+            <div class="time-inline-row">
               <div class="goal-title">${g.title}</div>
-              <div class="time-bar-inline">
-                <div class="time-bar-inline-label${met?' met':''}">${met?'✓ ':''} ${wkTotal}/${target}min</div>
-                <div class="time-bar-inline-track">
-                  <div class="time-bar-inline-fill${met?' met':''}" style="width:${pct}%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="time-input-row" style="margin-top:9px;">
-              <input class="time-input" type="number" min="0" max="1440"
-                value="${todayV}" placeholder="0"
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
+                value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
-              <span class="time-unit">min today</span>
+              <span class="time-unit">min</span>
+              <span class="time-counter${met?' met':''}">${met?'✓ ':''}${wkTotal}/${target}</span>
             </div>
           </div>`;
       }
@@ -1008,27 +1001,20 @@
         const wkDates = db.getWeekDates(cohort.startDate, wk);
         const wkTotal = db.getWeeklyTotal(g.id, wkDates);
         const maxMin  = g.config.weeklyMaxMinutes || 120;
-        const pct     = Math.min(100, Math.round((wkTotal/maxMin)*100));
         const over    = wkTotal > maxMin;
         const todayV  = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
             ${delBtn}
-            <div class="time-title-row">
+            <div class="time-inline-row">
               <div class="goal-title">${g.title}</div>
-              <div class="time-bar-inline">
-                <div class="time-bar-inline-label${over?' over':''}">${over?'⚠ ':''} ${wkTotal}/${maxMin}min</div>
-                <div class="time-bar-inline-track">
-                  <div class="time-bar-inline-fill${over?' over':''}" style="width:${pct}%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="time-input-row" style="margin-top:9px;">
-              <input class="time-input" type="number" min="0" max="1440"
-                value="${todayV}" placeholder="0"
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
+                value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
-              <span class="time-unit">min today</span>
+              <span class="time-unit">min</span>
+              <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
             </div>
           </div>`;
       }
@@ -1053,84 +1039,67 @@
       }
 
       if (g.type === 'total_count') {
-        const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
-        const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
-        const target    = g.config.totalTarget || 10;
-        const pct       = Math.min(100, Math.round(total/target*100));
-        const met       = total >= target;
+        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const total    = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
+        const target   = g.config.totalTarget || 10;
+        const met      = total >= target;
+        const todayV   = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
             ${delBtn}
-            <div class="time-title-row">
+            <div class="time-inline-row">
               <div class="goal-title">${g.title}</div>
-              <div class="time-bar-inline">
-                <div class="time-bar-inline-label${met?' met':''}">${total}/${target} sessions</div>
-                <div class="time-bar-inline-track">
-                  <div class="time-bar-inline-fill" style="width:${pct}%;${met?'background:var(--green)':''}"></div>
-                </div>
-              </div>
-            </div>
-            <div class="time-input-row" style="margin-top:9px;">
-              <input class="time-input" type="number" min="0" max="1" value="${c?.value||0}" placeholder="0"
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1"
+                value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
-              <span class="time-unit">session today</span>
+              <span class="time-unit">today</span>
+              <span class="time-counter${met?' met':''}">${met?'✓ ':''}${total}/${target}</span>
             </div>
           </div>`;
       }
 
       if (g.type === 'total_time_min') {
-        const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
-        const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
-        const target    = g.config.totalTargetMinutes || 120;
-        const pct       = Math.min(100, Math.round(total/target*100));
-        const met       = total >= target;
-        const todayV    = c?.value || '';
+        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const total    = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
+        const target   = g.config.totalTargetMinutes || 120;
+        const met      = total >= target;
+        const todayV   = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
             ${delBtn}
-            <div class="time-title-row">
+            <div class="time-inline-row">
               <div class="goal-title">${g.title}</div>
-              <div class="time-bar-inline">
-                <div class="time-bar-inline-label${met?' met':''}">${total}/${target}min total</div>
-                <div class="time-bar-inline-track">
-                  <div class="time-bar-inline-fill" style="width:${pct}%;${met?'background:var(--green)':''}"></div>
-                </div>
-              </div>
-            </div>
-            <div class="time-input-row" style="margin-top:9px;">
-              <input class="time-input" type="number" min="0" max="1440" value="${todayV}" placeholder="0"
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
+                value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
-              <span class="time-unit">min today</span>
+              <span class="time-unit">min</span>
+              <span class="time-counter${met?' met':''}">${met?'✓ ':''}${total}/${target}min</span>
             </div>
           </div>`;
       }
 
       if (g.type === 'total_time_max') {
-        const allDates  = cohort ? db.getCohortDates(cohort.startDate) : [];
-        const total     = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
-        const maxMin    = g.config.totalMaxMinutes || 300;
-        const pct       = Math.min(100, Math.round(total/maxMin*100));
-        const over      = total > maxMin;
-        const todayV    = c?.value || '';
+        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const total    = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
+        const maxMin   = g.config.totalMaxMinutes || 300;
+        const over     = total > maxMin;
+        const todayV   = c ? Number(c.value)||'' : '';
         return `
           <div class="goal-card">
             ${delBtn}
-            <div class="time-title-row">
+            <div class="time-inline-row">
               <div class="goal-title">${g.title}</div>
-              <div class="time-bar-inline">
-                <div class="time-bar-inline-label${over?' over':''}">${over?'⚠ ':''}${total}/${maxMin}min total</div>
-                <div class="time-bar-inline-track">
-                  <div class="time-bar-inline-fill${over?' over':''}" style="width:${pct}%"></div>
-                </div>
-              </div>
-            </div>
-            <div class="time-input-row" style="margin-top:9px;">
-              <input class="time-input" type="number" min="0" max="1440" value="${todayV}" placeholder="0"
+              <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
+                value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
+                onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
-              <span class="time-unit">min today</span>
+              <span class="time-unit">min</span>
+              <span class="time-counter${over?' over':''}">${over?'⚠ ':''}${total}/${maxMin}min</span>
             </div>
           </div>`;
       }
@@ -1193,17 +1162,67 @@
       renderContent();
     }
 
-    function openAddForm()  { addFormOpen=true;  renderContent(); }
-    function closeAddForm() { addFormOpen=false; addGoalTitle=''; renderContent(); }
+    function startRenameGoal(e, goalId, btn) {
+      e.stopPropagation();
+      const card = btn.closest('.goal-card');
+      const titleEl = card.querySelector('.goal-title');
+      const current = titleEl.textContent;
+      const input = document.createElement('input');
+      input.style.cssText = 'flex:1;min-width:0;font-size:inherit;font-weight:700;font-family:inherit;color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--orange);outline:none;padding:0;';
+      input.value = current;
+      titleEl.replaceWith(input);
+      btn.style.display = 'none';
+      input.focus(); input.select();
+      const commit = async () => {
+        const newTitle = input.value.trim();
+        if (newTitle && newTitle !== current) {
+          const goal = _c.goals.find(g => g.id === goalId);
+          if (goal) { goal.title = newTitle; sb.from('goals').update({ title: newTitle }).eq('id', goalId).then(() => {}); }
+        }
+        renderContent();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') renderContent(); });
+    }
+
+    function openAddForm() {
+      addFormOpen = true;
+      document.getElementById('addForm').classList.add('open');
+      document.getElementById('addGoalBtn').style.display = 'none';
+    }
+    function closeAddForm() {
+      addFormOpen = false; addGoalTitle = '';
+      document.getElementById('addForm').classList.remove('open');
+      document.getElementById('addGoalBtn').style.display = '';
+      const t = document.getElementById('newTitle'); if (t) t.value = '';
+    }
 
     function setAddFrame(btn, frame) {
       addGoalFrame = frame;
-      renderContent();
+      btn.closest('.type-pills').querySelectorAll('.type-pill').forEach(p => p.classList.remove('sel'));
+      btn.classList.add('sel');
+      _syncCfgFields();
     }
 
     function setAddMetric(btn, metric) {
       addGoalMetric = metric;
-      renderContent();
+      btn.closest('.type-pills').querySelectorAll('.type-pill').forEach(p => p.classList.remove('sel'));
+      btn.classList.add('sel');
+      _syncCfgFields();
+    }
+
+    function _syncCfgFields() {
+      const cf = document.getElementById('cfgCountField');
+      const tf = document.getElementById('cfgTimeField');
+      if (!cf || !tf) return;
+      cf.style.display = addGoalMetric === 'count' ? '' : 'none';
+      tf.style.display = (addGoalMetric === 'min_time' || addGoalMetric === 'max_time') ? '' : 'none';
+      const cl = document.getElementById('cfgCountLabel');
+      const tl = document.getElementById('cfgTimeLabel');
+      if (cl) cl.textContent = addGoalFrame === 'milestone' ? 'Total sessions over 21 days' : 'Sessions per week';
+      if (tl) tl.textContent = addGoalMetric === 'min_time'
+        ? (addGoalFrame === 'milestone' ? 'Total minimum over 21 days (minutes)' : 'Weekly minimum (minutes)')
+        : (addGoalFrame === 'milestone' ? 'Total maximum over 21 days (minutes)' : 'Weekly maximum (minutes)');
     }
 
     function saveGoal() {
