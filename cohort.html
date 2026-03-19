@@ -295,9 +295,8 @@
           const total = this.getWeeklyTotal(goal.id, wkDates);
           const target = (goal.config && goal.config.weeklyTarget) || 1;
           const elapsed = Math.min(7, this.getCohortDay(cohort.start_date, today) - (wk-1)*7);
-          if (total >= target) return { status: 'on-track', label: `${total}/${target}` };
-          if (elapsed >= 7)    return { status: 'off-track', label: `${total}/${target}` };
-          return { status: 'pending', label: `${total}/${target}` };
+          if (elapsed >= 7 && total < target) return { status: 'off-track', label: `${total}/${target}` };
+          return { status: 'on-track', label: `${total}/${target}` };
         }
         if (goal.type === 'daily_time' || goal.type === 'daily_time_max') {
           const wk = this.getCohortWeekNum(cohort.start_date);
@@ -312,9 +311,8 @@
           const total = this.getWeeklyTotal(goal.id, wkDates);
           const target = (goal.config && goal.config.weeklyTargetMinutes) || 60;
           const elapsed = Math.min(7, this.getCohortDay(cohort.start_date, today) - (wk-1)*7);
-          if (total >= target) return { status: 'on-track', label: `${Math.round(total/60*10)/10}h` };
-          if (elapsed >= 7)    return { status: 'off-track', label: `${Math.round(total/60*10)/10}h` };
-          return { status: 'pending', label: `${Math.round(total/60*10)/10}h` };
+          if (elapsed >= 7 && total < target) return { status: 'off-track', label: `${Math.round(total/60*10)/10}h` };
+          return { status: 'on-track', label: `${Math.round(total/60*10)/10}h` };
         }
         if (goal.type === 'milestone') {
           const dates = this.getCohortDates(cohort.start_date);
