@@ -60,18 +60,7 @@
     }
     .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
     .header-right { display: flex; align-items: center; gap: 10px; }
-    .day-badge {
-      background: var(--orange);
-      color: #fff;
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 100px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .day-badge.upcoming { background: var(--muted); }
-    .day-badge.complete { background: var(--green); }
+
 
     /* ── Progress strip ──────────────────────────────────────────────────── */
     .progress-section {
@@ -461,9 +450,6 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-    <div class="header-right">
-      <div class="day-badge" id="dayBadge">—</div>
-    </div>
   </div>
 
   <!-- Progress strip -->
@@ -857,17 +843,6 @@
 
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
 
-      const currentDay = cohort ? db.getCohortDay(cohort.startDate) : 0;
-      const badge = document.getElementById('dayBadge');
-      if (!cohort) {
-        badge.textContent = 'No cohort';
-      } else if (currentDay < 1) {
-        badge.textContent = 'Upcoming'; badge.classList.add('upcoming');
-      } else if (currentDay > 21) {
-        badge.textContent = 'Complete'; badge.classList.add('complete');
-      } else {
-        badge.textContent = `Day ${currentDay}`;
-      }
       if (!cohort) {
         document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
       } else {
