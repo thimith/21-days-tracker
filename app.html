@@ -608,10 +608,13 @@
 
         for (const g of goals) {
           if (g.type === 'daily_boolean') {
-            const yDay = currentDay - 1;
-            if (yDay >= 1 && yDay <= 21) {
-              const v = _c.checkins[`${g.id}_${yesterdayStr}`];
-              if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `Missed: ${g.title}`);
+            // Only evaluate at end of week (day 8, 15, 22) — never mid-week
+            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
+              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+              const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
+              const missed = wkDates.filter(d => !_c.checkins[`${g.id}_${d}`]).length;
+              if (missed > 0)
+                addF(prevWk, `Missed ${missed}/${wkDates.length} days: ${g.title}`);
             }
           } else if (g.type === 'weekly_count') {
             if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
