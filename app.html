@@ -183,32 +183,53 @@
     .goal-card {
       background: var(--card);
       border-radius: 14px;
-      padding: 11px 14px 11px 32px;
+      padding: 11px 14px;
       box-shadow: var(--shadow);
       transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s, opacity 0.12s;
       position: relative;
     }
     .goal-card.is-done { background: var(--green-lt); }
-    .dnd-handle {
-      position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
-      color: var(--muted); font-size: 1.1rem; line-height: 1;
-      cursor: grab; user-select: none; touch-action: none;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.18s;
-    }
-    .dnd-handle:active { cursor: grabbing; }
     .goal-card.dnd-dragging { opacity: 0.35; }
     .goal-card.dnd-over { transform: translateY(-3px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
     .goal-card.is-tappable { cursor: pointer; }
-    .goal-card.is-tappable:active { transform: scale(0.985); }
-    .goal-card.editing {
-      transform: scale(1.025);
-      box-shadow: 0 8px 28px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
-      z-index: 10;
+    .goal-card.is-tappable:not(.editing):active { transform: scale(0.985); }
+    .goal-card.editing { z-index: 10; }
+
+    /* Edit overlay (frosted glass) */
+    .goal-edit-overlay {
+      position: absolute; inset: 0; z-index: 5;
+      background: rgba(255,255,255,0.86);
+      backdrop-filter: blur(8px) saturate(1.5);
+      -webkit-backdrop-filter: blur(8px) saturate(1.5);
+      border-radius: 14px;
+      display: flex; align-items: center;
+      padding: 0 10px 0 4px; gap: 8px;
+      animation: overlayIn 0.18s ease;
     }
-    .goal-card.editing .dnd-handle { opacity: 1; pointer-events: auto; }
-    .goal-card.editing .goal-delete { opacity: 1; pointer-events: auto; }
-    .goal-card.editing .goal-rename-btn { opacity: 1; pointer-events: auto; }
+    @keyframes overlayIn { from { opacity:0; } to { opacity:1; } }
+    .ov-handle {
+      flex-shrink: 0; padding: 6px 6px;
+      color: var(--muted); font-size: 1.1rem; line-height: 1;
+      cursor: grab; user-select: none; touch-action: none;
+    }
+    .ov-handle:active { cursor: grabbing; color: var(--text); }
+    .goal-edit-input {
+      flex: 1; min-width: 0;
+      font-size: 0.71rem; font-weight: 700; font-family: inherit;
+      color: var(--text); letter-spacing: -0.01em;
+      background: transparent; border: none;
+      border-bottom: 2px solid var(--orange);
+      outline: none; padding: 2px 0;
+    }
+    .goal-edit-save {
+      flex-shrink: 0;
+      padding: 5px 11px;
+      background: var(--orange); color: #fff;
+      font-size: 0.65rem; font-weight: 700; font-family: inherit;
+      border: none; border-radius: 8px; cursor: pointer;
+      letter-spacing: 0.02em;
+    }
+    .goal-edit-save:active { background: var(--orange-dk); }
     .goal-type-tag {
       font-size: 0.47rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.1em;
@@ -352,29 +373,17 @@
     .btn-xs.pri { background: var(--orange); color: #fff; }
     .btn-xs.sec { background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); }
 
-    /* ── Goal delete button (setup mode) ─────────────────────────────────── */
+    /* ── Goal delete button (setup / unlocked mode) ──────────────────────── */
     .goal-delete {
-      position: absolute; top: 12px; right: 14px;
+      position: absolute; top: 10px; right: 10px;
       width: 22px; height: 22px; border-radius: 50%;
       background: var(--red-lt); color: var(--red);
       font-size: 0.8rem; font-weight: 700;
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, opacity 0.18s;
-      opacity: 0; pointer-events: none;
+      transition: background 0.15s;
     }
     .goal-delete:hover { background: rgba(255,59,48,0.2); }
-    .goal-rename-btn {
-      flex-shrink: 0;
-      width: 24px; height: 24px; border-radius: 6px;
-      background: var(--bg); color: var(--muted);
-      font-size: 0.8rem;
-      border: 1px solid var(--border); cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center;
-      transition: background 0.15s, opacity 0.18s;
-      opacity: 0; pointer-events: none;
-    }
-    .goal-rename-btn:hover { background: var(--border); }
 
     /* ── Bottom nav ──────────────────────────────────────────────────────── */
     .bottom-nav {
@@ -1014,7 +1023,6 @@
       const c = db.getCheckin(g.id, date);
       const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
       const deleteBtn = !locked ? `<button type="button" class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
-      const renameBtn = locked  ? `<button type="button" class="goal-rename-btn" onclick="startRenameGoal(event,'${g.id}',this)" title="Rename">✎</button>` : '';
 
       if (g.type === 'daily_boolean') {
         const done = !!(c?.value);
@@ -1069,8 +1077,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1092,8 +1099,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1115,8 +1121,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1138,8 +1143,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1162,8 +1166,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1181,8 +1184,7 @@
         return `
           <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleMilestone('${g.id}')">
             ${deleteBtn}
-            <div class="milestone-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="milestone-row">              <div class="goal-title">${g.title}</div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
                   <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1204,8 +1206,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1226,8 +1227,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1248,8 +1248,7 @@
         return `
           <div class="goal-card">
             ${deleteBtn}
-            <div class="time-inline-row">${renameBtn}
-              <div class="goal-title">${g.title}</div>
+            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
                 oninput="updateTime('${g.id}','${date}',this.value)"
@@ -1282,111 +1281,138 @@
     function _exitEditMode() {
       if (!_editCardId) return;
       const prev = document.querySelector(`[data-goal-id="${_editCardId}"]`);
-      if (prev) prev.classList.remove('editing');
+      if (prev) {
+        prev.classList.remove('editing');
+        prev.querySelector('.goal-edit-overlay')?.remove();
+      }
       _editCardId = null;
     }
 
-    // Exit edit mode when tapping anywhere outside a goal card
+    // Exit edit mode when tapping outside any goal card, or onto a different card
     document.addEventListener('pointerdown', e => {
       if (!_editCardId) return;
-      if (!e.target.closest('[data-goal-id]')) _exitEditMode();
+      const tapped = e.target.closest('[data-goal-id]');
+      if (!tapped || tapped.dataset.goalId !== _editCardId) _exitEditMode();
     }, { capture: true });
+
+    function _attachDragToHandle(handle, card) {
+      handle.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        _dnd = { goalId: card.dataset.goalId, type: card.dataset.goalType, card, clone: null };
+        const rect = card.getBoundingClientRect();
+        const clone = card.cloneNode(true);
+        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;pointer-events:none;z-index:9999;margin:0;box-shadow:0 8px 32px rgba(0,0,0,0.18);transform:scale(1.03);`;
+        document.body.appendChild(clone);
+        _dnd.clone = clone;
+        _dnd.offsetX = e.clientX - rect.left;
+        _dnd.offsetY = e.clientY - rect.top;
+        card.classList.add('dnd-dragging');
+        handle.setPointerCapture(e.pointerId);
+      });
+      handle.addEventListener('pointermove', e => {
+        if (!_dnd?.clone) return;
+        _dnd.clone.style.left = (e.clientX - _dnd.offsetX) + 'px';
+        _dnd.clone.style.top  = (e.clientY - _dnd.offsetY) + 'px';
+        _dnd.clone.style.pointerEvents = 'none';
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        _dnd.clone.style.pointerEvents = 'none';
+        const target = el?.closest('[data-goal-id]');
+        document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
+        if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type))
+          target.classList.add('dnd-over');
+      });
+      handle.addEventListener('pointerup', e => {
+        if (!_dnd) return;
+        _dnd.clone?.remove();
+        _dnd.card.classList.remove('dnd-dragging');
+        document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const target = el?.closest('[data-goal-id]');
+        if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type)) {
+          db.reorderGoals(_dnd.goalId, target.dataset.goalId);
+          renderContent();
+        }
+        _dnd = null;
+      });
+    }
+
+    function _enterEditMode(card) {
+      if (_editCardId === card.dataset.goalId) return; // already editing
+      _exitEditMode();
+
+      const goalId = card.dataset.goalId;
+      const goal   = _c.goals.find(g => g.id === goalId);
+      const currentTitle = goal?.title || card.querySelector('.goal-title')?.textContent || '';
+
+      card.classList.add('editing');
+      _editCardId = goalId;
+
+      // Build overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'goal-edit-overlay';
+
+      const handle = document.createElement('span');
+      handle.className = 'ov-handle';
+      handle.textContent = '⠿';
+      handle.addEventListener('click', e => e.stopPropagation());
+      _attachDragToHandle(handle, card);
+
+      const input = document.createElement('input');
+      input.className = 'goal-edit-input';
+      input.value = currentTitle;
+      input.addEventListener('click',      e => e.stopPropagation());
+      input.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.preventDefault(); commitSave(); }
+        if (e.key === 'Escape') { _exitEditMode(); }
+      });
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'goal-edit-save';
+      saveBtn.textContent = 'Save';
+      saveBtn.addEventListener('click', e => { e.stopPropagation(); commitSave(); });
+
+      overlay.append(handle, input, saveBtn);
+      card.appendChild(overlay);
+      setTimeout(() => { input.focus(); input.select(); }, 40);
+
+      function commitSave() {
+        const newTitle = input.value.trim();
+        if (newTitle && newTitle !== currentTitle) {
+          if (goal) { goal.title = newTitle; sb.from('goals').update({ title: newTitle }).eq('id', goalId).then(() => {}); }
+        }
+        renderContent();
+      }
+    }
 
     function initGoalDragDrop() {
       document.querySelectorAll('[data-goal-id]').forEach(card => {
-        // Add handle if not already present
-        if (!card.querySelector('.dnd-handle')) {
-          const h = document.createElement('span');
-          h.className = 'dnd-handle';
-          h.textContent = '⠿';
-          h.addEventListener('click', e => e.stopPropagation());
-          card.insertBefore(h, card.firstChild);
-        }
-
-        // Long-press to enter edit mode
-        let _lpTimer = null;
-        let _lpStartX = 0, _lpStartY = 0;
+        let _lpTimer = null, _lpStartX = 0, _lpStartY = 0;
 
         card.addEventListener('pointerdown', e => {
-          // Only start long-press on the card itself (not on interactive children)
-          if (e.target.closest('button,input,.dnd-handle')) return;
+          if (e.target.closest('button,input,.ov-handle,.goal-edit-overlay')) return;
           _lpStartX = e.clientX; _lpStartY = e.clientY;
           _lpTimer = setTimeout(() => {
             _lpTimer = null;
             _suppressTap = true;
-            // Exit previous edit card
-            if (_editCardId && _editCardId !== card.dataset.goalId) _exitEditMode();
-            card.classList.add('editing');
-            _editCardId = card.dataset.goalId;
-            // Brief haptic-style scale bounce
-            card.style.transition = 'transform 0.15s, box-shadow 0.15s';
+            _enterEditMode(card);
           }, 480);
         });
 
         card.addEventListener('pointermove', e => {
           if (!_lpTimer) return;
-          const dx = e.clientX - _lpStartX, dy = e.clientY - _lpStartY;
-          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) { clearTimeout(_lpTimer); _lpTimer = null; }
+          if (Math.abs(e.clientX - _lpStartX) > 6 || Math.abs(e.clientY - _lpStartY) > 6) {
+            clearTimeout(_lpTimer); _lpTimer = null;
+          }
         });
 
         const cancelLp = () => { if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; } };
-        card.addEventListener('pointerup', cancelLp);
+        card.addEventListener('pointerup',     cancelLp);
         card.addEventListener('pointercancel', cancelLp);
 
-        // Suppress the tap action for a brief moment after long-press fires
         card.addEventListener('click', e => {
           if (_suppressTap) { e.stopImmediatePropagation(); _suppressTap = false; }
         }, { capture: true });
-
-        // Pointer-based drag — only when card is in edit mode
-        const handle = card.querySelector('.dnd-handle');
-        handle.addEventListener('pointerdown', e => {
-          if (_editCardId !== card.dataset.goalId) return; // guard
-          e.stopPropagation();
-          _dnd = { goalId: card.dataset.goalId, type: card.dataset.goalType, card, clone: null };
-
-          // Create visual clone
-          const rect = card.getBoundingClientRect();
-          const clone = card.cloneNode(true);
-          clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;pointer-events:none;z-index:9999;margin:0;box-shadow:0 8px 32px rgba(0,0,0,0.18);transform:scale(1.03);`;
-          document.body.appendChild(clone);
-          _dnd.clone = clone;
-          _dnd.offsetX = e.clientX - rect.left;
-          _dnd.offsetY = e.clientY - rect.top;
-
-          card.classList.add('dnd-dragging');
-          handle.setPointerCapture(e.pointerId);
-        });
-
-        handle.addEventListener('pointermove', e => {
-          if (!_dnd || !_dnd.clone) return;
-          _dnd.clone.style.left = (e.clientX - _dnd.offsetX) + 'px';
-          _dnd.clone.style.top  = (e.clientY - _dnd.offsetY) + 'px';
-
-          _dnd.clone.style.pointerEvents = 'none';
-          const el = document.elementFromPoint(e.clientX, e.clientY);
-          _dnd.clone.style.pointerEvents = 'none';
-          const target = el?.closest('[data-goal-id]');
-          document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
-          if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type)) {
-            target.classList.add('dnd-over');
-          }
-        });
-
-        handle.addEventListener('pointerup', e => {
-          if (!_dnd) return;
-          _dnd.clone?.remove();
-          _dnd.card.classList.remove('dnd-dragging');
-          document.querySelectorAll('.dnd-over').forEach(c => c.classList.remove('dnd-over'));
-
-          const el = document.elementFromPoint(e.clientX, e.clientY);
-          const target = el?.closest('[data-goal-id]');
-          if (target && target !== _dnd.card && _dndGroup(target.dataset.goalType) === _dndGroup(_dnd.type)) {
-            db.reorderGoals(_dnd.goalId, target.dataset.goalId);
-            renderContent();
-          }
-          _dnd = null;
-        });
       });
     }
 
@@ -1505,32 +1531,6 @@
       renderContent();
     }
 
-    function startRenameGoal(e, goalId, btn) {
-      e.stopPropagation();
-      const card = btn.closest('.goal-card');
-      const savedOnclick = card.onclick;
-      card.onclick = null;
-      const titleEl = card.querySelector('.goal-title');
-      const current = titleEl.textContent;
-      const input = document.createElement('input');
-      input.style.cssText = 'flex:1;min-width:0;font-size:inherit;font-weight:700;font-family:inherit;color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--orange);outline:none;padding:0;';
-      input.value = current;
-      input.addEventListener('click', ev => ev.stopPropagation());
-      input.addEventListener('touchstart', ev => ev.stopPropagation());
-      titleEl.replaceWith(input);
-      btn.style.display = 'none';
-      input.focus(); input.select();
-      const commit = async () => {
-        const newTitle = input.value.trim();
-        if (newTitle && newTitle !== current) {
-          const goal = _c.goals.find(g => g.id === goalId);
-          if (goal) { goal.title = newTitle; sb.from('goals').update({ title: newTitle }).eq('id', goalId).then(() => {}); }
-        }
-        renderContent();
-      };
-      input.addEventListener('blur', commit);
-      input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') renderContent(); });
-    }
 
     function openAddForm() {
       addFormOpen = true;
