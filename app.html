@@ -805,7 +805,7 @@
         const cd = db.getCohortDay(cohort.startDate, ds);
         if (cd < 1 || cd > 21) continue;
         const label = i===0 ? 'Today' : d.toLocaleDateString('en',{weekday:'short'});
-        tabs.push(`<button class="date-tab${ds===selectedDate?' active':''}" onclick="selectDate('${ds}')">${label}</button>`);
+        tabs.push(`<button type="button" class="date-tab${ds===selectedDate?' active':''}" onclick="selectDate('${ds}')">${label}</button>`);
       }
       document.getElementById('dateTabs').innerHTML = tabs.join('');
     }
@@ -832,7 +832,7 @@
             </div>
             <div class="redemption-reason">${r.reason}</div>
             ${taskText ? `<div style="margin-top:8px;padding:10px 12px;background:rgba(255,59,48,0.07);border-radius:10px;font-size:0.82rem;color:var(--text);line-height:1.5;"><strong style="color:var(--red);font-size:0.73rem;letter-spacing:0.04em;text-transform:uppercase;">Your task</strong><br>${taskText}</div>` : ''}
-            <button class="btn-redemption-done" onclick="doneRedemption('${r.id}')">Mark Done ✓</button>
+            <button type="button" class="btn-redemption-done" onclick="doneRedemption('${r.id}')">Mark Done ✓</button>
           </div>`);
       }
 
@@ -872,18 +872,18 @@
               <div class="form-field">
                 <label class="form-label">Time frame</label>
                 <div class="type-pills">
-                  <button class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')">Daily</button>
-                  <button class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')">Weekly</button>
-                  <button class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')">21 Days</button>
+                  <button type="button" class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')">Daily</button>
+                  <button type="button" class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')">Weekly</button>
+                  <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')">21 Days</button>
                 </div>
               </div>
               <div class="form-field">
                 <label class="form-label">Type</label>
                 <div class="type-pills">
-                  <button class="type-pill${addGoalMetric==='boolean'?' sel':''}" onclick="setAddMetric(this,'boolean')">Yes / No</button>
-                  <button class="type-pill${addGoalMetric==='count'?' sel':''}" onclick="setAddMetric(this,'count')">Count</button>
-                  <button class="type-pill${addGoalMetric==='min_time'?' sel':''}" onclick="setAddMetric(this,'min_time')">Min time</button>
-                  <button class="type-pill${addGoalMetric==='max_time'?' sel':''}" onclick="setAddMetric(this,'max_time')">Max time</button>
+                  <button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}" onclick="setAddMetric(this,'boolean')">Yes / No</button>
+                  <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}" onclick="setAddMetric(this,'count')">Count</button>
+                  <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}" onclick="setAddMetric(this,'min_time')">Min time</button>
+                  <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}" onclick="setAddMetric(this,'max_time')">Max time</button>
                 </div>
               </div>
               <div class="form-field" id="cfgCountField" style="${addGoalMetric==='count'?'':'display:none'}">
@@ -895,11 +895,11 @@
                 <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" />
               </div>
               <div class="form-row">
-                <button class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
-                <button class="btn-xs pri" onclick="saveGoal()">Add Goal</button>
+                <button type="button" class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
+                <button type="button" class="btn-xs pri" onclick="saveGoal()">Add Goal</button>
               </div>
             </div>
-            <button class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
+            <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
           </div>`);
       }
 
@@ -910,8 +910,8 @@
       const isFuture = date > localDateStr();
       const c = db.getCheckin(g.id, date);
       const typeLabel = { daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
-      const deleteBtn = !locked ? `<button class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
-      const renameBtn = locked  ? `<button class="goal-rename-btn" onclick="startRenameGoal(event,'${g.id}',this)" title="Rename">✎</button>` : '';
+      const deleteBtn = !locked ? `<button type="button" class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
+      const renameBtn = locked  ? `<button type="button" class="goal-rename-btn" onclick="startRenameGoal(event,'${g.id}',this)" title="Rename">✎</button>` : '';
 
       if (g.type === 'daily_boolean') {
         const done = !!(c?.value);
