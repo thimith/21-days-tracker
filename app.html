@@ -1148,6 +1148,7 @@
         const todayV  = c ? Number(c.value)||'' : '';
         const pct     = Math.min(100, target > 0 ? (wkTotal / target * 100) : 0);
         const barColor = met ? 'var(--green)' : (accentColor || 'var(--orange)');
+        const thisCtrStyle = met ? ' style="background:var(--green);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1160,7 +1161,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${wkTotal}/${target}</span>
+                <span class="time-counter${met?' met':''}"${thisCtrStyle}>${met?'✓ ':''}${wkTotal}/${target}</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
@@ -1232,7 +1233,8 @@
         const met     = elapsed >= 7 ? wkTotal >= target : true;
         const todayV  = c ? Number(c.value)||'' : '';
         const pct      = Math.min(100, target > 0 ? (wkTotal / target * 100) : 0);
-        const barColor = wkTotal >= target ? 'var(--green)' : 'var(--orange)';
+        const barColor = wkTotal >= target ? 'var(--green)' : (accentColor || 'var(--orange)');
+        const thisCtrStyle = wkTotal >= target ? ' style="background:var(--green);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1245,7 +1247,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${met?'':' over'}"${ctrStyle}>${met?'':'⚠ '}${wkTotal}/${target}</span>
+                <span class="time-counter${met?'':' over'}"${thisCtrStyle}>${met?'✓ ':''}${wkTotal}/${target}</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
@@ -1279,6 +1281,7 @@
         const todayV   = c ? Number(c.value)||'' : '';
         const pct      = Math.min(100, target > 0 ? (total / target * 100) : 0);
         const barColor = met ? 'var(--green)' : (accentColor || 'var(--orange)');
+        const thisCtrStyle = met ? ' style="background:var(--green);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1291,7 +1294,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">today</span>
               <div class="ctr-wrap">
-                <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}</span>
+                <span class="time-counter${met?' met':''}"${thisCtrStyle}>${met?'✓ ':''}${total}/${target}</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
@@ -1306,6 +1309,7 @@
         const todayV   = c ? Number(c.value)||'' : '';
         const pct      = Math.min(100, target > 0 ? (total / target * 100) : 0);
         const barColor = met ? 'var(--green)' : (accentColor || 'var(--orange)');
+        const thisCtrStyle = met ? ' style="background:var(--green);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1318,7 +1322,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${total}/${target}min</span>
+                <span class="time-counter${met?' met':''}"${thisCtrStyle}>${met?'✓ ':''}${total}/${target}min</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
