@@ -1167,11 +1167,15 @@
     function startRenameGoal(e, goalId, btn) {
       e.stopPropagation();
       const card = btn.closest('.goal-card');
+      const savedOnclick = card.onclick;
+      card.onclick = null;
       const titleEl = card.querySelector('.goal-title');
       const current = titleEl.textContent;
       const input = document.createElement('input');
       input.style.cssText = 'flex:1;min-width:0;font-size:inherit;font-weight:700;font-family:inherit;color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--orange);outline:none;padding:0;';
       input.value = current;
+      input.addEventListener('click', ev => ev.stopPropagation());
+      input.addEventListener('touchstart', ev => ev.stopPropagation());
       titleEl.replaceWith(input);
       btn.style.display = 'none';
       input.focus(); input.select();
