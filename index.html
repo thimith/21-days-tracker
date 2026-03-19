@@ -300,8 +300,16 @@
       errMsg.classList.remove('show');
       if (!email || !password) { errMsg.textContent = 'Enter your email and password.'; errMsg.classList.add('show'); return; }
       btn.disabled = true; btn.textContent = 'Signing in…';
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign in'; }
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) {
+        errMsg.textContent = error.message;
+        errMsg.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Sign in';
+        return;
+      }
+      // Handle redirect directly — don't rely on onAuthStateChange
+      redirected = true;
+      await handleNewSignIn(data);
     }
 
     // ── Send magic link ──────────────────────────────────────────────────
