@@ -1377,56 +1377,6 @@
       goToPage(idx, false);
 
       initGoalDragDrop();
-      _initPagerTouch();
-    }
-
-    function _initPagerTouch() {
-      const wrap  = document.getElementById('pagerWrap');
-      const track = document.getElementById('pagerTrack');
-      let _sx, _sy, _horizontal, _startIdx;
-
-      // Remove old listeners by cloning (safe because pagerWrap is replaced on each renderPager)
-      wrap.addEventListener('touchstart', e => {
-        _sx         = e.touches[0].clientX;
-        _sy         = e.touches[0].clientY;
-        _horizontal = null;
-        _startIdx   = _pageIdx;
-        track.classList.add('no-anim');
-      }, { passive: true });
-
-      wrap.addEventListener('touchmove', e => {
-        const dx = e.touches[0].clientX - _sx;
-        const dy = e.touches[0].clientY - _sy;
-
-        if (_horizontal === null) {
-          if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-          _horizontal = Math.abs(dx) >= Math.abs(dy);
-          if (!_horizontal) { track.classList.remove('no-anim'); return; }
-        }
-        if (!_horizontal) return;
-
-        e.preventDefault();
-        const pageW = wrap.clientWidth;
-        const max   = (_pgDates.length - 1) * pageW;
-        let raw = _startIdx * pageW - dx;
-        // rubber-band at edges
-        if (raw < 0)    raw = raw * 0.25;
-        if (raw > max)  raw = max + (raw - max) * 0.25;
-        track.style.transform = `translateX(${-raw}px)`;
-      }, { passive: false });
-
-      wrap.addEventListener('touchend', e => {
-        track.classList.remove('no-anim');
-        if (!_horizontal) return;
-        const dx   = e.changedTouches[0].clientX - _sx;
-        const dt   = e.timeStamp - (e.target._tsStart || e.timeStamp);
-        let newIdx = _startIdx;
-        // Fast flick OR dragged past threshold
-        if (dx < -40 && _startIdx < _pgDates.length - 1) newIdx = _startIdx + 1;
-        if (dx >  40 && _startIdx > 0)                    newIdx = _startIdx - 1;
-        goToPage(newIdx, true);
-        _onPageChanged(newIdx);
-      }, { passive: true });
     }
 
     function checkFailed() {
