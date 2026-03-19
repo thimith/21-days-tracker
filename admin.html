@@ -139,7 +139,7 @@
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span id="lastPushDate" style="font-size:0.68rem;color:var(--muted);"></span>
+      <span id="lastPushDate" style="font-size:0.48rem;color:var(--muted);"></span>
       <div class="admin-badge">Admin</div>
     </div>
   </div>
@@ -176,7 +176,11 @@
       .then(d => {
         const date = new Date(d.commit.committer.date);
         const el = document.getElementById('lastPushDate');
-        if (el) el.textContent = 'pushed ' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        if (el) {
+          const s = (Date.now() - date) / 1000;
+          const rel = s < 60 ? `${Math.floor(s)}s` : s < 3600 ? `${Math.floor(s/60)}min` : s < 86400 ? `${Math.floor(s/3600)}h` : `${Math.floor(s/86400)}d`;
+          el.textContent = rel;
+        }
       }).catch(() => {});
 
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
