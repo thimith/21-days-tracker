@@ -121,6 +121,11 @@
     .divider { height: 1px; background: var(--border); margin: 2px 0; }
     .section-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
     .loading-state { text-align: center; padding: 32px; color: var(--muted); font-size: 0.84rem; }
+    .pending-banner { background: var(--card); border-bottom: 2px solid var(--orange-lt); padding: 12px 16px; position: sticky; top: 96px; z-index: 98; }
+    .pending-banner-title { font-size: 0.72rem; font-weight: 800; color: var(--orange); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .pending-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .pending-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .pending-name { flex: 1; font-size: 0.88rem; font-weight: 700; color: var(--text); }
     .stakes-input { width: 100%; padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.86rem; color: var(--text); background: var(--bg); outline: none; transition: border-color 0.2s; resize: vertical; min-height: 60px; }
     .stakes-input:focus { border-color: var(--orange); }
     @media (min-width: 768px) {
@@ -138,6 +143,8 @@
       <div class="admin-badge">Admin</div>
     </div>
   </div>
+
+  <div id="pendingBanner" style="display:none;"></div>
 
   <div class="tab-bar">
     <button type="button" class="tab-btn active" onclick="switchTab('members')">Members</button>
@@ -851,6 +858,47 @@
 
     async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
+    // ── Unassigned members banner ─────────────────────────────────────────
+    async function checkUnassignedMembers() {
+      const [{ data: allProfiles }, { data: assigned }, { data: cohortsRaw }] = await Promise.all([
+        sb.from('profiles').select('id, name').eq('role', 'member'),
+        sb.from('cohort_members').select('user_id'),
+        sb.from('cohorts').select('*').order('start_date', { ascending: false })
+      ]);
+
+      const assignedIds = new Set((assigned || []).map(r => r.user_id));
+      const unassigned = (allProfiles || []).filter(p => !assignedIds.has(p.id));
+      const cohorts = cohortsRaw || [];
+      const banner = document.getElementById('pendingBanner');
+
+      if (!unassigned.length) { banner.style.display = 'none'; return; }
+
+      const cohortOptions = cohorts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      const rows = unassigned.map(p => `
+        <div class="pending-row" id="pending-row-${p.id}">
+          <div class="member-avatar">${p.name[0].toUpperCase()}</div>
+          <div class="pending-name">${p.name}</div>
+          <select class="form-input" id="pending-cohort-${p.id}" style="width:auto;font-size:0.8rem;padding:6px 10px;">${cohortOptions}</select>
+          <button type="button" class="btn primary" style="padding:7px 14px;font-size:0.8rem;flex-shrink:0;" onclick="assignToCohort('${p.id}')">Add</button>
+        </div>`).join('');
+
+      banner.style.display = 'block';
+      banner.innerHTML = `<div class="pending-banner">
+        <div class="pending-banner-title">${unassigned.length} new member${unassigned.length !== 1 ? 's' : ''} — assign to cohort</div>
+        ${rows}
+      </div>`;
+    }
+
+    async function assignToCohort(userId) {
+      const cohortId = document.getElementById(`pending-cohort-${userId}`)?.value;
+      if (!cohortId) return;
+      const row = document.getElementById(`pending-row-${userId}`);
+      if (row) row.style.opacity = '0.4';
+      await sb.from('cohort_members').insert({ cohort_id: cohortId, user_id: userId });
+      await checkUnassignedMembers();
+      if (document.getElementById('tab-members').classList.contains('active')) renderMembers();
+    }
+
     // ── Init ─────────────────────────────────────────────────────────────
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
@@ -872,7 +920,14 @@
         if (_ac.activeCohort) membersCohortId = _ac.activeCohort.id;
       }
 
-      await renderMembers();
+      await Promise.all([renderMembers(), checkUnassignedMembers()]);
+
+      // Live updates: banner appears instantly when someone signs up
+      sb.channel('new_member_watch')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, () => {
+          checkUnassignedMembers();
+        })
+        .subscribe();
     })();
   </script>
 </body>

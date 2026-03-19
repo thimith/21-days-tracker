@@ -265,12 +265,13 @@
       // Consume invite if any
       const token = localStorage.getItem('ft_pending_invite');
       if (token) {
-        const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
+        // Reuse cached invite data from checkInviteToken if available, else fetch
+        const invite = (_cachedInvite?.token === token) ? _cachedInvite : null
+          || (await sb.from('invites').select('*').eq('token', token).single()).data;
         if (invite && !invite.used) {
-          await sb.from('invites').update({ used: true }).eq('id', invite.id);
-          if (invite.cohort_id) {
-            await sb.from('cohort_members').insert({ cohort_id: invite.cohort_id, user_id: user.id });
-          }
+          const writes = [sb.from('invites').update({ used: true }).eq('id', invite.id)];
+          if (invite.cohort_id) writes.push(sb.from('cohort_members').insert({ cohort_id: invite.cohort_id, user_id: user.id }));
+          await Promise.all(writes);
         }
         localStorage.removeItem('ft_pending_invite');
       }
@@ -279,12 +280,14 @@
     }
 
     // ── Invite token in URL ──────────────────────────────────────────────
+    let _cachedInvite = null;
     (async function checkInviteToken() {
       const params = new URLSearchParams(location.search);
       const token  = params.get('invite');
       if (!token) return;
       localStorage.setItem('ft_pending_invite', token);
       const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
+      _cachedInvite = invite; // cache for reuse in handleNewSignIn
       if (invite && !invite.used) {
         // Pre-fill sign-up tab and switch to it
         switchTab('signup');

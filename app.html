@@ -72,14 +72,6 @@
     }
     .day-badge.upcoming { background: var(--muted); }
     .day-badge.complete { background: var(--green); }
-    .avatar {
-      width: 30px; height: 30px;
-      background: var(--orange-lt);
-      color: var(--orange);
-      font-size: 0.78rem; font-weight: 800;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-    }
 
     /* ── Progress strip ──────────────────────────────────────────────────── */
     .progress-section {
@@ -471,7 +463,6 @@
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
     <div class="header-right">
       <div class="day-badge" id="dayBadge">—</div>
-      <div class="avatar" id="userAvatar">?</div>
     </div>
   </div>
 
@@ -488,7 +479,9 @@
   <div class="date-tabs" id="dateTabs"></div>
 
   <!-- Main content -->
-  <div class="pager-wrap" id="pagerWrap"><div class="pager-track" id="pagerTrack"></div></div>
+  <div class="pager-wrap" id="pagerWrap"><div class="pager-track" id="pagerTrack"><div class="day-page"><div class="empty-state">Loading…</div></div></div></div>
+
+
 
   <!-- Bottom nav -->
   <nav class="bottom-nav">
@@ -776,94 +769,94 @@
     // LOAD DATA
     // ══════════════════════════════════════════════════════════════════════
     async function loadData() {
-      // 1. Auth
       const { data: { session } } = await sb.auth.getSession();
       const authUser = session?.user;
-      if (!authUser) { window.location.href = 'index.html'; return; }
+      if (!authUser) { window.location.href = 'index.html'; return 'noauth'; }
       _c.userId = authUser.id;
 
-      // 2. Profile
-      const { data: profile } = await sb.from('profiles').select('*').eq('id', _c.userId).single();
-      _c.profile = profile;
+      // Serve from cache instantly, refresh in background
+      try {
+        const raw = localStorage.getItem(`ft_app_${authUser.id}`);
+        if (raw) { Object.assign(_c, JSON.parse(raw)); return 'cache'; }
+      } catch(e) {}
 
-      // 3. Cohort
-      const { data: memberships } = await sb.from('cohort_members')
-        .select('cohort_id, cohorts(*)')
-        .eq('user_id', _c.userId);
+      await _fetchFreshApp();
+      return 'fresh';
+    }
+
+    async function _fetchFreshApp() {
+      const userId = _c.userId;
+
+      // Parallel: profile + cohort membership
+      const [{ data: profile }, { data: memberships }] = await Promise.all([
+        sb.from('profiles').select('*').eq('id', userId).single(),
+        sb.from('cohort_members').select('cohort_id, cohorts(*)').eq('user_id', userId)
+      ]);
+      _c.profile = profile;
 
       if (memberships?.length) {
         const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
         const actives = cohorts.filter(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
         const active = actives.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
         const picked = active || cohorts.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0];
-        if (picked) {
-          _c.cohort = { ...picked, startDate: picked.start_date };
-        }
+        if (picked) _c.cohort = { ...picked, startDate: picked.start_date };
       }
 
-      if (!_c.cohort) return;
+      if (!_c.cohort) { _saveAppCache(); return; }
 
-      // 4. Goals
-      const { data: goalsRaw } = await sb.from('goals')
-        .select('*')
-        .eq('user_id', _c.userId)
-        .eq('cohort_id', _c.cohort.id)
-        .order('sort_order');
+      // Parallel: goals + stakes + redemptions
+      const [goalsRes, stakesRes, redemptionsRes] = await Promise.all([
+        sb.from('goals').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).order('sort_order'),
+        sb.from('stakes').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).single(),
+        sb.from('redemptions').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).order('strike_number')
+      ]);
 
-      _c.goals = (goalsRaw || []).map(g => ({
+      _c.goals = (goalsRes.data || []).map(g => ({
         id: g.id, userId: g.user_id, cohortId: g.cohort_id,
         type: g.type, title: g.title, config: g.config || {},
         locked: g.locked, order: g.sort_order
       }));
+      _c.stakes = stakesRes.data || null;
+      _c.redemptions = (redemptionsRes.data || []).map(r => ({
+        id: r.id, userId: r.user_id, cohortId: r.cohort_id,
+        weekNumber: r.week_number, strikeNumber: r.strike_number,
+        reason: r.reason, status: r.status
+      }));
 
-      // 5. Checkins
+      // Checkins: only up to today (no future dates needed)
       if (_c.goals.length) {
-        const goalIds = _c.goals.map(g => g.id);
         const { data: checkinsRaw } = await sb.from('checkins')
           .select('goal_id, date, value')
-          .in('goal_id', goalIds);
-
+          .in('goal_id', _c.goals.map(g => g.id))
+          .lte('date', localDateStr());
         _c.checkins = {};
         for (const c of (checkinsRaw || [])) {
           _c.checkins[`${c.goal_id}_${c.date}`] = c.value;
         }
       }
 
-      // 6. Stakes
-      const { data: stakesRaw } = await sb.from('stakes')
-        .select('*')
-        .eq('user_id', _c.userId)
-        .eq('cohort_id', _c.cohort.id)
-        .single();
-      _c.stakes = stakesRaw || null;
+      _saveAppCache();
+    }
 
-      // 7. Redemptions
-      const { data: redemptionsRaw } = await sb.from('redemptions')
-        .select('*')
-        .eq('user_id', _c.userId)
-        .eq('cohort_id', _c.cohort.id)
-        .order('strike_number');
-
-      _c.redemptions = (redemptionsRaw || []).map(r => ({
-        id: r.id, userId: r.user_id, cohortId: r.cohort_id,
-        weekNumber: r.week_number, strikeNumber: r.strike_number,
-        reason: r.reason, status: r.status
-      }));
+    function _saveAppCache() {
+      try {
+        localStorage.setItem(`ft_app_${_c.userId}`, JSON.stringify({
+          profile: _c.profile, cohort: _c.cohort, goals: _c.goals,
+          checkins: _c.checkins, stakes: _c.stakes, redemptions: _c.redemptions
+        }));
+      } catch(e) {}
     }
 
     // ══════════════════════════════════════════════════════════════════════
     // INIT
     // ══════════════════════════════════════════════════════════════════════
-    (async () => {
-      await loadData();
-
+    function _applyDataAndRender() {
       session = { userId: _c.userId, role: _c.profile?.role };
       user    = _c.profile;
       cohort  = _c.cohort;
 
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
 
-      // Header setup
       const currentDay = cohort ? db.getCohortDay(cohort.startDate) : 0;
       const badge = document.getElementById('dayBadge');
       if (!cohort) {
@@ -875,14 +868,22 @@
       } else {
         badge.textContent = `Day ${currentDay}`;
       }
-      document.getElementById('userAvatar').textContent = (user?.name||'?')[0].toUpperCase();
-      // 'Me' label stays as "Me"
-
-
       if (!cohort) {
         document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
       } else {
         render();
+      }
+    }
+
+    (async () => {
+      const result = await loadData();
+      if (result === 'noauth') return;
+
+      _applyDataAndRender();
+
+      // If served from cache, refresh in background and silently re-render
+      if (result === 'cache') {
+        _fetchFreshApp().then(() => _applyDataAndRender()).catch(() => {});
       }
     })();
 

@@ -333,13 +333,14 @@
       if (!authUser) { window.location.href = 'index.html'; return false; }
       _c.userId = authUser.id;
 
-      const { data: profile } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+      // Parallel: profile + cohort membership
+      const [{ data: profile }, { data: memberships }] = await Promise.all([
+        sb.from('profiles').select('*').eq('id', authUser.id).single(),
+        sb.from('cohort_members').select('cohort_id, cohorts(*)').eq('user_id', authUser.id)
+      ]);
       if (!profile) { window.location.href = 'index.html'; return false; }
       _c.profile = profile;
 
-      // Get cohort for this user
-      const { data: memberships } = await sb.from('cohort_members')
-        .select('cohort_id, cohorts(*)').eq('user_id', authUser.id);
       if (!memberships?.length) return true;
       const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
       const actives = cohorts.filter(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
@@ -352,21 +353,21 @@
         .select('user_id, profiles(*)').eq('cohort_id', _c.cohort.id);
       _c.members = (memberRows || []).map(r => r.profiles).filter(Boolean);
 
-      // Goals for all members
+      // Parallel: goals + redemptions for all members
       const memberIds = _c.members.map(m => m.id);
-      const { data: goalsRaw } = await sb.from('goals')
-        .select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('sort_order');
+      const [goalsRes, redemptionsRes] = await Promise.all([
+        sb.from('goals').select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('sort_order'),
+        sb.from('redemptions').select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('strike_number')
+      ]);
+
       _c.goals = {};
-      for (const g of (goalsRaw || [])) {
+      for (const g of (goalsRes.data || [])) {
         if (!_c.goals[g.user_id]) _c.goals[g.user_id] = [];
         _c.goals[g.user_id].push({ id: g.id, userId: g.user_id, cohortId: g.cohort_id, type: g.type, title: g.title, config: g.config || {}, locked: g.locked, order: g.sort_order });
       }
 
-      // Redemptions for all members
-      const { data: redemptionsRaw } = await sb.from('redemptions')
-        .select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('strike_number');
       _c.redemptions = {};
-      for (const r of (redemptionsRaw || [])) {
+      for (const r of (redemptionsRes.data || [])) {
         if (!_c.redemptions[r.user_id]) _c.redemptions[r.user_id] = [];
         _c.redemptions[r.user_id].push({ id: r.id, userId: r.user_id, cohortId: r.cohort_id, weekNumber: r.week_number, strikeNumber: r.strike_number, status: r.status, reason: r.reason });
       }
