@@ -191,22 +191,8 @@
     .goal-card.is-done { background: var(--green-lt); }
     .dnd-placeholder {
       border-radius: 14px;
-      background: rgba(255,85,0,0.07);
-      border: 2px dashed rgba(255,85,0,0.28);
+      background: rgba(255,85,0,0.06);
       flex-shrink: 0;
-      transition: height 0.12s ease;
-    }
-    @keyframes card-squish {
-      0%   { transform: scaleY(1)    scaleX(1); }
-      18%  { transform: scaleY(0.86) scaleX(1.07); }
-      42%  { transform: scaleY(1.07) scaleX(0.96); }
-      66%  { transform: scaleY(0.97) scaleX(1.02); }
-      84%  { transform: scaleY(1.01) scaleX(0.99); }
-      100% { transform: scaleY(1)    scaleX(1); }
-    }
-    .goal-card.squish {
-      animation: card-squish 0.46s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-      transform-origin: center center;
     }
     .goal-card.is-tappable { cursor: pointer; }
     .goal-card.is-tappable:not(.editing):active { transform: scale(0.985); }
@@ -1322,8 +1308,9 @@
 
       const clone = card.cloneNode(true);
       clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;`
-        + `opacity:0.92;pointer-events:none;z-index:9999;margin:0;`
-        + `box-shadow:0 12px 40px rgba(0,0,0,0.22);transform:scale(1.04);transition:transform 0.12s;`;
+        + `opacity:0.96;pointer-events:none;z-index:9999;margin:0;transition:none;`
+        + `box-shadow:0 24px 64px rgba(0,0,0,0.26),0 6px 20px rgba(0,0,0,0.14);`
+        + `transform:scale(1.05) rotate(1.2deg);`;
       document.body.appendChild(clone);
 
       const ph = document.createElement('div');
@@ -1356,35 +1343,45 @@
       document.addEventListener('pointercancel', onCancel);
     }
 
-    let _lastJelloEl = null;
-
-    function _squish(el) {
-      if (!el?.dataset?.goalId || el === _lastJelloEl) return;
-      _lastJelloEl = el;
-      el.classList.remove('squish');
-      void el.offsetWidth; // force reflow
-      el.classList.add('squish');
-    }
-
     function _movePlaceholder(clientX, clientY) {
       if (!_dnd) return;
       const { clone, placeholder, card, type } = _dnd;
+
       clone.style.pointerEvents = 'none';
       placeholder.style.pointerEvents = 'none';
       const el = document.elementFromPoint(clientX, clientY);
       clone.style.pointerEvents = '';
       placeholder.style.pointerEvents = '';
       if (!el) return;
+
       const target = el.closest('[data-goal-id]');
       if (!target || target === card || _dndGroup(target.dataset.goalType) !== _dndGroup(type)) return;
+
       const mid = target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
-      const prevPrev = placeholder.previousElementSibling;
-      const prevNext = placeholder.nextElementSibling;
-      if (clientY < mid) target.before(placeholder);
-      else               target.after(placeholder);
-      // Jello any card displaced by the placeholder move
-      if (placeholder.previousElementSibling !== prevPrev) _squish(placeholder.previousElementSibling);
-      if (placeholder.nextElementSibling     !== prevNext) _squish(placeholder.nextElementSibling);
+      const insertBefore = clientY < mid;
+      const newNext = insertBefore ? target : target.nextElementSibling;
+      if (placeholder.nextElementSibling === newNext) return; // already in position
+
+      // ── FLIP animation ────────────────────────────────────────────────
+      // 1. Record current visual positions (First)
+      const peers = [...document.querySelectorAll('[data-goal-id]')]
+        .filter(c => c !== card && _dndGroup(c.dataset.goalType) === _dndGroup(type));
+      const firstY = new Map(peers.map(c => [c, c.getBoundingClientRect().top]));
+
+      // 2. Move placeholder (Last)
+      if (insertBefore) target.before(placeholder);
+      else              target.after(placeholder);
+
+      // 3+4. Invert → Play: spring each displaced card back to its old position then release
+      peers.forEach(c => {
+        const d = firstY.get(c) - c.getBoundingClientRect().top;
+        if (Math.abs(d) < 1) return;
+        c.style.transition = 'none';
+        c.style.transform  = `translateY(${d}px)`;
+        c.getBoundingClientRect(); // force reflow
+        c.style.transition = 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+        c.style.transform  = 'translateY(0)';
+      });
     }
 
     function _nextGoalEl(el) {
@@ -1398,19 +1395,31 @@
       const { card, clone, placeholder, goalId } = _dnd;
       const insertBeforeEl = _nextGoalEl(placeholder);
       const insertBeforeId = insertBeforeEl?.dataset?.goalId || null;
-      clone.remove();
-      placeholder.remove();
-      card.style.display = '';
-      _dnd = null; _lastJelloEl = null;
-      db.reorderGoals(goalId, insertBeforeId);
-      renderContent();
+
+      // Snap clone into placeholder position, then commit
+      const phRect = placeholder.getBoundingClientRect();
+      clone.style.transition = 'left 0.22s cubic-bezier(0.34,1.56,0.64,1), top 0.22s cubic-bezier(0.34,1.56,0.64,1), transform 0.22s, box-shadow 0.22s, opacity 0.15s';
+      clone.style.left      = phRect.left + 'px';
+      clone.style.top       = phRect.top  + 'px';
+      clone.style.transform = 'scale(1) rotate(0deg)';
+      clone.style.boxShadow = 'var(--shadow)';
+      clone.style.opacity   = '0';
+
+      setTimeout(() => {
+        clone.remove();
+        placeholder.remove();
+        card.style.display = '';
+        _dnd = null;
+        db.reorderGoals(goalId, insertBeforeId);
+        renderContent();
+      }, 220);
     }
 
     function _cancelDrag() {
       if (!_dnd) return;
       const { card, clone, placeholder } = _dnd;
       clone.remove(); placeholder.remove(); card.style.display = '';
-      _dnd = null; _lastJelloEl = null;
+      _dnd = null;
       renderContent();
     }
 
