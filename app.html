@@ -308,13 +308,13 @@
     .time-input:focus { border-color: var(--orange); }
     .time-input:disabled { opacity: 0.5; }
     .time-unit { font-size: 0.72rem; color: var(--muted); flex-shrink: 0; }
-    /* Progress line at card bottom */
-    .card-progress-track {
-      position: absolute; bottom: 5px; left: 2.5%; right: 2.5%;
-      height: 3px; border-radius: 99px;
+    /* Progress bar under counter */
+    .ctr-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .ctr-progress-track {
+      width: 100%; min-width: 44px; height: 3px; border-radius: 99px;
       background: rgba(0,0,0,0.12); overflow: hidden;
     }
-    .card-progress-fill {
+    .ctr-progress-fill {
       height: 100%; border-radius: 99px;
       transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1), background-color 0.3s;
     }
@@ -1131,9 +1131,11 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}"${ctrStyle}>${wkTotal}/${maxMin}</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${over?' over':''}"${ctrStyle}>${wkTotal}/${maxMin}</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
-            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
@@ -1157,9 +1159,11 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${wkTotal}/${target}</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${met?' met':''}"${ctrStyle}>${met?'✓ ':''}${wkTotal}/${target}</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
-            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
@@ -1183,9 +1187,11 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
-            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
@@ -1209,9 +1215,11 @@
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
-              <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+              <div class="ctr-wrap">
+                <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
             </div>
-            <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>`;
       }
 
