@@ -196,6 +196,18 @@
       flex-shrink: 0;
       transition: height 0.12s ease;
     }
+    @keyframes card-squish {
+      0%   { transform: scaleY(1)    scaleX(1); }
+      18%  { transform: scaleY(0.86) scaleX(1.07); }
+      42%  { transform: scaleY(1.07) scaleX(0.96); }
+      66%  { transform: scaleY(0.97) scaleX(1.02); }
+      84%  { transform: scaleY(1.01) scaleX(0.99); }
+      100% { transform: scaleY(1)    scaleX(1); }
+    }
+    .goal-card.squish {
+      animation: card-squish 0.46s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      transform-origin: center center;
+    }
     .goal-card.is-tappable { cursor: pointer; }
     .goal-card.is-tappable:not(.editing):active { transform: scale(0.985); }
     .goal-card.editing { z-index: 10; }
@@ -1344,6 +1356,16 @@
       document.addEventListener('pointercancel', onCancel);
     }
 
+    let _lastJelloEl = null;
+
+    function _squish(el) {
+      if (!el?.dataset?.goalId || el === _lastJelloEl) return;
+      _lastJelloEl = el;
+      el.classList.remove('squish');
+      void el.offsetWidth; // force reflow
+      el.classList.add('squish');
+    }
+
     function _movePlaceholder(clientX, clientY) {
       if (!_dnd) return;
       const { clone, placeholder, card, type } = _dnd;
@@ -1356,8 +1378,13 @@
       const target = el.closest('[data-goal-id]');
       if (!target || target === card || _dndGroup(target.dataset.goalType) !== _dndGroup(type)) return;
       const mid = target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
+      const prevPrev = placeholder.previousElementSibling;
+      const prevNext = placeholder.nextElementSibling;
       if (clientY < mid) target.before(placeholder);
       else               target.after(placeholder);
+      // Jello any card displaced by the placeholder move
+      if (placeholder.previousElementSibling !== prevPrev) _squish(placeholder.previousElementSibling);
+      if (placeholder.nextElementSibling     !== prevNext) _squish(placeholder.nextElementSibling);
     }
 
     function _nextGoalEl(el) {
@@ -1374,7 +1401,7 @@
       clone.remove();
       placeholder.remove();
       card.style.display = '';
-      _dnd = null;
+      _dnd = null; _lastJelloEl = null;
       db.reorderGoals(goalId, insertBeforeId);
       renderContent();
     }
@@ -1383,7 +1410,7 @@
       if (!_dnd) return;
       const { card, clone, placeholder } = _dnd;
       clone.remove(); placeholder.remove(); card.style.display = '';
-      _dnd = null;
+      _dnd = null; _lastJelloEl = null;
       renderContent();
     }
 
@@ -1454,6 +1481,16 @@
             _enterEditMode(card);
             // Mark as ready — drag activates on first movement
             _lpReady = { card, pointerId: _lpPointerId, startX: _lpStartX, startY: _lpStartY };
+            // Mobile: prevent browser scroll from hijacking the gesture
+            const noScroll = te => te.preventDefault();
+            const dropNoScroll = () => {
+              document.removeEventListener('touchmove',   noScroll);
+              document.removeEventListener('touchend',    dropNoScroll);
+              document.removeEventListener('touchcancel', dropNoScroll);
+            };
+            document.addEventListener('touchmove',   noScroll,      { passive: false });
+            document.addEventListener('touchend',    dropNoScroll,  { once: true });
+            document.addEventListener('touchcancel', dropNoScroll,  { once: true });
           }, 480);
         });
 
