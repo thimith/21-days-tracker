@@ -310,7 +310,7 @@
     .time-unit { font-size: 0.72rem; color: var(--muted); flex-shrink: 0; }
     /* Progress line at card bottom */
     .card-progress-track {
-      position: absolute; bottom: 0; left: 7.5%; right: 7.5%;
+      position: absolute; bottom: 5px; left: 2.5%; right: 2.5%;
       height: 3px; border-radius: 99px;
       background: rgba(0,0,0,0.12); overflow: hidden;
     }
@@ -1124,7 +1124,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
@@ -1149,7 +1150,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
@@ -1174,7 +1176,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
@@ -1199,7 +1202,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
@@ -1223,7 +1227,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
@@ -1263,7 +1268,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">today</span>
@@ -1284,7 +1290,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
@@ -1305,7 +1312,8 @@
             <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
               <input class="time-input" type="number" inputmode="numeric" min="0" max="1440"
                 value="${todayV}" placeholder=""
-                oninput="updateTime('${g.id}','${date}',this.value)"
+                onchange="updateTime('${g.id}','${date}',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()"
                 onwheel="this.blur()"
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
@@ -1798,12 +1806,10 @@
       renderContent();
     }
 
-    let _timeDebounce;
     function updateTime(goalId, date, val) {
       db.setCheckin(goalId, date, parseInt(val)||0);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      clearTimeout(_timeDebounce);
-      _timeDebounce = setTimeout(()=>{ renderContent(); }, 450);
+      renderContent();
     }
 
     function toggleMilestone(goalId) {
