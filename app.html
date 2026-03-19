@@ -1115,9 +1115,10 @@
       }
 
       if (g.type === 'milestone') {
-        const done = !!(c?.value);
+        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const done = allDates.some(d => !!db.getCheckin(g.id, d)?.value);
         return `
-          <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleMilestone('${g.id}','${date}')">
+          <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleMilestone('${g.id}')">
             ${deleteBtn}
             <div class="milestone-row">${renameBtn}
               <div class="goal-title">${g.title}</div>
@@ -1319,9 +1320,14 @@
       _timeDebounce = setTimeout(()=>{ renderContent(); }, 450);
     }
 
-    function toggleMilestone(goalId, date) {
-      const c = db.getCheckin(goalId, date);
-      db.setCheckin(goalId, date, !(c?.value));
+    function toggleMilestone(goalId) {
+      // Milestone is a one-off — store on cohort start date regardless of selected day
+      const canonDate = cohort.startDate;
+      const allDates  = db.getCohortDates(cohort.startDate);
+      const done      = allDates.some(d => !!db.getCheckin(goalId, d)?.value);
+      // Clear any existing checkins on other dates, then set on canonical date
+      allDates.forEach(d => { if (db.getCheckin(goalId, d)?.value) db.setCheckin(goalId, d, false); });
+      db.setCheckin(goalId, canonDate, !done);
       renderContent();
     }
 
