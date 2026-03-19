@@ -220,7 +220,7 @@
     <a class="nav-item active" href="cohort.html">
       <span class="nav-label">Cohort</span>
     </a>
-    <a class="nav-item" id="adminNav" href="admin.html" style="display:none;">
+    <a class="nav-item" id="adminNav" href="admin.html">
       <span class="nav-label">Admin</span>
     </a>
     <a class="nav-item" href="me.html">
@@ -396,7 +396,7 @@
       const session = { userId: _c.userId, role: _c.profile?.role };
 
       document.getElementById('userNavLabel').textContent = _c.profile?.name?.split(' ')[0] || 'Me';
-      if (_c.profile?.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
+
 
       if (!cohort) {
         document.getElementById('content').innerHTML = '<div class="empty-state">No active cohort found.</div>';

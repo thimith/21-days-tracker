@@ -438,7 +438,7 @@
 
       <span class="nav-label">Cohort</span>
     </a>
-    <a class="nav-item" id="adminNav" href="admin.html" style="display:none;">
+    <a class="nav-item" id="adminNav" href="admin.html">
 
       <span class="nav-label">Admin</span>
     </a>
@@ -760,7 +760,7 @@
       }
       document.getElementById('userAvatar').textContent = (user?.name||'?')[0].toUpperCase();
       // 'Me' label stays as "Me"
-      if (session.role === 'admin') document.getElementById('adminNav').style.display = 'flex';
+
 
       if (!cohort) {
         document.getElementById('content').innerHTML = '<div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div>';
