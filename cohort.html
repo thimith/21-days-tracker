@@ -225,7 +225,7 @@
   <script>
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
     const DUMMY_ADMIN_EMAIL = 'thierry.muller@gmail.com'; // kept for reference only
 
     // ── Cache ────────────────────────────────────────────────────────────
@@ -326,7 +326,8 @@
 
     // ── Load data ─────────────────────────────────────────────────────────
     async function loadData() {
-      const { data: { user: authUser } } = await sb.auth.getUser();
+      const { data: { session } } = await sb.auth.getSession();
+      const authUser = session?.user;
       if (!authUser) { window.location.href = 'index.html'; return false; }
       _c.userId = authUser.id;
 
