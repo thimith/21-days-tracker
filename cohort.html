@@ -210,7 +210,12 @@
     </div>
   </div>
 
-  <div class="summary-bar" id="summaryBar"></div>
+  <div class="summary-bar" id="summaryBar">
+    <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">Members</div></div>
+    <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">On Track</div></div>
+    <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">At Risk</div></div>
+    <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">Owe Redemp.</div></div>
+  </div>
   <div class="content" id="content"></div>
 
   <nav class="bottom-nav">
@@ -395,7 +400,7 @@
       const cohort = _c.cohort;
       const session = { userId: _c.userId, role: _c.profile?.role };
 
-      document.getElementById('userNavLabel').textContent = _c.profile?.name?.split(' ')[0] || 'Me';
+
 
 
       if (!cohort) {
