@@ -174,9 +174,10 @@
 
     // ── Date helpers ──────────────────────────────────────────────────────
     function uid() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
+    const parseLocalDate = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
     function getCohortDay(startDate, targetDate) {
-      const s = new Date(startDate); s.setHours(0,0,0,0);
-      const t = targetDate ? new Date(targetDate) : new Date(); t.setHours(0,0,0,0);
+      const s = parseLocalDate(startDate);
+      const t = targetDate ? parseLocalDate(targetDate) : (() => { const n = new Date(); n.setHours(0,0,0,0); return n; })();
       return Math.floor((t-s)/86400000)+1;
     }
 
@@ -184,7 +185,8 @@
     let activeTab        = 'members';
     let membersCohortId  = null;
     let overrideMemberId = null;
-    let overrideDate     = new Date().toISOString().split('T')[0];
+    const _lds = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    let overrideDate = _lds();
     let goalsMemberId    = null;
     let goalsMemberCohortId = null;
     let addGoalFormOpen  = false;
