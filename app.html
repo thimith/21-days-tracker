@@ -1534,7 +1534,7 @@
       setTimeout(() => { input.focus(); input.select(); }, 40);
 
       function commitSave() {
-        const newTitle   = input.value.trim();
+        const newTitle     = input.value.trim();
         const titleChanged = newTitle && newTitle !== currentTitle;
         const colorChanged = selectedColor !== (goal?.config?.color || '');
         if (goal) {
@@ -1546,6 +1546,12 @@
             if (colorChanged) upd.config = goal.config;
             sb.from('goals').update(upd).eq('id', goalId).then(() => {});
           }
+        }
+        // Propagate accent immediately to all day pages in the pager
+        if (colorChanged) {
+          document.querySelectorAll(`[data-goal-id="${goalId}"]`).forEach(el => {
+            el.style.borderLeft = selectedColor ? `4px solid ${selectedColor}` : '';
+          });
         }
         renderContent();
       }
@@ -1602,7 +1608,11 @@
         });
 
         card.addEventListener('click', e => {
-          if (_suppressTap) { e.stopImmediatePropagation(); _suppressTap = false; }
+          if (_suppressTap) {
+            _suppressTap = false;
+            // Don't swallow taps on the edit overlay itself (e.g. color swatches)
+            if (!e.target.closest('.goal-edit-overlay')) e.stopImmediatePropagation();
+          }
         }, { capture: true });
       });
     }
