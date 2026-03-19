@@ -1120,6 +1120,7 @@
         const todayV  = c ? Number(c.value)||'' : '';
         const pct     = Math.min(100, maxMin > 0 ? (wkTotal / maxMin * 100) : 0);
         const barColor = over ? 'var(--red)' : (accentColor || 'var(--green)');
+        const thisCtrStyle = over ? ' style="background:var(--red);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1132,7 +1133,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${over?' over':''}"${ctrStyle}>${wkTotal}/${maxMin}</span>
+                <span class="time-counter${over?' over':''}"${thisCtrStyle}>${wkTotal}/${maxMin}</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
@@ -1177,6 +1178,7 @@
         const todayV  = c ? Number(c.value)||'' : '';
         const pct     = Math.min(100, maxMin > 0 ? (wkTotal / maxMin * 100) : 0);
         const barColor = over ? 'var(--red)' : (accentColor || 'var(--green)');
+        const thisCtrStyle = over ? ' style="background:var(--red);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1189,7 +1191,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+                <span class="time-counter${over?' over':''}"${thisCtrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
@@ -1205,6 +1207,7 @@
         const todayV  = c ? Number(c.value)||'' : '';
         const pct     = Math.min(100, maxMin > 0 ? (wkTotal / maxMin * 100) : 0);
         const barColor = over ? 'var(--red)' : (accentColor || 'var(--green)');
+        const thisCtrStyle = over ? ' style="background:var(--red);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1217,7 +1220,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
+                <span class="time-counter${over?' over':''}"${thisCtrStyle}>${over?'⚠ ':''}${wkTotal}/${maxMin}</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
@@ -1247,7 +1250,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${met?'':' over'}"${thisCtrStyle}>${met?'✓ ':''}${wkTotal}/${target}</span>
+                <span class="time-counter${met?'':' over'}"${thisCtrStyle}>${wkTotal >= target?'✓ ':''}${wkTotal}/${target}</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
@@ -1337,6 +1340,7 @@
         const todayV   = c ? Number(c.value)||'' : '';
         const pct      = Math.min(100, maxMin > 0 ? (total / maxMin * 100) : 0);
         const barColor = over ? 'var(--red)' : (accentColor || 'var(--green)');
+        const thisCtrStyle = over ? ' style="background:var(--red);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
         return `
           <div class="goal-card">
             ${deleteBtn}
@@ -1349,7 +1353,7 @@
                 ${isFuture?'disabled':''} />
               <span class="time-unit">min</span>
               <div class="ctr-wrap">
-                <span class="time-counter${over?' over':''}"${ctrStyle}>${over?'⚠ ':''}${total}/${maxMin}min</span>
+                <span class="time-counter${over?' over':''}"${thisCtrStyle}>${over?'⚠ ':''}${total}/${maxMin}min</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
             </div>
