@@ -221,18 +221,20 @@
 
     let redirected = false;
 
-    // ── Auth state listener ──────────────────────────────────────────────
+    // ── Check session immediately, show card only if not logged in ────────
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        redirected = true;
+        redirectUser(session.user);
+      } else {
+        document.getElementById('mainCard').classList.add('visible');
+      }
+    });
+
+    // ── Auth state listener (handles magic link clicks) ───────────────────
     sb.auth.onAuthStateChange(async (event, session) => {
       if (redirected) return;
-      if (event === 'INITIAL_SESSION') {
-        if (session) {
-          redirected = true;
-          await redirectUser(session.user);
-        } else {
-          // No session — show the card
-          document.getElementById('mainCard').classList.add('visible');
-        }
-      } else if (event === 'SIGNED_IN' && session) {
+      if (event === 'SIGNED_IN' && session) {
         redirected = true;
         await handleNewSignIn(session);
       }
