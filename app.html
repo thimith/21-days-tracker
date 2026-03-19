@@ -674,10 +674,8 @@
 
       if (memberships?.length) {
         const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
-        const active = cohorts.find(c => {
-          const d = db.getCohortDay(c.start_date);
-          return d >= 1 && d <= 21;
-        });
+        const actives = cohorts.filter(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+        const active = actives.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
         const picked = active || cohorts.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0];
         if (picked) {
           _c.cohort = { ...picked, startDate: picked.start_date };
