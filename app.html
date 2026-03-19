@@ -810,11 +810,24 @@
       document.getElementById('cohortLabel').textContent = cohort.name;
       document.getElementById('progressPct').textContent = `${pct}% complete`;
 
+      const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
       document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {
+        const dayNum = i + 1;
         let cls = 'dot';
-        if      (d === todayStr) cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : ' today';
-        else if (d < todayStr)   cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : db.isDayPartial(session.userId,cohort.id,d) ? ' partial' : ' missed';
-        else                     cls += ' future';
+        if (d === todayStr) {
+          cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : ' today';
+        } else if (d < todayStr) {
+          // Last day of a week with a redemption → red slip dot
+          const weekNum = Math.ceil(dayNum / 7);
+          const isLastDayOfWeek = dayNum % 7 === 0;
+          if (isLastDayOfWeek && redemptionWeeks.has(weekNum)) {
+            cls += ' missed';
+          } else {
+            cls += ' done';
+          }
+        } else {
+          cls += ' future';
+        }
         return `<div class="${cls}" title="Day ${i+1}"></div>`;
       }).join('');
     }
