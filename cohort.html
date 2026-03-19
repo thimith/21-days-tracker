@@ -124,19 +124,21 @@
     }
     .strike-pip.active { background: var(--red); }
 
-    /* Goal status pills */
-    .goal-pills { display: flex; gap: 5px; flex-wrap: wrap; }
-    .goal-pill {
-      display: flex; align-items: center; gap: 4px;
-      padding: 4px 9px; border-radius: 100px;
-      font-size: 0.7rem; font-weight: 600;
-      max-width: 140px; overflow: hidden;
+    /* On-track status badge */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 100px;
+      font-size: 0.72rem; font-weight: 700;
     }
-    .goal-pill.on-track  { background: var(--green-lt); color: var(--green); }
-    .goal-pill.off-track { background: var(--red-lt);   color: var(--red); }
-    .goal-pill.pending   { background: rgba(255,159,10,0.12); color: var(--yellow); }
-    .goal-pill.no-data   { background: var(--bg);       color: var(--muted); border: 1px solid var(--border); }
-    .pill-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .status-badge.on-track  { background: var(--green-lt);  color: var(--green); }
+    .status-badge.at-risk   { background: var(--red-lt);    color: var(--red); }
+    .status-badge.complete  { background: var(--green-lt);  color: var(--green); }
+    /* Chevron */
+    .member-chevron {
+      font-size: 0.75rem; color: var(--muted);
+      transition: transform 0.2s; margin-left: 4px;
+    }
+    .member-card.open .member-chevron { transform: rotate(180deg); }
 
     /* ── Expanded member detail ── */
     .member-detail {
@@ -243,7 +245,8 @@
     // ── Cache ────────────────────────────────────────────────────────────
     const _c = {
       userId: null, profile: null, cohort: null,
-      members: [], goals: {}, checkins: {}, redemptions: {}
+      members: [], goals: {}, checkins: {}, redemptions: {},
+      checkinsLoaded: new Set()   // track which member IDs have checkins loaded
     };
 
     const localDateStr   = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -374,13 +377,6 @@
         _c.goals[g.user_id].push({ id: g.id, userId: g.user_id, cohortId: g.cohort_id, type: g.type, title: g.title, config: g.config || {}, locked: g.locked, order: g.sort_order });
       }
 
-      // Checkins for all goals
-      const goalIds = (goalsRaw || []).map(g => g.id);
-      if (goalIds.length) {
-        const { data: checkinsRaw } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', goalIds);
-        for (const c of (checkinsRaw || [])) _c.checkins[`${c.goal_id}_${c.date}`] = c.value;
-      }
-
       // Redemptions for all members
       const { data: redemptionsRaw } = await sb.from('redemptions')
         .select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('strike_number');
@@ -447,9 +443,9 @@
     }
 
     function isAtRisk(userId) {
-      const missed  = db.getMissedDays(userId, _c.cohort);
       const pending = db.getPendingRedemptions(userId).length;
-      return missed >= 2 || pending > 0;
+      const strikes = db.getRedemptionsForUser(userId).length;
+      return pending > 0 || strikes >= 2;
     }
 
     function renderMembers() {
@@ -475,55 +471,44 @@
     function renderMemberCard(member) {
       const goals       = db.getGoalsForUser(member.id);
       const strikes     = db.getRedemptionsForUser(member.id);
-      const pending     = db.getPendingRedemptions(member.id);
-      const missed      = db.getMissedDays(member.id, _c.cohort);
       const atRisk      = isAtRisk(member.id);
       const isSelf      = member.id === _c.userId;
       const strikeCount = strikes.length;
       const isOpen      = expanded === member.id;
+      const hasCheckins = _c.checkinsLoaded.has(member.id);
 
-      // Strike pips
       const pips = [1,2,3].map(n=>`<div class="strike-pip${n<=strikeCount?' active':''}"></div>`).join('');
 
-      // Goal status pills
-      const pills = goals.map(g => {
-        const s = db.getGoalStatus(g, _c.cohort);
-        return `<div class="goal-pill ${s.status}"><span class="pill-label">${g.title}</span></div>`;
-      }).join('');
+      const avatarClass = atRisk ? 'at-risk' : strikeCount===0 ? 'good' : '';
+      const cardClass   = (atRisk ? 'at-risk' : strikeCount===0 ? 'complete' : '') + (isOpen ? ' open' : '');
 
-      // Member detail (goals + redemptions)
-      const detailGoals = goals.map(g => {
-        const s = db.getGoalStatus(g, _c.cohort);
-        const statusClass = s.status==='on-track' ? 'on' : s.status==='off-track' ? 'off' : 'na';
-        const statusText  = s.status==='on-track' ? '✓ On track' : s.status==='off-track' ? '✗ Off track' : s.status==='pending' ? '· Not yet' : '—';
-        return `<div class="detail-goal-row">
-          <div class="detail-goal-name">${g.title}</div>
-          <div class="detail-goal-status ${statusClass}">${statusText}</div>
-        </div>`;
-      }).join('');
+      const badge = atRisk
+        ? `<span class="status-badge at-risk">⚠ At Risk</span>`
+        : `<span class="status-badge on-track">✓ On Track</span>`;
 
-      const detailRedemptions = strikes.length ? strikes.map(r => `
-        <div class="redemption-row">
-          <span class="r-badge ${r.status}">${r.status==='pending'?'Pending':'Done'}</span>
-          <span class="r-reason">${r.reason}</span>
-        </div>`).join('') : '<div style="font-size:0.8rem;color:var(--muted);padding:4px 0;">No strikes yet.</div>';
+      // Detail section — only built when checkins are loaded
+      let detailHTML = '';
+      if (isOpen) {
+        if (!hasCheckins) {
+          detailHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:8px 0;">Loading…</div>';
+        } else {
+          const detailGoals = goals.map(g => {
+            const s = db.getGoalStatus(g, _c.cohort);
+            const statusClass = s.status==='on-track' ? 'on' : s.status==='off-track' ? 'off' : 'na';
+            const statusText  = s.status==='on-track' ? '✓ On track' : s.status==='off-track' ? '✗ Off track' : s.status==='pending' ? '· Not yet' : '—';
+            return `<div class="detail-goal-row">
+              <div class="detail-goal-name">${g.title}</div>
+              <div class="detail-goal-status ${statusClass}">${statusText}</div>
+            </div>`;
+          }).join('');
 
-      const avatarClass = atRisk ? 'at-risk' : missed===0 ? 'good' : '';
-      const cardClass   = atRisk ? 'at-risk' : missed===0&&strikeCount===0 ? 'complete' : '';
+          const detailRedemptions = strikes.length ? strikes.map(r => `
+            <div class="redemption-row">
+              <span class="r-badge ${r.status}">${r.status==='pending'?'Pending':'Done'}</span>
+              <span class="r-reason">${r.reason}</span>
+            </div>`).join('') : '<div style="font-size:0.8rem;color:var(--muted);padding:4px 0;">No strikes yet.</div>';
 
-      return `
-        <div class="member-card ${cardClass}" onclick="toggleExpand('${member.id}')">
-          <div class="member-top">
-            <div class="member-avatar ${avatarClass}">${member.name[0].toUpperCase()}</div>
-            <div class="member-info">
-              <div class="member-name">${member.name}${isSelf?' (you)':''}</div>
-              <div class="member-meta">${missed} day${missed!==1?'s':''} missed · ${strikeCount} strike${strikeCount!==1?'s':''}</div>
-            </div>
-            <div class="member-strikes">${pips}</div>
-          </div>
-          <div class="goal-pills">${pills || '<span style="font-size:0.75rem;color:var(--muted);">No goals set</span>'}</div>
-
-          <div class="member-detail${isOpen?' open':''}">
+          detailHTML = `
             <div style="margin-bottom:14px;">
               <div class="detail-section-title">Goals</div>
               ${detailGoals || '<div style="font-size:0.8rem;color:var(--muted);">No goals yet.</div>'}
@@ -531,14 +516,48 @@
             <div>
               <div class="detail-section-title">Redemptions</div>
               <div class="redemption-list">${detailRedemptions}</div>
+            </div>`;
+        }
+      }
+
+      return `
+        <div class="member-card ${cardClass}" onclick="toggleExpand('${member.id}')">
+          <div class="member-top">
+            <div class="member-avatar ${avatarClass}">${member.name[0].toUpperCase()}</div>
+            <div class="member-info">
+              <div class="member-name">${member.name}${isSelf?' (you)':''}</div>
+              <div class="member-meta">${strikeCount} strike${strikeCount!==1?'s':''} · ${goals.length} goal${goals.length!==1?'s':''}</div>
             </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${badge}
+              <div class="member-strikes">${pips}</div>
+              <span class="member-chevron">▼</span>
+            </div>
+          </div>
+          <div class="member-detail${isOpen?' open':''}">
+            ${detailHTML}
           </div>
         </div>`;
     }
 
-    function toggleExpand(memberId) {
-      expanded = expanded === memberId ? null : memberId;
-      renderMembers();
+    async function toggleExpand(memberId) {
+      if (expanded === memberId) {
+        expanded = null;
+        renderMembers();
+        return;
+      }
+      expanded = memberId;
+      renderMembers(); // show card open with "Loading…" immediately
+
+      if (!_c.checkinsLoaded.has(memberId)) {
+        const goalIds = db.getGoalsForUser(memberId).map(g => g.id);
+        if (goalIds.length) {
+          const { data: rows } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', goalIds);
+          for (const r of (rows || [])) _c.checkins[`${r.goal_id}_${r.date}`] = r.value;
+        }
+        _c.checkinsLoaded.add(memberId);
+      }
+      renderMembers(); // re-render with real data
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
