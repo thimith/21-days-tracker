@@ -104,7 +104,8 @@
     .dot.done    { background: var(--green); }
     .dot.missed  { background: rgba(255,59,48,0.35); }
     .dot.partial { background: var(--yellow); }
-    .dot.today   { background: var(--orange); animation: pulse-dot 2s ease-in-out infinite; }
+    .dot.today   { background: var(--orange); }
+    .dot.current { animation: pulse-dot 2s ease-in-out infinite; }
     .dot.future  { background: var(--border); }
     @keyframes pulse-dot {
       0%,100% { opacity:1; transform:scaleY(1); }
@@ -855,6 +856,7 @@
         let cls = 'dot';
         if (d === todayStr) {
           cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : ' today';
+          cls += ' current';
         } else if (d < todayStr) {
           // Last day of a week with a redemption → red slip dot
           const weekNum = Math.ceil(dayNum / 7);
