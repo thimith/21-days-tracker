@@ -100,6 +100,24 @@
       line-height: 1.55;
     }
     .loading { opacity: 0.5; pointer-events: none; }
+    .profile-setup { display: none; }
+    .profile-setup.active { display: block; }
+    .form-field { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 0.75rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.07em; margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--border); border-radius: 12px;
+      font-size: 1rem; font-family: inherit;
+      color: var(--text); background: var(--bg);
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--orange); }
+    .form-input:disabled { color: var(--muted); }
+    .form-input.error { border-color: var(--red); }
   </style>
 </head>
 <body>
@@ -121,6 +139,25 @@
       <div class="success-title">Check your inbox</div>
       <p class="success-sub">We sent a sign-in link to <strong id="sentTo"></strong>.<br>Click the link in the email to continue.</p>
     </div>
+
+    <div class="profile-setup" id="profileSetup">
+      <div class="card-title">One last step</div>
+      <div class="card-sub" style="margin-bottom:20px;">Tell us a bit about yourself.</div>
+      <div class="form-field">
+        <label class="form-label">Display name</label>
+        <input class="form-input" id="setupName" placeholder="Your name" autocomplete="name" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="setupEmail" type="email" disabled />
+      </div>
+      <div class="form-field" style="margin-bottom:20px;">
+        <label class="form-label">WhatsApp number</label>
+        <input class="form-input" id="setupWhatsapp" type="tel" placeholder="+1 555 000 0000" autocomplete="tel" />
+      </div>
+      <div class="error-msg" id="setupError">Please fill in your name.</div>
+      <button class="btn" onclick="submitProfile()">Join the tribe</button>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -131,6 +168,8 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 
     let redirected = false;
+    let _pendingUser = null;
+    let _pendingCohortId = null;
 
     // ── Auth state listener ──────────────────────────────────────────────
     sb.auth.onAuthStateChange(async (event, session) => {
@@ -156,29 +195,62 @@
       if (!profile) {
         // New user — check for pending invite
         const token = localStorage.getItem('ft_pending_invite');
-        let name = user.email.split('@')[0];
+        let prefillName = '';
         let cohortId = null;
 
         if (token) {
           const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
           if (invite && !invite.used) {
-            name = invite.name || name;
+            prefillName = invite.name || '';
             cohortId = invite.cohort_id;
-            await sb.from('invites').update({ used: true }).eq('id', invite.id);
           }
-          localStorage.removeItem('ft_pending_invite');
         }
 
-        const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
-        await sb.from('profiles').insert({ id: user.id, name, role });
-        if (cohortId) {
-          await sb.from('cohort_members').insert({ cohort_id: cohortId, user_id: user.id })
-            .then(({ error }) => { if (error) console.error('cohort_members insert:', error); });
-        }
-        window.location.href = role === 'admin' ? 'admin.html' : 'app.html';
+        // Show profile setup form
+        _pendingUser = user;
+        _pendingCohortId = cohortId;
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('successState').style.display = 'none';
+        const setup = document.getElementById('profileSetup');
+        setup.classList.add('active');
+        document.getElementById('setupName').value = prefillName;
+        document.getElementById('setupEmail').value = user.email;
+        document.getElementById('setupName').focus();
       } else {
         window.location.href = profile.role === 'admin' ? 'admin.html' : 'app.html';
       }
+    }
+
+    async function submitProfile() {
+      const name = document.getElementById('setupName').value.trim();
+      const whatsapp = document.getElementById('setupWhatsapp').value.trim();
+      const errEl = document.getElementById('setupError');
+      errEl.classList.remove('show');
+
+      if (!name) { errEl.textContent = 'Please fill in your name.'; errEl.classList.add('show'); return; }
+
+      const btn = document.querySelector('#profileSetup .btn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      const user = _pendingUser;
+      const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
+
+      const { error } = await sb.from('profiles').insert({ id: user.id, name, role, whatsapp });
+      if (error) { errEl.textContent = error.message; errEl.classList.add('show'); btn.disabled = false; btn.textContent = 'Join the tribe'; return; }
+
+      // Consume invite
+      const token = localStorage.getItem('ft_pending_invite');
+      if (token) {
+        const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
+        if (invite && !invite.used) await sb.from('invites').update({ used: true }).eq('id', invite.id);
+        localStorage.removeItem('ft_pending_invite');
+      }
+
+      if (_pendingCohortId) {
+        await sb.from('cohort_members').insert({ cohort_id: _pendingCohortId, user_id: user.id });
+      }
+
+      window.location.href = role === 'admin' ? 'admin.html' : 'app.html';
     }
 
     // ── Invite token in URL ──────────────────────────────────────────────
