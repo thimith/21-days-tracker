@@ -137,6 +137,11 @@
 
     /* ── Content ─────────────────────────────────────────────────────────── */
     .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .content-wrap { overflow-x: hidden; }
+    @keyframes slideInFromLeft  { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideInFromRight { from { transform: translateX( 40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .slide-back    { animation: slideInFromRight 0.22s cubic-bezier(0.25,0.46,0.45,0.94); }
+    .slide-forward { animation: slideInFromLeft  0.22s cubic-bezier(0.25,0.46,0.45,0.94); }
 
     /* ── Redemption card ─────────────────────────────────────────────────── */
     .redemption-card {
@@ -434,7 +439,7 @@
   <div class="date-tabs" id="dateTabs"></div>
 
   <!-- Main content -->
-  <div class="content" id="content"></div>
+  <div class="content-wrap"><div class="content" id="content"></div></div>
 
   <!-- Bottom nav -->
   <nav class="bottom-nav">
@@ -826,6 +831,26 @@
       }
     })();
 
+    // ── Swipe gesture to navigate days ────────────────────────────────────
+    (() => {
+      let _tx = null, _ty = null;
+      document.addEventListener('touchstart', e => {
+        _tx = e.touches[0].clientX;
+        _ty = e.touches[0].clientY;
+      }, { passive: true });
+      document.addEventListener('touchend', e => {
+        if (_tx === null || !cohort) return;
+        const dx = e.changedTouches[0].clientX - _tx;
+        const dy = e.changedTouches[0].clientY - _ty;
+        _tx = _ty = null;
+        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // too short or vertical
+        const dates = db.getCohortDates(cohort.startDate);
+        const idx = dates.indexOf(selectedDate);
+        if (dx > 0 && idx > 0)                  selectDate(dates[idx - 1]); // swipe right → go back
+        if (dx < 0 && idx < dates.length - 1)   selectDate(dates[idx + 1]); // swipe left  → go forward
+      }, { passive: true });
+    })();
+
     // ══════════════════════════════════════════════════════════════════════
     // RENDER
     // ══════════════════════════════════════════════════════════════════════
@@ -974,7 +999,14 @@
           </div>`);
       }
 
-      document.getElementById('content').innerHTML = html.join('');
+      const contentEl = document.getElementById('content');
+      contentEl.innerHTML = html.join('');
+      if (_slideDir) {
+        contentEl.classList.remove('slide-back', 'slide-forward');
+        void contentEl.offsetWidth; // force reflow
+        contentEl.classList.add(_slideDir === 'back' ? 'slide-back' : 'slide-forward');
+        _slideDir = null;
+      }
       initGoalDragDrop();
     }
 
@@ -1332,7 +1364,13 @@
     // ══════════════════════════════════════════════════════════════════════
     // INTERACTIONS
     // ══════════════════════════════════════════════════════════════════════
-    function selectDate(date) { selectedDate=date; renderDateTabs(); renderContent(); }
+    let _slideDir = null;
+    function selectDate(date) {
+      _slideDir = date < selectedDate ? 'back' : 'forward';
+      selectedDate = date;
+      renderDateTabs();
+      renderContent();
+    }
 
     function toggleBoolean(goalId, date) {
       const c = db.getCheckin(goalId, date);
