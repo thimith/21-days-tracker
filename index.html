@@ -48,14 +48,11 @@
       letter-spacing: 0.04em; text-transform: uppercase;
     }
 
-    /* Card — hidden until we know no session exists */
     .card {
       background: var(--card); border-radius: 20px;
       box-shadow: var(--shadow); padding: 24px 24px 28px;
       width: 100%; max-width: 380px;
-      opacity: 0; transition: opacity 0.18s ease;
     }
-    .card.visible { opacity: 1; }
 
     /* Tabs */
     .tabs {
@@ -221,20 +218,13 @@
 
     let redirected = false;
 
-    // ── Check session immediately, show card only if not logged in ────────
-    sb.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        redirected = true;
-        redirectUser(session.user);
-      } else {
-        document.getElementById('mainCard').classList.add('visible');
-      }
-    });
-
-    // ── Auth state listener (handles magic link clicks) ───────────────────
+    // ── Auth state listener ──────────────────────────────────────────────
     sb.auth.onAuthStateChange(async (event, session) => {
       if (redirected) return;
-      if (event === 'SIGNED_IN' && session) {
+      if (event === 'INITIAL_SESSION' && session) {
+        redirected = true;
+        await redirectUser(session.user);
+      } else if (event === 'SIGNED_IN' && session) {
         redirected = true;
         await handleNewSignIn(session);
       }
