@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#F5F5F7">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/jpeg" href="brand_assets/favicon.jpeg">
-  <link rel="apple-touch-icon" href="brand_assets/favicon.jpeg">
+  <link rel="icon" type="image/png" sizes="32x32" href="brand_assets/favicon.png">
+  <link rel="apple-touch-icon" href="brand_assets/favicon.png">
   <title>Focus Tribe</title>
   <style>
     html { font-size: 120%; }
@@ -395,6 +395,11 @@
     .empty-state {
       text-align: center; padding: 48px 20px;
       font-size: 0.88rem; color: var(--muted); line-height: 1.6;
+    }
+    @media (min-width: 768px) {
+      html { background: #DDDDE0; }
+      body { max-width: 50vw; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
+      .bottom-nav { left: 50%; right: auto; transform: translateX(-50%); width: 50vw; }
     }
   </style>
 </head>
