@@ -475,8 +475,8 @@
               <button type="button" ${pillStyle(addGoalMetric==='max_time')} onclick="setAdminMetric(this,'max_time')">Max time</button>
             </div>
           </div>
-          <div class="form-field" id="agCountField" style="${addGoalMetric==='count'?'':'display:none'}"><label class="form-label" id="agCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':'Sessions per week'}</label><input class="form-input" id="agCount" type="number" min="1" max="999" placeholder="${addGoalFrame==='milestone'?'10':'4'}" /></div>
-          <div class="form-field" id="agTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}"><label class="form-label" id="agTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':'Weekly maximum (minutes)')}</label><input class="form-input" id="agTime" type="number" min="1" placeholder="${addGoalMetric==='min_time'?'60':'120'}" /></div>
+          <div class="form-field" id="agCountField" style="${addGoalMetric==='count'?'':'display:none'}"><label class="form-label" id="agCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label><input class="form-input" id="agCount" type="number" min="1" max="999" placeholder="${addGoalFrame==='milestone'?'10':'4'}" /></div>
+          <div class="form-field" id="agTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}"><label class="form-label" id="agTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':addGoalFrame==='daily'?'Daily minimum (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':addGoalFrame==='daily'?'Daily maximum (minutes)':'Weekly maximum (minutes)')}</label><input class="form-input" id="agTime" type="number" min="1" placeholder="${addGoalMetric==='min_time'?'60':'120'}" /></div>
           <div class="btn-row">
             <button type="button" class="btn secondary" onclick="addGoalFormOpen=false;addGoalTitle='';renderGoals()">Cancel</button>
             <button type="button" class="btn primary" onclick="adminSaveGoal()">Add</button>
@@ -512,10 +512,10 @@
       if (tf) tf.style.display = (addGoalMetric === "min_time" || addGoalMetric === "max_time") ? "" : "none";
       const cl = document.getElementById("agCountLabel");
       const tl = document.getElementById("agTimeLabel");
-      if (cl) cl.textContent = addGoalFrame === "milestone" ? "Total sessions over 21 days" : "Sessions per week";
+      if (cl) cl.textContent = addGoalFrame === "milestone" ? "Total sessions over 21 days" : addGoalFrame === "daily" ? "Sessions per day" : "Sessions per week";
       if (tl) tl.textContent = addGoalMetric === "min_time"
-        ? (addGoalFrame === "milestone" ? "Total minimum over 21 days (minutes)" : "Weekly minimum (minutes)")
-        : (addGoalFrame === "milestone" ? "Total maximum over 21 days (minutes)" : "Weekly maximum (minutes)");
+        ? (addGoalFrame === "milestone" ? "Total minimum over 21 days (minutes)" : addGoalFrame === "daily" ? "Daily minimum (minutes)" : "Weekly minimum (minutes)")
+        : (addGoalFrame === "milestone" ? "Total maximum over 21 days (minutes)" : addGoalFrame === "daily" ? "Daily maximum (minutes)" : "Weekly maximum (minutes)");
     }
     async function adminDeleteGoal(goalId) {
       if (!confirm('Delete this goal?')) return;
