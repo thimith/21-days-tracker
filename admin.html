@@ -137,11 +137,11 @@
   </div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('members')">Members</button>
-    <button class="tab-btn"        onclick="switchTab('goals')">Goals</button>
-    <button class="tab-btn"        onclick="switchTab('stakes')">Stakes</button>
-    <button class="tab-btn"        onclick="switchTab('override')">Override</button>
-    <button class="tab-btn"        onclick="switchTab('cohorts')">Cohorts</button>
+    <button type="button" class="tab-btn active" onclick="switchTab('members')">Members</button>
+    <button type="button" class="tab-btn"        onclick="switchTab('goals')">Goals</button>
+    <button type="button" class="tab-btn"        onclick="switchTab('stakes')">Stakes</button>
+    <button type="button" class="tab-btn"        onclick="switchTab('override')">Override</button>
+    <button type="button" class="tab-btn"        onclick="switchTab('cohorts')">Cohorts</button>
   </div>
 
   <div class="content">
@@ -263,9 +263,9 @@
               <div class="strikes-row">${pips} ${status}</div>
             </div>
             <div class="member-actions">
-              <button class="icon-btn" onclick="editMemberName('${m.id}')" title="Edit name">✎</button>
-              <button class="icon-btn remove" onclick="removeMember('${m.id}')" title="Remove">✕</button>
-              <button class="icon-btn" style="background:var(--red-lt);color:var(--red);" onclick="clearStrikes('${m.id}')" title="Clear strikes">↺</button>
+              <button type="button" class="icon-btn" onclick="editMemberName('${m.id}')" title="Edit name">✎</button>
+              <button type="button" class="icon-btn remove" onclick="removeMember('${m.id}')" title="Remove">✕</button>
+              <button type="button" class="icon-btn" style="background:var(--red-lt);color:var(--red);" onclick="clearStrikes('${m.id}')" title="Clear strikes">↺</button>
             </div>
           </div>`;
       }).join('');
@@ -295,8 +295,8 @@
           <div id="inviteLinkBox" style="display:none;" class="invite-link-box"></div>
           <div id="inviteFlash" class="flash"></div>
           <div class="btn-row" style="margin-top:4px;">
-            <button class="btn primary full" onclick="inviteMember()">Generate Invite Link</button>
-            <button class="btn secondary" id="copyInviteBtn" style="display:none;" onclick="copyInviteLink()">Copy</button>
+            <button type="button" class="btn primary full" onclick="inviteMember()">Generate Invite Link</button>
+            <button type="button" class="btn secondary" id="copyInviteBtn" style="display:none;" onclick="copyInviteLink()">Copy</button>
           </div>
         </div>`;
     }
@@ -445,7 +445,7 @@
             <div class="goal-edit-name">${g.title}</div>
             <div class="goal-edit-type">${typeLabel[g.type]||g.type}${configLabel(g) ? ' · '+configLabel(g) : ''}</div>
           </div>
-          <button class="icon-btn remove" onclick="adminDeleteGoal('${g.id}')">✕</button>
+          <button type="button" class="icon-btn remove" onclick="adminDeleteGoal('${g.id}')">✕</button>
         </div>`).join('');
 
       const pillStyle = sel => `style="padding:5px 11px;border-radius:100px;font-size:0.76rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.15s;${sel?'background:var(--orange);color:#fff;border-color:var(--orange);':'background:var(--bg);color:var(--muted);border-color:var(--border);'}"`;
@@ -458,28 +458,28 @@
           </div>
           <div class="form-field">
             <label class="form-label">Time frame</label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button ${pillStyle(addGoalFrame==='daily')}   onclick="addGoalFrame='daily';renderGoals()">Daily</button>
-              <button ${pillStyle(addGoalFrame==='weekly')}  onclick="addGoalFrame='weekly';renderGoals()">Weekly</button>
-              <button ${pillStyle(addGoalFrame==='milestone')} onclick="addGoalFrame='milestone';renderGoals()">21 Days</button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="agFramePills">
+              <button type="button" ${pillStyle(addGoalFrame==='daily')}   onclick="setAdminFrame(this,'daily')">Daily</button>
+              <button type="button" ${pillStyle(addGoalFrame==='weekly')}  onclick="setAdminFrame(this,'weekly')">Weekly</button>
+              <button type="button" ${pillStyle(addGoalFrame==='milestone')} onclick="setAdminFrame(this,'milestone')">21 Days</button>
             </div>
           </div>
           <div class="form-field">
             <label class="form-label">Type</label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button ${pillStyle(addGoalMetric==='boolean')}  onclick="addGoalMetric='boolean';renderGoals()">Yes / No</button>
-              <button ${pillStyle(addGoalMetric==='count')}    onclick="addGoalMetric='count';renderGoals()">Count</button>
-              <button ${pillStyle(addGoalMetric==='min_time')} onclick="addGoalMetric='min_time';renderGoals()">Min time</button>
-              <button ${pillStyle(addGoalMetric==='max_time')} onclick="addGoalMetric='max_time';renderGoals()">Max time</button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;" id="agMetricPills">
+              <button type="button" ${pillStyle(addGoalMetric==='boolean')}  onclick="setAdminMetric(this,'boolean')">Yes / No</button>
+              <button type="button" ${pillStyle(addGoalMetric==='count')}    onclick="setAdminMetric(this,'count')">Count</button>
+              <button type="button" ${pillStyle(addGoalMetric==='min_time')} onclick="setAdminMetric(this,'min_time')">Min time</button>
+              <button type="button" ${pillStyle(addGoalMetric==='max_time')} onclick="setAdminMetric(this,'max_time')">Max time</button>
             </div>
           </div>
-          ${addGoalMetric==='count' ? `<div class="form-field"><label class="form-label">${addGoalFrame==='milestone'?'Total sessions over 21 days':'Sessions per week'}</label><input class="form-input" id="agCount" type="number" min="1" max="999" placeholder="${addGoalFrame==='milestone'?'10':'4'}" /></div>` : ''}
-          ${addGoalMetric==='min_time'||addGoalMetric==='max_time' ? `<div class="form-field"><label class="form-label">${addGoalFrame==='milestone'?(addGoalMetric==='min_time'?'Total minimum over 21 days (minutes)':'Total maximum over 21 days (minutes)'):(addGoalMetric==='min_time'?'Weekly minimum (minutes)':'Weekly maximum (minutes)')}</label><input class="form-input" id="agTime" type="number" min="1" placeholder="${addGoalMetric==='min_time'?'60':'120'}" /></div>` : ''}
+          <div class="form-field" id="agCountField" style="${addGoalMetric==='count'?'':'display:none'}"><label class="form-label" id="agCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':'Sessions per week'}</label><input class="form-input" id="agCount" type="number" min="1" max="999" placeholder="${addGoalFrame==='milestone'?'10':'4'}" /></div>
+          <div class="form-field" id="agTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}"><label class="form-label" id="agTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':'Weekly maximum (minutes)')}</label><input class="form-input" id="agTime" type="number" min="1" placeholder="${addGoalMetric==='min_time'?'60':'120'}" /></div>
           <div class="btn-row">
-            <button class="btn secondary" onclick="addGoalFormOpen=false;addGoalTitle='';renderGoals()">Cancel</button>
-            <button class="btn primary" onclick="adminSaveGoal()">Add</button>
+            <button type="button" class="btn secondary" onclick="addGoalFormOpen=false;addGoalTitle='';renderGoals()">Cancel</button>
+            <button type="button" class="btn primary" onclick="adminSaveGoal()">Add</button>
           </div>
-        </div>` : `<button class="btn secondary full" style="margin-top:12px;" onclick="addGoalFormOpen=true;renderGoals()">+ Add Goal</button>`;
+        </div>` : `<button type="button" class="btn secondary full" style="margin-top:12px;" onclick="addGoalFormOpen=true;renderGoals()">+ Add Goal</button>`;
 
       el.innerHTML = `
         ${memberPicker}
@@ -490,6 +490,31 @@
         </div>`;
     }
 
+
+    function setAdminFrame(btn, frame) {
+      addGoalFrame = frame;
+      btn.closest("#agFramePills").querySelectorAll("button").forEach(b => { b.style.background=""; b.style.color=""; b.style.borderColor=""; });
+      btn.style.background = "var(--orange)"; btn.style.color = "#fff"; btn.style.borderColor = "var(--orange)";
+      _syncAdminCfg();
+    }
+    function setAdminMetric(btn, metric) {
+      addGoalMetric = metric;
+      btn.closest("#agMetricPills").querySelectorAll("button").forEach(b => { b.style.background=""; b.style.color=""; b.style.borderColor=""; });
+      btn.style.background = "var(--orange)"; btn.style.color = "#fff"; btn.style.borderColor = "var(--orange)";
+      _syncAdminCfg();
+    }
+    function _syncAdminCfg() {
+      const cf = document.getElementById("agCountField");
+      const tf = document.getElementById("agTimeField");
+      if (cf) cf.style.display = addGoalMetric === "count" ? "" : "none";
+      if (tf) tf.style.display = (addGoalMetric === "min_time" || addGoalMetric === "max_time") ? "" : "none";
+      const cl = document.getElementById("agCountLabel");
+      const tl = document.getElementById("agTimeLabel");
+      if (cl) cl.textContent = addGoalFrame === "milestone" ? "Total sessions over 21 days" : "Sessions per week";
+      if (tl) tl.textContent = addGoalMetric === "min_time"
+        ? (addGoalFrame === "milestone" ? "Total minimum over 21 days (minutes)" : "Weekly minimum (minutes)")
+        : (addGoalFrame === "milestone" ? "Total maximum over 21 days (minutes)" : "Weekly maximum (minutes)");
+    }
     async function adminDeleteGoal(goalId) {
       if (!confirm('Delete this goal?')) return;
       await sb.from('goals').delete().eq('id', goalId);
@@ -601,7 +626,7 @@
               <textarea class="stakes-input" id="stkFail" placeholder="Consequence for failing…">${existing?.fail||''}</textarea>
             </div>
             <div id="stakesFlash" class="flash"></div>
-            <button class="btn primary full" style="margin-top:4px;" onclick="saveStakes()">Save Stakes</button>
+            <button type="button" class="btn primary full" style="margin-top:4px;" onclick="saveStakes()">Save Stakes</button>
           </div>
         </div>`;
     }
@@ -772,7 +797,7 @@
             <input class="form-input" id="newCohortDate" type="date" value="${new Date().toISOString().split('T')[0]}" />
           </div>
           <div id="newCohortFlash" class="flash"></div>
-          <button class="btn primary full" style="margin-top:4px;" onclick="createCohort()">Create Cohort</button>
+          <button type="button" class="btn primary full" style="margin-top:4px;" onclick="createCohort()">Create Cohort</button>
         </div>`;
     }
 
