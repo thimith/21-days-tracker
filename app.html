@@ -200,18 +200,20 @@
 
     /* Edit overlay (frosted glass) */
     .goal-edit-overlay {
-      position: absolute; inset: 0; z-index: 5;
-      background: rgba(255,255,255,0.86);
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      background: rgba(255,255,255,0.92);
       backdrop-filter: blur(8px) saturate(1.5);
       -webkit-backdrop-filter: blur(8px) saturate(1.5);
       border-radius: 14px;
-      display: flex; align-items: center;
-      padding: 0 10px 0 4px; gap: 8px;
+      display: flex; flex-direction: column; align-items: stretch;
+      padding: 5px 8px 7px 4px; gap: 4px;
       animation: overlayIn 0.18s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
-    @keyframes overlayIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes overlayIn { from { opacity:0; transform:scaleY(0.94); } to { opacity:1; transform:scaleY(1); } }
+    .ov-row1 { display: flex; align-items: center; gap: 8px; }
     .ov-handle {
-      flex-shrink: 0; padding: 6px 6px;
+      flex-shrink: 0; padding: 4px 6px;
       color: var(--muted); font-size: 1.1rem; line-height: 1;
       cursor: grab; user-select: none; touch-action: none;
     }
@@ -233,6 +235,21 @@
       letter-spacing: 0.02em;
     }
     .goal-edit-save:active { background: var(--orange-dk); }
+    /* Color swatch row */
+    .ov-color-row { display: flex; align-items: center; gap: 6px; padding-left: 6px; }
+    .ov-color-label { font-size: 0.52rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; }
+    .ov-swatch {
+      width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid transparent; cursor: pointer;
+      transition: transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.12s;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7px; color: #bbb; line-height: 1;
+    }
+    .ov-swatch.selected {
+      box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px #444;
+      transform: scale(1.2);
+    }
+    .ov-swatch:active { transform: scale(0.88) !important; }
     .goal-type-tag {
       font-size: 0.54rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.1em;
@@ -1023,8 +1040,14 @@
     }
 
     function renderGoalCard(g, date, locked) {
-      const html = _renderGoalCardInner(g, date, locked);
-      return html.replace('<div class="goal-card', `<div data-goal-id="${g.id}" data-goal-type="${g.type}" class="goal-card`);
+      const html  = _renderGoalCardInner(g, date, locked);
+      const color = g.config?.color || '';
+      const accentStyle = color ? `border-left:4px solid ${color};` : '';
+      let out = html.replace('<div class="goal-card', `<div data-goal-id="${g.id}" data-goal-type="${g.type}" class="goal-card`);
+      if (accentStyle) {
+        out = out.replace(`data-goal-type="${g.type}" class`, `data-goal-type="${g.type}" style="${accentStyle}" class`);
+      }
+      return out;
     }
 
     function _renderGoalCardInner(g, date, locked) {
@@ -1423,13 +1446,25 @@
       renderContent();
     }
 
-    // ── Edit mode (overlay: rename + drag handle) ─────────────────────────
+    // ── Edit mode (overlay: rename + drag handle + color picker) ──────────
+    const _GOAL_COLORS = [
+      { hex: '',        label: 'None'   },
+      { hex: '#FF3B30', label: 'Red'    },
+      { hex: '#FF9500', label: 'Orange' },
+      { hex: '#FFCC00', label: 'Yellow' },
+      { hex: '#34C759', label: 'Green'  },
+      { hex: '#007AFF', label: 'Blue'   },
+      { hex: '#AF52DE', label: 'Purple' },
+      { hex: '#FF2D55', label: 'Pink'   },
+    ];
+
     function _enterEditMode(card) {
       if (_editCardId === card.dataset.goalId) return;
       _exitEditMode();
       const goalId = card.dataset.goalId;
       const goal   = _c.goals.find(g => g.id === goalId);
       const currentTitle = goal?.title || card.querySelector('.goal-title')?.textContent || '';
+      let selectedColor  = goal?.config?.color || '';
 
       card.classList.add('editing');
       _editCardId = goalId;
@@ -1437,11 +1472,14 @@
       const overlay = document.createElement('div');
       overlay.className = 'goal-edit-overlay';
 
+      // ── Row 1: drag handle + title input + save ──
+      const row1 = document.createElement('div');
+      row1.className = 'ov-row1';
+
       const handle = document.createElement('span');
       handle.className = 'ov-handle';
       handle.textContent = '⠿';
       handle.addEventListener('click', e => e.stopPropagation());
-      // Handle pointerdown also starts drag immediately
       handle.addEventListener('pointerdown', e => {
         e.stopPropagation();
         _lpReady = null;
@@ -1463,14 +1501,51 @@
       saveBtn.textContent = 'Save';
       saveBtn.addEventListener('click', e => { e.stopPropagation(); commitSave(); });
 
-      overlay.append(handle, input, saveBtn);
+      row1.append(handle, input, saveBtn);
+
+      // ── Row 2: color swatches ──
+      const row2 = document.createElement('div');
+      row2.className = 'ov-color-row';
+
+      function buildSwatches() {
+        row2.innerHTML = '';
+        _GOAL_COLORS.forEach(({ hex, label }) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.title = label;
+          btn.className = 'ov-swatch' + (selectedColor === hex ? ' selected' : '');
+          if (hex) {
+            btn.style.background = hex;
+            btn.style.borderColor = selectedColor === hex ? 'transparent' : 'transparent';
+          } else {
+            btn.style.background = '#fff';
+            btn.style.border = selectedColor === hex ? '2px solid transparent' : '2px dashed #ccc';
+            btn.textContent = '✕';
+          }
+          btn.addEventListener('click', e => { e.stopPropagation(); selectedColor = hex; buildSwatches(); });
+          btn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+          row2.appendChild(btn);
+        });
+      }
+      buildSwatches();
+
+      overlay.append(row1, row2);
       card.appendChild(overlay);
       setTimeout(() => { input.focus(); input.select(); }, 40);
 
       function commitSave() {
-        const newTitle = input.value.trim();
-        if (newTitle && newTitle !== currentTitle) {
-          if (goal) { goal.title = newTitle; sb.from('goals').update({ title: newTitle }).eq('id', goalId).then(() => {}); }
+        const newTitle   = input.value.trim();
+        const titleChanged = newTitle && newTitle !== currentTitle;
+        const colorChanged = selectedColor !== (goal?.config?.color || '');
+        if (goal) {
+          if (titleChanged) goal.title = newTitle;
+          if (colorChanged) { goal.config = goal.config || {}; goal.config.color = selectedColor; }
+          if (titleChanged || colorChanged) {
+            const upd = {};
+            if (titleChanged) upd.title = newTitle;
+            if (colorChanged) upd.config = goal.config;
+            sb.from('goals').update(upd).eq('id', goalId).then(() => {});
+          }
         }
         renderContent();
       }
