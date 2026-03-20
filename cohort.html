@@ -232,7 +232,6 @@
     <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">At Risk</div></div>
     <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">Owe Redemp.</div></div>
   </div>
-  <div class="leaderboard" id="leaderboard" style="display:none;"></div>
   <div class="content" id="content"></div>
 
   <nav class="bottom-nav">
@@ -485,7 +484,6 @@
 
     function render() {
       renderSummary();
-      renderLeaderboard();
       renderMembers();
     }
 
@@ -561,20 +559,16 @@
         return;
       }
 
-      // Sort: at-risk first, then alphabetical
-      members.sort((a,b) => {
-        const ar = isAtRisk(a.id) ? 0 : 1;
-        const br = isAtRisk(b.id) ? 0 : 1;
-        return ar - br || a.name.localeCompare(b.name);
-      });
+      // Sort by XP descending
+      members.sort((a, b) => calcMemberXP(b.id) - calcMemberXP(a.id));
 
-      document.getElementById('content').innerHTML = members.map(m => {
-        try { return renderMemberCard(m); }
+      document.getElementById('content').innerHTML = members.map((m, i) => {
+        try { return renderMemberCard(m, i); }
         catch(e) { return `<div style="padding:10px 14px;background:#FF3B30;color:#fff;border-radius:10px;font-size:0.8rem;font-weight:600;">${m.name}: ${e.message}</div>`; }
       }).join('');
     }
 
-    function renderMemberCard(member) {
+    function renderMemberCard(member, rank) {
       const goals       = db.getGoalsForUser(member.id);
       const strikes     = db.getRedemptionsForUser(member.id);
       const atRisk      = isAtRisk(member.id);
@@ -583,10 +577,14 @@
       const isOpen      = expanded === member.id;
       const hasCheckins = _c.checkinsLoaded.has(member.id);
 
-      const pips = [1,2,3].map(n=>`<div class="strike-pip${n<=strikeCount?' active':''}"></div>`).join('');
+      const xp   = calcMemberXP(member.id);
+      const lv   = getXPLevel(xp);
+      const idx  = XP_LEVELS.indexOf(lv);
+      const next = XP_LEVELS[idx + 1];
+      const pct  = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
+      const rankLabel = rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `#${rank+1}`;
 
-      const avatarClass = atRisk ? 'at-risk' : strikeCount===0 ? 'good' : '';
-      const cardClass   = (atRisk ? 'at-risk' : strikeCount===0 ? 'complete' : '') + (isOpen ? ' open' : '');
+      const cardClass = (atRisk ? 'at-risk' : strikeCount===0 ? 'complete' : '') + (isOpen ? ' open' : '');
 
       const badge = atRisk
         ? `<span class="status-badge at-risk">⚠ At Risk</span>`
@@ -629,10 +627,13 @@
       return `
         <div class="member-card ${cardClass}" onclick="toggleExpand('${member.id}')">
           <div class="member-top">
-            <div class="member-name">${member.name}${isSelf?' <span class="member-meta-inline">(you)</span>':''}<span class="member-meta-inline">· ${strikeCount} strike${strikeCount!==1?'s':''}</span></div>
+            <span style="font-size:0.82rem;min-width:26px;flex-shrink:0;">${rankLabel}</span>
+            <div class="member-name">${member.first_name || member.name}${isSelf?' <span class="member-meta-inline">(you)</span>':''}</div>
             <div class="member-right">
+              <span style="font-size:0.9rem;">${lv.icon}</span>
+              <div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:${pct}%"></div></div>
+              <span style="font-size:0.72rem;font-weight:800;color:var(--text);min-width:42px;text-align:right;">${xp} XP</span>
               ${badge}
-              <div class="member-strikes">${pips}</div>
               <span class="member-chevron">▼</span>
             </div>
           </div>
