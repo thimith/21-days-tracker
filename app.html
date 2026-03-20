@@ -1322,9 +1322,12 @@
           ? `incrementDailyCount('${g.id}','${date}',${target})`
           : `toggleSession('${g.id}','${date}')`;
         const checkmark = `<svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        const resetBtn = multiPerDay && todayV > 0 && !isFuture
+          ? `<button onclick="event.stopPropagation();resetDailyCount('${g.id}','${date}')" style="position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;padding:2px 4px;font-size:0.7rem;color:var(--muted);line-height:1;opacity:0.6;" title="Reset today">✕</button>`
+          : '';
         return `
-          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${tapFn}" style="${isFuture?'cursor:default':''}">
-            ${deleteBtn}
+          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${tapFn}" style="${isFuture?'cursor:default':'';position:relative}">
+            ${deleteBtn}${resetBtn}
             <div class="bool-row">
               <div class="goal-title">${g.title}</div>
               <div class="session-inline">
@@ -2074,6 +2077,12 @@
       const c = db.getCheckin(goalId, date);
       const cur = c ? Number(c.value)||0 : 0;
       db.setCheckin(goalId, date, cur >= target ? 0 : cur + 1);
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
+      renderContent(); updateXPBadge();
+    }
+
+    function resetDailyCount(goalId, date) {
+      db.setCheckin(goalId, date, 0);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent(); updateXPBadge();
     }
