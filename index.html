@@ -126,6 +126,21 @@
     }
     .error-msg.show { display: block; }
 
+    /* Google button */
+    .btn-google {
+      width: 100%; padding: 13px 14px;
+      background: var(--card); color: var(--text);
+      font-family: inherit; font-size: 0.95rem; font-weight: 600;
+      border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      letter-spacing: -0.01em;
+    }
+    .btn-google:hover  { background: var(--bg); border-color: #bbb; }
+    .btn-google:active { transform: scale(0.98); }
+    .btn-google:disabled { opacity: 0.6; cursor: default; transform: none; }
+    .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
     /* Success */
     .success-state { display: none; text-align: center; padding: 8px 0; }
     .success-state.active { display: block; }
@@ -134,77 +149,21 @@
     .success-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
   </style>
 </head>
-<body style="visibility:hidden;">
+<body>
   <div class="logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
   <p class="tagline">21-Day Challenge</p>
 
   <div class="card" id="mainCard">
-
-    <!-- Success state (shared) -->
-    <div class="success-state" id="successState">
-      <div class="success-icon">📬</div>
-      <div class="success-title">Check your inbox</div>
-      <p class="success-sub">We sent a link to <strong id="sentTo"></strong>.<br>Click it to continue.</p>
-    </div>
-
-    <!-- Tabs + panels (hidden when success shown) -->
-    <div id="authForms">
-      <div class="tabs">
-        <button class="tab active" id="tabSignin" onclick="switchTab('signin')">Sign in</button>
-        <button class="tab"        id="tabSignup" onclick="switchTab('signup')">Sign up</button>
-      </div>
-
-      <!-- ── Sign in panel ── -->
-      <div class="panel active" id="panelSignin">
-        <div class="form-field">
-          <label class="form-label">Email</label>
-          <input class="form-input" type="email" id="siEmail" placeholder="you@example.com"
-            autocomplete="email" onkeydown="if(event.key==='Enter')siSubmit()" />
-        </div>
-        <div id="siPasswordWrap" style="display:none;">
-          <div class="form-field">
-            <label class="form-label">Password</label>
-            <input class="form-input" type="password" id="siPassword" placeholder="Password"
-              autocomplete="current-password" onkeydown="if(event.key==='Enter')signInWithPassword()" />
-          </div>
-        </div>
-        <div class="error-msg" id="siError"></div>
-        <button class="btn" id="siBtn" onclick="siSubmit()">Send magic link</button>
-        <div class="divider"><span>or</span></div>
-        <div style="text-align:center;">
-          <button class="text-btn" id="siToggle" onclick="togglePasswordMode()">Sign in with password instead</button>
-        </div>
-      </div>
-
-      <!-- ── Sign up panel ── -->
-      <div class="panel" id="panelSignup">
-        <div class="field-row">
-          <div class="form-field">
-            <label class="form-label">First name</label>
-            <input class="form-input" type="text" id="suFirst" placeholder="First"
-              autocomplete="given-name" />
-          </div>
-          <div class="form-field">
-            <label class="form-label">Last name</label>
-            <input class="form-input" type="text" id="suLast" placeholder="Last"
-              autocomplete="family-name" />
-          </div>
-        </div>
-        <div class="form-field">
-          <label class="form-label">Email</label>
-          <input class="form-input" type="email" id="suEmail" placeholder="you@example.com"
-            autocomplete="email" />
-        </div>
-        <div class="form-field">
-          <label class="form-label">Phone <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:0.7rem;">(optional)</span></label>
-          <input class="form-input" type="tel" id="suPhone" placeholder="+1 555 000 0000"
-            autocomplete="tel" />
-        </div>
-        <div class="error-msg" id="suError"></div>
-        <button class="btn" id="suBtn" onclick="signUp()">Create account</button>
-      </div>
-    </div>
-
+    <div class="error-msg" id="authError"></div>
+    <button class="btn-google" id="googleBtn" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -218,7 +177,7 @@
 
     let redirected = false;
 
-    // ── Instant redirect if already logged in ────────────────────────────
+    // ── Redirect if already logged in ───────────────────────────────────
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
@@ -226,60 +185,39 @@
       } else {
         document.body.style.visibility = 'visible';
       }
-    });
+    }).catch(() => { document.body.style.visibility = 'visible'; });
 
     // ── Auth state listener ──────────────────────────────────────────────
     sb.auth.onAuthStateChange(async (event, session) => {
       if (redirected) return;
-      if (event === 'INITIAL_SESSION' && session) {
-        redirected = true;
-        await redirectUser(session.user);
-      } else if (event === 'INITIAL_SESSION' && !session) {
-        document.body.style.visibility = 'visible';
-      } else if (event === 'SIGNED_IN' && session) {
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session) {
         redirected = true;
         await handleNewSignIn(session);
       }
     });
 
-    async function redirectUser(user) {
-      window.location.href = 'app.html';
-    }
-
     async function handleNewSignIn(sessionData) {
       const user = sessionData.user;
       if (!user) { window.location.href = 'index.html'; return; }
 
-      // Check for existing profile
       const { data: profile } = await Promise.race([
-        sb.from('profiles').select('id, role').eq('id', user.id).single(),
+        sb.from('profiles').select('id').eq('id', user.id).single(),
         new Promise(resolve => setTimeout(() => resolve({ data: null }), 4000))
       ]);
 
-      if (profile) {
-        window.location.href = 'app.html';
-        return;
+      if (!profile) {
+        const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
+        await sb.from('profiles').insert({ id: user.id, name: fullName, first_name: firstName, last_name: lastName, role, whatsapp: '' });
       }
-
-      // New user — try to auto-create profile from sign-up data stored before link was sent
-      const raw = localStorage.getItem('ft_signup_data');
-      const signupData = raw ? JSON.parse(raw) : null;
-
-      const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
-      const name = signupData
-        ? [signupData.firstName, signupData.lastName].filter(Boolean).join(' ')
-        : (user.email.split('@')[0]); // fallback: use email prefix
-      const whatsapp = signupData?.phone || '';
-
-      await sb.from('profiles').insert({ id: user.id, name, role, whatsapp });
-      if (raw) localStorage.removeItem('ft_signup_data');
 
       // Consume invite if any
       const token = localStorage.getItem('ft_pending_invite');
       if (token) {
-        // Reuse cached invite data from checkInviteToken if available, else fetch
-        const invite = (_cachedInvite?.token === token) ? _cachedInvite : null
-          || (await sb.from('invites').select('*').eq('token', token).single()).data;
+        const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
         if (invite && !invite.used) {
           const writes = [sb.from('invites').update({ used: true }).eq('id', invite.id)];
           if (invite.cohort_id) writes.push(sb.from('cohort_members').insert({ cohort_id: invite.cohort_id, user_id: user.id }));
@@ -291,106 +229,28 @@
       window.location.href = 'app.html';
     }
 
+    // ── Google sign-in ───────────────────────────────────────────────────
+    async function signInWithGoogle() {
+      const btn = document.getElementById('googleBtn');
+      const errEl = document.getElementById('authError');
+      btn.disabled = true; btn.textContent = 'Redirecting…';
+      errEl.classList.remove('show');
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/21-days-tracker/index.html' }
+      });
+      if (error) {
+        errEl.textContent = error.message; errEl.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;flex-shrink:0"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google`;
+      }
+    }
+
     // ── Invite token in URL ──────────────────────────────────────────────
-    let _cachedInvite = null;
-    (async function checkInviteToken() {
-      const params = new URLSearchParams(location.search);
-      const token  = params.get('invite');
-      if (!token) return;
-      localStorage.setItem('ft_pending_invite', token);
-      const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
-      _cachedInvite = invite; // cache for reuse in handleNewSignIn
-      if (invite && !invite.used) {
-        // Pre-fill sign-up tab and switch to it
-        switchTab('signup');
-        if (invite.name)  document.getElementById('suFirst').value = invite.name;
-        if (invite.email) document.getElementById('suEmail').value = invite.email;
-      }
+    (function() {
+      const token = new URLSearchParams(location.search).get('invite');
+      if (token) localStorage.setItem('ft_pending_invite', token);
     })();
-
-    // ── Tab switching ────────────────────────────────────────────────────
-    function switchTab(tab) {
-      document.getElementById('tabSignin').classList.toggle('active', tab === 'signin');
-      document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
-      document.getElementById('panelSignin').classList.toggle('active', tab === 'signin');
-      document.getElementById('panelSignup').classList.toggle('active', tab === 'signup');
-    }
-
-    // ── Sign in ──────────────────────────────────────────────────────────
-    let passwordMode = false;
-
-    function togglePasswordMode() {
-      passwordMode = !passwordMode;
-      document.getElementById('siPasswordWrap').style.display = passwordMode ? 'block' : 'none';
-      document.getElementById('siBtn').textContent   = passwordMode ? 'Sign in' : 'Send magic link';
-      document.getElementById('siBtn').onclick       = passwordMode ? signInWithPassword : siSubmit;
-      document.getElementById('siToggle').textContent = passwordMode ? 'Use magic link instead' : 'Sign in with password instead';
-      document.getElementById('siError').classList.remove('show');
-    }
-
-    function siSubmit() {
-      if (passwordMode) signInWithPassword(); else sendMagicLink('signin');
-    }
-
-    async function signInWithPassword() {
-      const email    = document.getElementById('siEmail').value.trim().toLowerCase();
-      const password = document.getElementById('siPassword').value;
-      const errEl    = document.getElementById('siError');
-      const btn      = document.getElementById('siBtn');
-      errEl.classList.remove('show');
-      if (!email || !password) { errEl.textContent = 'Enter your email and password.'; errEl.classList.add('show'); return; }
-      btn.disabled = true; btn.textContent = 'Signing in…';
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) {
-        errEl.textContent = error.message; errEl.classList.add('show');
-        btn.disabled = false; btn.textContent = 'Sign in';
-        return;
-      }
-      redirected = true;
-      await handleNewSignIn(data);
-    }
-
-    async function sendMagicLink(source) {
-      const emailEl = document.getElementById(source === 'signup' ? 'suEmail' : 'siEmail');
-      const errEl   = document.getElementById(source === 'signup' ? 'suError'  : 'siError');
-      const btn     = document.getElementById(source === 'signup' ? 'suBtn'    : 'siBtn');
-      const email   = emailEl.value.trim().toLowerCase();
-      errEl.classList.remove('show');
-      emailEl.classList.remove('error');
-      if (!email || !email.includes('@')) { emailEl.classList.add('error'); return; }
-      btn.disabled = true; btn.textContent = 'Sending…';
-      const redirectTo = window.location.origin + window.location.pathname;
-      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
-      if (error) {
-        errEl.textContent = error.message; errEl.classList.add('show');
-        btn.disabled = false; btn.textContent = source === 'signup' ? 'Create account' : 'Send magic link';
-        return;
-      }
-      document.getElementById('authForms').style.display = 'none';
-      const s = document.getElementById('successState');
-      s.classList.add('active');
-      document.getElementById('sentTo').textContent = email;
-    }
-
-    // ── Sign up ──────────────────────────────────────────────────────────
-    async function signUp() {
-      const firstName = document.getElementById('suFirst').value.trim();
-      const lastName  = document.getElementById('suLast').value.trim();
-      const email     = document.getElementById('suEmail').value.trim().toLowerCase();
-      const phone     = document.getElementById('suPhone').value.trim();
-      const errEl     = document.getElementById('suError');
-      errEl.classList.remove('show');
-      ['suFirst','suLast','suEmail'].forEach(id => document.getElementById(id).classList.remove('error'));
-
-      if (!firstName) { document.getElementById('suFirst').classList.add('error'); errEl.textContent = 'First name is required.'; errEl.classList.add('show'); return; }
-      if (!lastName)  { document.getElementById('suLast').classList.add('error');  errEl.textContent = 'Last name is required.';  errEl.classList.add('show'); return; }
-      if (!email || !email.includes('@')) { document.getElementById('suEmail').classList.add('error'); return; }
-
-      // Store profile data so handleNewSignIn can auto-create the profile silently
-      localStorage.setItem('ft_signup_data', JSON.stringify({ firstName, lastName, phone }));
-
-      await sendMagicLink('signup');
-    }
   </script>
 </body>
 </html>

@@ -123,8 +123,8 @@
     .logout-btn:active { opacity: 0.8; }
     @media (min-width: 768px) {
       html { background: #DDDDE0; }
-      body { max-width: 62.5vw; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
-      .bottom-nav { left: 50%; right: auto; transform: translateX(-50%); width: 62.5vw; }
+      body { max-width: min(62.5vw, 720px); margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
+      .bottom-nav { left: 50%; right: auto; transform: translateX(-50%); width: min(62.5vw, 720px); }
     }
   </style>
 </head>
@@ -250,6 +250,7 @@
       function goalTypePill(type) {
         const map = {
           'daily_boolean':  ['boolean',   'Daily ✓'],
+          'daily_count':    ['boolean',   'Daily count'],
           'weekly_count':   ['weekly',    'Weekly count'],
           'daily_time':     ['time',      'Time (max/wk)'],
           'daily_time_max': ['time',      'Time (max/wk)'],
@@ -265,6 +266,7 @@
 
       function goalConfigLabel(g) {
         const c = g.config || {};
+        if (g.type === 'daily_count')                               return `${c.dailyTarget || 1}×/day`;
         if (g.type === 'weekly_count')                              return `${c.weeklyTarget || 1}×/wk`;
         if (g.type === 'daily_time' || g.type === 'daily_time_max') return `≤${c.weeklyMaxMinutes || '?'}min/wk`;
         if (g.type === 'daily_time_min')                            return `≥${c.weeklyTargetMinutes || '?'}min/wk`;

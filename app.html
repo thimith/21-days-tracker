@@ -31,6 +31,12 @@
       --border:    #E5E5EA;
       --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
     }
+    /* ── XP badge ────────────────────────────────────────────────────────── */
+    .xp-badge { display:flex; align-items:center; gap:5px; background:var(--bg); border-radius:100px; padding:4px 10px 4px 7px; font-size:0.68rem; font-weight:800; color:var(--text); letter-spacing:-0.01em; cursor:default; }
+    .xp-level-icon { font-size:0.88rem; line-height:1; }
+    .xp-bar-wrap { width:36px; height:3px; background:var(--border); border-radius:99px; overflow:hidden; }
+    .xp-bar-fill { height:100%; background:var(--orange); border-radius:99px; transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
       background: var(--bg);
@@ -60,6 +66,12 @@
     }
     .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
     .header-right { display: flex; align-items: center; gap: 10px; }
+    .day-badge {
+      background: var(--orange); color: #fff;
+      font-size: 0.7rem; font-weight: 800;
+      padding: 4px 10px; border-radius: 100px;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
 
 
     /* ── Progress strip ──────────────────────────────────────────────────── */
@@ -88,6 +100,31 @@
     .dot.today   { background: var(--orange); }
     .dot.current { animation: pulse-dot 2s ease-in-out infinite; }
     .dot.future  { background: var(--border); }
+    .cohort-day-bubble {
+      background: var(--orange); color: #fff;
+      font-size: 0.72rem; font-weight: 800;
+      padding: 3px 10px; border-radius: 100px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Admin member select ── */
+    .member-select {
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      color: var(--text); background: var(--bg);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 5px 28px 5px 10px;
+      outline: none; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238E8E93' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 9px center;
+      max-width: 130px; transition: border-color 0.15s;
+    }
+    .member-select:focus { border-color: var(--orange); }
+    .viewing-banner {
+      background: var(--orange-lt); border-bottom: 1px solid rgba(255,85,0,0.15);
+      padding: 6px 20px; font-size: 0.75rem; font-weight: 600;
+      color: var(--orange); text-align: center;
+    }
     @keyframes pulse-dot {
       0%,100% { opacity:1; transform:scaleY(1); }
       50%     { opacity:0.65; transform:scaleY(1.5); }
@@ -441,8 +478,8 @@
     }
     @media (min-width: 768px) {
       html { background: #DDDDE0; }
-      body { max-width: 62.5vw; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
-      .bottom-nav { left: 50%; right: auto; transform: translateX(-50%); width: 62.5vw; }
+      body { max-width: min(62.5vw, 720px); margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
+      .bottom-nav { left: 50%; right: auto; transform: translateX(-50%); width: min(62.5vw, 720px); }
     }
   </style>
 </head>
@@ -450,12 +487,21 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
+    <select class="member-select" id="memberSelect" style="display:none;" onchange="switchToMember(this.value)"></select>
+    <div class="header-right">
+      <div class="xp-badge" id="xpBadge" style="display:none;">
+        <span class="xp-level-icon" id="xpIcon">🌱</span>
+        <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+        <span id="xpLabel">0 XP</span>
+      </div>
+    </div>
   </div>
+  <div class="viewing-banner" id="viewingBanner" style="display:none;"></div>
 
   <!-- Progress strip -->
   <div class="progress-section">
     <div class="progress-meta">
-      <div class="cohort-label" id="cohortLabel">—</div>
+      <div class="cohort-day-bubble" id="cohortLabel">—</div>
       <div class="progress-pct" id="progressPct">—</div>
     </div>
     <div class="dots-strip" id="dotsStrip"></div>
@@ -500,11 +546,12 @@
     // CACHE
     // ══════════════════════════════════════════════════════════════════════
     const _c = {
-      userId: null, profile: null,
+      userId: null, viewingUserId: null, profile: null,
       cohort: null,
       goals: [],
       checkins: {},
-      stakes: null, redemptions: []
+      stakes: null, redemptions: [],
+      cohortMembers: []   // admin only
     };
 
     // ══════════════════════════════════════════════════════════════════════
@@ -581,6 +628,7 @@
 
       // ── Cache writes + async Supabase saves ──
       setCheckin(goalId, date, value) {
+        if (_c.viewingUserId && _c.viewingUserId !== _c.userId) return; // read-only when viewing another member
         const v = typeof value === 'boolean' ? (value ? 1 : 0) : (parseInt(value)||0);
         _c.checkins[`${goalId}_${date}`] = v;
         sb.from('checkins').upsert({
@@ -588,6 +636,7 @@
         }, { onConflict: 'goal_id,date' }).then(() => {});
       },
       upsertGoal(g) {
+        if (_c.viewingUserId && _c.viewingUserId !== _c.userId) return;
         const idx = _c.goals.findIndex(x => x.id === g.id);
         if (idx >= 0) _c.goals[idx] = g; else _c.goals.push(g);
         sb.from('goals').upsert({
@@ -618,6 +667,7 @@
         sb.from('goals').upsert(rows).then(() => {});
       },
       deleteGoal(id) {
+        if (_c.viewingUserId && _c.viewingUserId !== _c.userId) return;
         _c.goals = _c.goals.filter(g => g.id !== id);
         sb.from('goals').delete().eq('id', id).then(() => {});
       },
@@ -653,6 +703,13 @@
             if (yDay >= 1 && yDay <= 21) {
               const v = _c.checkins[`${g.id}_${yesterdayStr}`];
               if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `Missed: ${g.title}`);
+            }
+          } else if (g.type === 'daily_count') {
+            const yDay = currentDay - 1;
+            if (yDay >= 1 && yDay <= 21) {
+              const v = Number(_c.checkins[`${g.id}_${yesterdayStr}`])||0;
+              const target = g.config?.dailyTarget || 1;
+              if (v < target) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `${g.title}: ${v}/${target}`);
             }
 
           // ── Weekly: evaluate at end of each week (day 8, 15, 22) ─────────
@@ -790,11 +847,18 @@
 
       if (!_c.cohort) { _saveAppCache(); return; }
 
+      await _fetchDataForUser(userId);
+      _saveAppCache();
+    }
+
+    async function _fetchDataForUser(targetUserId) {
+      if (!_c.cohort) return;
+
       // Parallel: goals + stakes + redemptions
       const [goalsRes, stakesRes, redemptionsRes] = await Promise.all([
-        sb.from('goals').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).order('sort_order'),
-        sb.from('stakes').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).single(),
-        sb.from('redemptions').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).order('strike_number')
+        sb.from('goals').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).order('sort_order'),
+        sb.from('stakes').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).single(),
+        sb.from('redemptions').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).order('strike_number')
       ]);
 
       _c.goals = (goalsRes.data || []).map(g => ({
@@ -809,7 +873,7 @@
         reason: r.reason, status: r.status
       }));
 
-      // Checkins: only up to today (no future dates needed)
+      // Checkins: only up to today
       if (_c.goals.length) {
         const { data: checkinsRaw } = await sb.from('checkins')
           .select('goal_id, date, value')
@@ -819,9 +883,9 @@
         for (const c of (checkinsRaw || [])) {
           _c.checkins[`${c.goal_id}_${c.date}`] = c.value;
         }
+      } else {
+        _c.checkins = {};
       }
-
-      _saveAppCache();
     }
 
     function _saveAppCache() {
@@ -841,13 +905,64 @@
       user    = _c.profile;
       cohort  = _c.cohort;
 
-      if (cohort) db.evalRedemptions(session.userId, cohort.id);
+      // Default viewing user to self on every fresh load
+      if (!_c.viewingUserId) _c.viewingUserId = _c.userId;
+
+      // Populate admin dropdown
+      const sel = document.getElementById('memberSelect');
+      if (session.role === 'admin' && _c.cohortMembers.length > 1) {
+        sel.innerHTML = _c.cohortMembers.map(m =>
+          `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name || m.name}</option>`
+        ).join('');
+        sel.style.display = '';
+      } else {
+        sel.style.display = 'none';
+      }
+
+      // Show viewing banner when admin is looking at someone else
+      const banner = document.getElementById('viewingBanner');
+      const isViewingOther = _c.viewingUserId && _c.viewingUserId !== _c.userId;
+      if (isViewingOther) {
+        const m = _c.cohortMembers.find(x => x.id === _c.viewingUserId);
+        banner.textContent = `Viewing ${m?.name || 'member'}'s tracker (read-only)`;
+        banner.style.display = '';
+      } else {
+        banner.style.display = 'none';
+      }
+
+      if (cohort) db.evalRedemptions(_c.viewingUserId, cohort.id);
 
       if (!cohort) {
         document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
       } else {
         render();
+        updateXPBadge();
       }
+    }
+
+    async function switchToMember(memberId) {
+      _c.viewingUserId = memberId;
+      document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">Loading…</div></div>';
+      await _fetchDataForUser(memberId);
+      _applyDataAndRender();
+    }
+
+    async function _fetchCohortMembers() {
+      if (!_c.cohort || _c.profile?.role !== 'admin') return;
+      const { data: memberRows } = await sb.from('cohort_members')
+        .select('user_id, profiles(*)')
+        .eq('cohort_id', _c.cohort.id);
+      _c.cohortMembers = (memberRows || []).map(r => r.profiles).filter(Boolean)
+        .sort((a,b) => (a.first_name||a.name||'').localeCompare(b.first_name||b.name||''));
+    }
+
+    function _updateMemberDropdown() {
+      const sel = document.getElementById('memberSelect');
+      if (_c.profile?.role !== 'admin' || _c.cohortMembers.length < 1) { sel.style.display = 'none'; return; }
+      sel.innerHTML = _c.cohortMembers.map(m =>
+        `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name || m.name}</option>`
+      ).join('');
+      sel.style.display = '';
     }
 
     (async () => {
@@ -855,6 +970,9 @@
       if (result === 'noauth') return;
 
       _applyDataAndRender();
+
+      // Always fetch cohort members for admin dropdown (regardless of cache)
+      _fetchCohortMembers().then(() => _updateMemberDropdown()).catch(() => {});
 
       // If served from cache, refresh in background and silently re-render
       if (result === 'cache') {
@@ -879,7 +997,8 @@
       const day      = db.getCohortDay(cohort.startDate);
       const pct      = Math.max(0, Math.min(100, Math.round(((Math.min(day,21)-1)/21)*100)));
 
-      document.getElementById('cohortLabel').textContent = cohort.name;
+      const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? 'Upcoming' : 'Complete';
+      document.getElementById('cohortLabel').textContent = dayLabel;
       document.getElementById('progressPct').textContent = `${pct}% complete`;
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
@@ -890,7 +1009,6 @@
           cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : ' today';
           cls += ' current';
         } else if (d < todayStr) {
-          // Last day of a week with a redemption → red slip dot
           const weekNum = Math.ceil(dayNum / 7);
           const isLastDayOfWeek = dayNum % 7 === 0;
           if (isLastDayOfWeek && redemptionWeeks.has(weekNum)) {
@@ -901,7 +1019,7 @@
         } else {
           cls += ' future';
         }
-        return `<div class="${cls}" title="Day ${i+1}"></div>`;
+        return `<div class="${cls}"></div>`;
       }).join('');
     }
 
@@ -948,10 +1066,14 @@
 
       // ── Goal cards (grouped) ──
       if (!goals.length) {
-        html.push('<div class="empty-state">No goals yet.<br>Add your goals below before Day 2.</div>');
+        const currentDay = db.getCohortDay(cohort.startDate);
+        const msg = currentDay >= 2
+          ? 'Thierry will soon add your Goals here.'
+          : 'No goals yet.<br>Add your goals below before Day 2.';
+        html.push(`<div class="empty-state">${msg}</div>`);
       }
 
-      const daily     = goals.filter(g => ['daily_boolean','daily_time','daily_time_min','daily_time_max'].includes(g.type));
+      const daily     = goals.filter(g => ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'].includes(g.type));
       const weekly    = goals.filter(g => ['weekly_count','weekly_time_min','weekly_time_max'].includes(g.type));
       const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
 
@@ -1041,7 +1163,7 @@
       const c = db.getCheckin(g.id, date);
       const accentColor = g.config?.color || '';
       const ctrStyle = accentColor ? ` style="background:${accentColor};color:#fff;padding:2px 8px;border-radius:99px;"` : '';
-      const typeLabel ={ daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
+      const typeLabel ={ daily_boolean:'Daily habit', daily_count:'Daily count', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
       const deleteBtn = !locked ? `<button type="button" class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
 
       if (g.type === 'daily_boolean') {
@@ -1053,6 +1175,30 @@
               <div class="goal-title">${g.title}</div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+                  <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'daily_count') {
+        const target  = (g.config && g.config.dailyTarget) || 1;
+        const todayV  = c ? Number(c.value)||0 : 0;
+        const checked = todayV >= target;
+        const pips    = Array.from({length:target}, (_,i) =>
+          `<div class="session-pip${i<todayV?' done':''}"></div>`).join('');
+        return `
+          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`incrementDailyCount('${g.id}','${date}',${target})`:''}" style="${isFuture?'cursor:default':''}">
+            ${deleteBtn}
+            <div class="bool-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="session-inline">
+                <div class="session-dots-row">${pips}</div>
+                <div class="session-count-label"><strong>${todayV}</strong>/${target} today</div>
+              </div>
+              <div class="check-circle${checked?' checked':''}">
+                <svg width="12" height="9" viewBox="0 0 13 10" fill="none">
                   <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
@@ -1341,7 +1487,7 @@
 
     // ── Drag-and-drop goal reordering ────────────────────────────────────
     const _dndGroups = {
-      daily:     ['daily_boolean','daily_time','daily_time_min','daily_time_max'],
+      daily:     ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'],
       weekly:    ['weekly_count','weekly_time_min','weekly_time_max'],
       milestone: ['milestone','total_count','total_time_min','total_time_max'],
     };
@@ -1453,7 +1599,7 @@
 
     function _nextGoalEl(el) {
       let s = el.nextElementSibling;
-      while (s) { if (s.dataset?.goalId) return s; s = s.nextElementSibling; }
+      while (s) { if (s.dataset?.goalId && s.style.display !== 'none') return s; s = s.nextElementSibling; }
       return null;
     }
 
@@ -1787,6 +1933,8 @@
         _live = false;
         _dir  = null;
       }, { passive: true });
+
+      window.addEventListener('resize', () => goToPage(_pageIdx, false));
     }
 
     function checkFailed() {
@@ -1812,7 +1960,15 @@
       const c = db.getCheckin(goalId, date);
       db.setCheckin(goalId, date, !(c?.value));
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent(); renderDots();
+      renderContent(); renderDots(); updateXPBadge();
+    }
+
+    function incrementDailyCount(goalId, date, target) {
+      const c = db.getCheckin(goalId, date);
+      const cur = c ? Number(c.value)||0 : 0;
+      db.setCheckin(goalId, date, cur >= target ? 0 : cur + 1);
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
+      renderContent(); updateXPBadge();
     }
 
     function toggleSession(goalId, date) {
@@ -1820,13 +1976,13 @@
       const cur = c ? Number(c.value)||0 : 0;
       db.setCheckin(goalId, date, cur > 0 ? 0 : 1);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent();
+      renderContent(); updateXPBadge();
     }
 
     function updateTime(goalId, date, val) {
       db.setCheckin(goalId, date, parseInt(val)||0);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent();
+      renderContent(); updateXPBadge();
     }
 
     function toggleMilestone(goalId) {
@@ -1838,7 +1994,7 @@
       allDates.forEach(d => { if (db.getCheckin(goalId, d)?.value) db.setCheckin(goalId, d, false); });
       db.setCheckin(goalId, canonDate, !done);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent();
+      renderContent(); updateXPBadge();
     }
 
     function doneRedemption(id) { db.markRedemptionDone(id); renderContent(); }
@@ -1909,7 +2065,7 @@
         if (addGoalMetric === 'max_time') { type = 'weekly_time_max'; config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
-        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
+        if (addGoalMetric === 'count')    { type = 'daily_count';     config.dailyTarget           = parseInt(document.getElementById('cfgCountVal')?.value)||1; }
         if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
         if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       }
@@ -1926,6 +2082,51 @@
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
+
+    // ── XP + Levels ───────────────────────────────────────────────────────
+    const XP_LEVELS = [
+      { min:0,   label:'Beginner',    icon:'🌱' },
+      { min:75,  label:'Focused',     icon:'⚡' },
+      { min:200, label:'Consistent',  icon:'🔥' },
+      { min:400, label:'Disciplined', icon:'💪' },
+      { min:700, label:'Elite',       icon:'🏆' },
+    ];
+    function calcXP() {
+      if (!cohort) return 0;
+      const dates = db.getCohortDates(cohort.startDate);
+      const today = localDateStr();
+      let xp = 0;
+      for (const g of _c.goals) {
+        for (const d of dates) {
+          if (d > today) continue;
+          const val = Number(_c.checkins[`${g.id}_${d}`] || 0);
+          if (!val) continue;
+          if (g.type === 'daily_boolean') xp += 10;
+          else if (g.type === 'daily_count') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
+          else if (g.type === 'weekly_count') xp += 5;
+          else if (['daily_time','daily_time_min','daily_time_max','weekly_time_min','weekly_time_max'].includes(g.type)) xp += 8;
+          else if (['milestone','total_count','total_time_min','total_time_max'].includes(g.type)) xp += 50;
+        }
+      }
+      return xp;
+    }
+    function getXPLevel(xp) {
+      let lv = XP_LEVELS[0];
+      for (const l of XP_LEVELS) { if (xp >= l.min) lv = l; }
+      return lv;
+    }
+    function updateXPBadge() {
+      if (!cohort) return;
+      const xp   = calcXP();
+      const lv   = getXPLevel(xp);
+      const idx  = XP_LEVELS.indexOf(lv);
+      const next = XP_LEVELS[idx + 1];
+      const pct  = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
+      document.getElementById('xpIcon').textContent    = lv.icon;
+      document.getElementById('xpLabel').textContent   = `${xp} XP`;
+      document.getElementById('xpBarFill').style.width = `${pct}%`;
+      document.getElementById('xpBadge').style.display = '';
+    }
   </script>
 </body>
 </html>
