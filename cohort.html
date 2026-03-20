@@ -182,6 +182,35 @@
     .nav-item.active .nav-label { color: var(--orange); }
 
     .empty-state { text-align: center; padding: 48px 20px; font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── Leaderboard ── */
+    .leaderboard {
+      padding: 14px 16px 6px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .leaderboard-title {
+      font-size: 0.68rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .lb-row {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 9px 12px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: var(--shadow);
+    }
+    .lb-rank {
+      font-size: 0.72rem; font-weight: 800; color: var(--muted);
+      width: 18px; text-align: center; flex-shrink: 0;
+    }
+    .lb-rank.top { color: var(--orange); }
+    .lb-icon { font-size: 0.9rem; flex-shrink: 0; }
+    .lb-name { flex: 1; font-size: 0.84rem; font-weight: 600; color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-name.is-self { color: var(--orange); }
+    .lb-bar-wrap { width: 56px; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; flex-shrink: 0; }
+    .lb-bar-fill { height: 100%; background: var(--orange); border-radius: 99px; }
+    .lb-xp { font-size: 0.78rem; font-weight: 800; color: var(--text); flex-shrink: 0; min-width: 48px; text-align: right; }
     @media (min-width: 768px) {
       html { background: #DDDDE0; }
       body { max-width: min(62.5vw, 720px); margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
@@ -203,6 +232,7 @@
     <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">At Risk</div></div>
     <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">Owe Redemp.</div></div>
   </div>
+  <div class="leaderboard" id="leaderboard" style="display:none;"></div>
   <div class="content" id="content"></div>
 
   <nav class="bottom-nav">
@@ -378,6 +408,16 @@
         if (!_c.redemptions[r.user_id]) _c.redemptions[r.user_id] = [];
         _c.redemptions[r.user_id].push({ id: r.id, userId: r.user_id, cohortId: r.cohort_id, weekNumber: r.week_number, strikeNumber: r.strike_number, status: r.status, reason: r.reason });
       }
+
+      // Bulk-load all checkins upfront for XP leaderboard
+      const allGoalIds = (goalsRes.data || []).map(g => g.id);
+      if (allGoalIds.length) {
+        const { data: allCheckins } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', allGoalIds);
+        for (const r of (allCheckins || [])) _c.checkins[`${r.goal_id}_${r.date}`] = r.value;
+      }
+      // Mark all members as having checkins loaded (since we fetched all above)
+      for (const m of _c.members) _c.checkinsLoaded.add(m.id);
+
       return true;
     }
 
@@ -407,16 +447,54 @@
       render();
     })();
 
+    const XP_LEVELS = [
+      { min:0,   label:'Beginner',    icon:'🌱' },
+      { min:75,  label:'Focused',     icon:'⚡' },
+      { min:200, label:'Consistent',  icon:'🔥' },
+      { min:400, label:'Disciplined', icon:'💪' },
+      { min:700, label:'Elite',       icon:'🏆' },
+    ];
+
+    function calcMemberXP(userId) {
+      const cohort = _c.cohort;
+      if (!cohort) return 0;
+      const dates = db.getCohortDates(cohort.start_date);
+      const today = localDateStr();
+      const goals = _c.goals[userId] || [];
+      let xp = 0;
+      for (const g of goals) {
+        for (const d of dates) {
+          if (d > today) continue;
+          const val = Number(_c.checkins[`${g.id}_${d}`] || 0);
+          if (!val) continue;
+          if (g.type === 'daily_boolean') xp += 10;
+          else if (g.type === 'daily_count') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
+          else if (g.type === 'weekly_count') xp += 5;
+          else if (['daily_time','daily_time_min','daily_time_max','weekly_time_min','weekly_time_max'].includes(g.type)) xp += 8;
+          else if (['milestone','total_count','total_time_min','total_time_max'].includes(g.type)) xp += 50;
+        }
+      }
+      return xp;
+    }
+
+    function getXPLevel(xp) {
+      let lv = XP_LEVELS[0];
+      for (const l of XP_LEVELS) { if (xp >= l.min) lv = l; }
+      return lv;
+    }
+
     function render() {
       renderSummary();
+      renderLeaderboard();
       renderMembers();
     }
 
     function renderSummary() {
-      const members = _c.members;
-      const atRisk  = members.filter(m => isAtRisk(m.id));
-      const onTrack = members.filter(m => !isAtRisk(m.id));
-      const pending = members.filter(m => db.getPendingRedemptions(m.id).length > 0);
+      const members   = _c.members;
+      const atRisk    = members.filter(m => isAtRisk(m.id));
+      const onTrack   = members.filter(m => !isAtRisk(m.id));
+      const pending   = members.filter(m => db.getPendingRedemptions(m.id).length > 0);
+      const totalXP   = members.reduce((s, m) => s + calcMemberXP(m.id), 0);
 
       document.getElementById('summaryBar').innerHTML = `
         <div class="stat-item">
@@ -434,7 +512,40 @@
         <div class="stat-item">
           <div class="stat-value${pending.length>0?' warn':''}">${pending.length}</div>
           <div class="stat-label">Owe Redemp.</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">${totalXP}</div>
+          <div class="stat-label">Cohort XP</div>
         </div>`;
+    }
+
+    function renderLeaderboard() {
+      const el = document.getElementById('leaderboard');
+      const members = _c.members;
+      if (!members.length) { el.style.display = 'none'; return; }
+
+      const ranked = members.map(m => ({ m, xp: calcMemberXP(m.id) }))
+        .sort((a, b) => b.xp - a.xp);
+      const maxXP = ranked[0]?.xp || 1;
+
+      el.style.display = '';
+      el.innerHTML = `<div class="leaderboard-title">Leaderboard</div>` +
+        ranked.map(({ m, xp }, i) => {
+          const lv   = getXPLevel(xp);
+          const idx  = XP_LEVELS.indexOf(lv);
+          const next = XP_LEVELS[idx + 1];
+          const pct  = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
+          const isSelf = m.id === _c.userId;
+          const rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+          const isTop = i < 3;
+          return `<div class="lb-row">
+            <span class="lb-rank${isTop?' top':''}">${rankLabel}</span>
+            <span class="lb-icon">${lv.icon}</span>
+            <span class="lb-name${isSelf?' is-self':''}">${m.first_name || m.name}</span>
+            <div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:${pct}%"></div></div>
+            <span class="lb-xp">${xp} XP</span>
+          </div>`;
+        }).join('');
     }
 
     function isAtRisk(userId) {

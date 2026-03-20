@@ -31,6 +31,12 @@
       --border:    #E5E5EA;
       --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
     }
+    /* ── XP badge ────────────────────────────────────────────────────────── */
+    .xp-badge { display:flex; align-items:center; gap:5px; background:var(--bg); border-radius:100px; padding:4px 10px 4px 7px; font-size:0.68rem; font-weight:800; color:var(--text); letter-spacing:-0.01em; cursor:default; }
+    .xp-level-icon { font-size:0.88rem; line-height:1; }
+    .xp-bar-wrap { width:36px; height:3px; background:var(--border); border-radius:99px; overflow:hidden; }
+    .xp-bar-fill { height:100%; background:var(--orange); border-radius:99px; transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
       background: var(--bg);
@@ -456,7 +462,14 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-    <div class="header-right"><div class="day-badge" id="headerDayLabel" style="display:none;"></div></div>
+    <div class="header-right">
+      <div class="xp-badge" id="xpBadge" style="display:none;">
+        <span class="xp-level-icon" id="xpIcon">🌱</span>
+        <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+        <span id="xpLabel">0 XP</span>
+      </div>
+      <div class="day-badge" id="headerDayLabel" style="display:none;"></div>
+    </div>
   </div>
 
   <!-- Progress strip -->
@@ -861,6 +874,7 @@
         document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
       } else {
         render();
+        updateXPBadge();
       }
     }
 
@@ -1858,7 +1872,7 @@
       const c = db.getCheckin(goalId, date);
       db.setCheckin(goalId, date, !(c?.value));
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent(); renderDots();
+      renderContent(); renderDots(); updateXPBadge();
     }
 
     function incrementDailyCount(goalId, date, target) {
@@ -1866,7 +1880,7 @@
       const cur = c ? Number(c.value)||0 : 0;
       db.setCheckin(goalId, date, cur >= target ? 0 : cur + 1);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent();
+      renderContent(); updateXPBadge();
     }
 
     function toggleSession(goalId, date) {
@@ -1874,13 +1888,13 @@
       const cur = c ? Number(c.value)||0 : 0;
       db.setCheckin(goalId, date, cur > 0 ? 0 : 1);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent();
+      renderContent(); updateXPBadge();
     }
 
     function updateTime(goalId, date, val) {
       db.setCheckin(goalId, date, parseInt(val)||0);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent();
+      renderContent(); updateXPBadge();
     }
 
     function toggleMilestone(goalId) {
@@ -1892,7 +1906,7 @@
       allDates.forEach(d => { if (db.getCheckin(goalId, d)?.value) db.setCheckin(goalId, d, false); });
       db.setCheckin(goalId, canonDate, !done);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent();
+      renderContent(); updateXPBadge();
     }
 
     function doneRedemption(id) { db.markRedemptionDone(id); renderContent(); }
@@ -1980,6 +1994,51 @@
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
+
+    // ── XP + Levels ───────────────────────────────────────────────────────
+    const XP_LEVELS = [
+      { min:0,   label:'Beginner',    icon:'🌱' },
+      { min:75,  label:'Focused',     icon:'⚡' },
+      { min:200, label:'Consistent',  icon:'🔥' },
+      { min:400, label:'Disciplined', icon:'💪' },
+      { min:700, label:'Elite',       icon:'🏆' },
+    ];
+    function calcXP() {
+      if (!cohort) return 0;
+      const dates = db.getCohortDates(cohort.startDate);
+      const today = localDateStr();
+      let xp = 0;
+      for (const g of _c.goals) {
+        for (const d of dates) {
+          if (d > today) continue;
+          const val = Number(_c.checkins[`${g.id}_${d}`] || 0);
+          if (!val) continue;
+          if (g.type === 'daily_boolean') xp += 10;
+          else if (g.type === 'daily_count') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
+          else if (g.type === 'weekly_count') xp += 5;
+          else if (['daily_time','daily_time_min','daily_time_max','weekly_time_min','weekly_time_max'].includes(g.type)) xp += 8;
+          else if (['milestone','total_count','total_time_min','total_time_max'].includes(g.type)) xp += 50;
+        }
+      }
+      return xp;
+    }
+    function getXPLevel(xp) {
+      let lv = XP_LEVELS[0];
+      for (const l of XP_LEVELS) { if (xp >= l.min) lv = l; }
+      return lv;
+    }
+    function updateXPBadge() {
+      if (!cohort) return;
+      const xp   = calcXP();
+      const lv   = getXPLevel(xp);
+      const idx  = XP_LEVELS.indexOf(lv);
+      const next = XP_LEVELS[idx + 1];
+      const pct  = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
+      document.getElementById('xpIcon').textContent    = lv.icon;
+      document.getElementById('xpLabel').textContent   = `${xp} XP`;
+      document.getElementById('xpBarFill').style.width = `${pct}%`;
+      document.getElementById('xpBadge').style.display = '';
+    }
   </script>
 </body>
 </html>
