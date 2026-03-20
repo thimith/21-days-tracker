@@ -134,7 +134,7 @@
     .success-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
   </style>
 </head>
-<body style="visibility:hidden;">
+<body>
   <div class="logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
   <p class="tagline">21-Day Challenge</p>
 
@@ -218,18 +218,13 @@
 
     let redirected = false;
 
-    // ── Instant redirect if already logged in ────────────────────────────
-    const _showPage = () => { document.body.style.visibility = 'visible'; };
-    setTimeout(_showPage, 1500); // safety fallback — never leave user on grey screen
-
+    // ── Redirect if already logged in ───────────────────────────────────
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
         window.location.href = session.user.email === ADMIN_EMAIL ? 'admin.html' : 'app.html';
-      } else {
-        _showPage();
       }
-    }).catch(_showPage);
+    }).catch(() => {});
 
     // ── Auth state listener ──────────────────────────────────────────────
     sb.auth.onAuthStateChange(async (event, session) => {
@@ -237,8 +232,6 @@
       if (event === 'INITIAL_SESSION' && session) {
         redirected = true;
         await redirectUser(session.user);
-      } else if (event === 'INITIAL_SESSION' && !session) {
-        document.body.style.visibility = 'visible';
       } else if (event === 'SIGNED_IN' && session) {
         redirected = true;
         await handleNewSignIn(session);
