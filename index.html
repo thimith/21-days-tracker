@@ -219,14 +219,17 @@
     let redirected = false;
 
     // ── Instant redirect if already logged in ────────────────────────────
+    const _showPage = () => { document.body.style.visibility = 'visible'; };
+    setTimeout(_showPage, 1500); // safety fallback — never leave user on grey screen
+
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
         window.location.href = session.user.email === ADMIN_EMAIL ? 'admin.html' : 'app.html';
       } else {
-        document.body.style.visibility = 'visible';
+        _showPage();
       }
-    });
+    }).catch(_showPage);
 
     // ── Auth state listener ──────────────────────────────────────────────
     sb.auth.onAuthStateChange(async (event, session) => {
