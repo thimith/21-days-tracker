@@ -1314,17 +1314,17 @@
         const wkTotal = db.getWeeklyTotal(g.id, wkDates);
         const target  = (g.config && g.config.weeklyTarget) || 1;
         const todayV  = c ? Number(c.value)||0 : 0;
-        const checked = todayV > 0;
+        const checked = wkTotal >= target;
         const pips    = Array.from({length:target}, (_,i) =>
           `<div class="session-pip${i<wkTotal?' done':''}"></div>`).join('');
         return `
-          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`toggleSession('${g.id}','${date}')`:''}" style="${isFuture?'cursor:default':''}">
+          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`incrementDailyCount('${g.id}','${date}',${target})`:''}" style="${isFuture?'cursor:default':''}">
             ${deleteBtn}
             <div class="bool-row">
               <div class="goal-title">${g.title}</div>
               <div class="session-inline">
                 <div class="session-dots-row">${pips}</div>
-                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week</div>
+                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${todayV>0?` · <strong>${todayV}</strong> today`:''}</div>
               </div>
               <div class="check-circle${checked?' checked':''}">
                 <svg width="12" height="9" viewBox="0 0 13 10" fill="none">
