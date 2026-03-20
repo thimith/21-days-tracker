@@ -205,13 +205,13 @@
       document.getElementById('profileCard').innerHTML = `
         <div class="profile-avatar">${initial}</div>
         <div class="profile-info">
-          <div class="profile-name">${profile.name || '—'}</div>
+          <div class="profile-name">${profile.first_name || '—'}</div>
           <div class="profile-email">${authUser.email || '—'}</div>
           <span class="role-badge ${profile.role === 'admin' ? 'admin' : 'member'}">${profile.role === 'admin' ? 'Admin' : 'Member'}</span>
         </div>`;
 
       document.getElementById('accountInfo').innerHTML = `
-        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${profile.name || '—'}</span></div>
+        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${profile.first_name || '—'}</span></div>
         <div class="info-row"><span class="info-label">Email</span><span class="info-value">${authUser.email || '—'}</span></div>
         <div class="info-row"><span class="info-label">Role</span><span class="info-value">${profile.role || '—'}</span></div>`;
 
