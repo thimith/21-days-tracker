@@ -314,6 +314,7 @@
       transition: all 0.2s;
     }
     .session-pip.done { background: var(--orange); border-color: var(--orange); }
+    .is-done .session-pip.done { background: var(--green); border-color: var(--green); }
     .session-count-label { font-size: 0.61rem; color: var(--muted); }
     .session-count-label strong { color: var(--text); }
 
@@ -1332,7 +1333,7 @@
               <div class="goal-title">${g.title}</div>
               <div class="session-inline">
                 <div class="session-dots-row">${pips}</div>
-                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${todayV>0?` · <strong>${todayV}</strong> today`:''}${g.config?.sessionMinMinutes?` <span style="color:var(--muted);font-weight:500">≥${g.config.sessionMinMinutes}min each</span>`:''}</div>
+                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${multiPerDay&&todayV>0?` · <strong>${todayV}</strong> today`:''}${g.config?.sessionMinMinutes?` <span style="color:var(--muted);font-weight:500">≥${g.config.sessionMinMinutes}min each</span>`:''}</div>
               </div>
               <div class="check-circle${todayV>0?' checked':''}" style="${multiPerDay&&todayV>0?'font-size:0.78rem;font-weight:800;':''}">
                 ${multiPerDay && todayV>0 ? todayV : checkmark}
