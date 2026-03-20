@@ -450,6 +450,7 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
+    <div class="header-right"><span id="headerDayLabel" style="font-size:0.82rem;font-weight:700;color:var(--muted);letter-spacing:-0.01em;"></span></div>
   </div>
 
   <!-- Progress strip -->
@@ -881,6 +882,8 @@
 
       document.getElementById('cohortLabel').textContent = cohort.name;
       document.getElementById('progressPct').textContent = `${pct}% complete`;
+      const headerDay = document.getElementById('headerDayLabel');
+      if (headerDay) headerDay.textContent = day >= 1 && day <= 21 ? `Day ${day}` : '';
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
       document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {

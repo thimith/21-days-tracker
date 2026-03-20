@@ -222,7 +222,13 @@
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
+<<<<<<< HEAD
         window.location.href = session.user.email === ADMIN_EMAIL ? 'admin.html' : 'app.html';
+=======
+        window.location.href = 'app.html';
+      } else {
+        document.body.style.visibility = 'visible';
+>>>>>>> d618cc2 (Redirect all users to Today page on login)
       }
     }).catch(() => {});
 
@@ -239,7 +245,7 @@
     });
 
     async function redirectUser(user) {
-      window.location.href = user.email === ADMIN_EMAIL ? 'admin.html' : 'app.html';
+      window.location.href = 'app.html';
     }
 
     async function handleNewSignIn(sessionData) {
@@ -253,7 +259,7 @@
       ]);
 
       if (profile) {
-        window.location.href = profile.role === 'admin' ? 'admin.html' : 'app.html';
+        window.location.href = 'app.html';
         return;
       }
 
@@ -284,7 +290,7 @@
         localStorage.removeItem('ft_pending_invite');
       }
 
-      window.location.href = role === 'admin' ? 'admin.html' : 'app.html';
+      window.location.href = 'app.html';
     }
 
     // ── Invite token in URL ──────────────────────────────────────────────
