@@ -843,15 +843,6 @@
 
       if (!_c.cohort) { _saveAppCache(); return; }
 
-      // If admin: also fetch all cohort members for the dropdown
-      if (profile?.role === 'admin') {
-        const { data: memberRows } = await sb.from('cohort_members')
-          .select('user_id, profiles(id,first_name,last_name,name)')
-          .eq('cohort_id', _c.cohort.id);
-        _c.cohortMembers = (memberRows || []).map(r => r.profiles).filter(Boolean)
-          .sort((a,b) => (a.first_name||a.name).localeCompare(b.first_name||b.name));
-      }
-
       await _fetchDataForUser(userId);
       _saveAppCache();
     }
@@ -952,11 +943,32 @@
       _applyDataAndRender();
     }
 
+    async function _fetchCohortMembers() {
+      if (!_c.cohort || _c.profile?.role !== 'admin') return;
+      const { data: memberRows } = await sb.from('cohort_members')
+        .select('user_id, profiles(*)')
+        .eq('cohort_id', _c.cohort.id);
+      _c.cohortMembers = (memberRows || []).map(r => r.profiles).filter(Boolean)
+        .sort((a,b) => (a.first_name||a.name||'').localeCompare(b.first_name||b.name||''));
+    }
+
+    function _updateMemberDropdown() {
+      const sel = document.getElementById('memberSelect');
+      if (_c.profile?.role !== 'admin' || _c.cohortMembers.length < 1) { sel.style.display = 'none'; return; }
+      sel.innerHTML = _c.cohortMembers.map(m =>
+        `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name || m.name}</option>`
+      ).join('');
+      sel.style.display = '';
+    }
+
     (async () => {
       const result = await loadData();
       if (result === 'noauth') return;
 
       _applyDataAndRender();
+
+      // Always fetch cohort members for admin dropdown (regardless of cache)
+      _fetchCohortMembers().then(() => _updateMemberDropdown()).catch(() => {});
 
       // If served from cache, refresh in background and silently re-render
       if (result === 'cache') {
