@@ -1324,7 +1324,7 @@
               <div class="goal-title">${g.title}</div>
               <div class="session-inline">
                 <div class="session-dots-row">${pips}</div>
-                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${todayV>0?` · <strong>${todayV}</strong> today`:''}</div>
+                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${todayV>0?` · <strong>${todayV}</strong> today`:''}${g.config?.sessionMinMinutes?` <span style="color:var(--muted);font-weight:500">≥${g.config.sessionMinMinutes}min each</span>`:''}</div>
               </div>
               <div class="check-circle${checked?' checked':''}">
                 <svg width="12" height="9" viewBox="0 0 13 10" fill="none">
