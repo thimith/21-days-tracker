@@ -1326,10 +1326,8 @@
                 <div class="session-dots-row">${pips}</div>
                 <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${todayV>0?` · <strong>${todayV}</strong> today`:''}${g.config?.sessionMinMinutes?` <span style="color:var(--muted);font-weight:500">≥${g.config.sessionMinMinutes}min each</span>`:''}</div>
               </div>
-              <div class="check-circle${checked?' checked':''}">
-                <svg width="12" height="9" viewBox="0 0 13 10" fill="none">
-                  <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+              <div class="check-circle${todayV>0?' checked':''}" style="${todayV>0?'font-size:0.78rem;font-weight:800;':''}">
+                ${todayV>0 ? todayV : `<svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
               </div>
             </div>
           </div>`;
