@@ -206,9 +206,12 @@
       ]);
 
       if (!profile) {
-        const name = user.user_metadata?.full_name || user.email.split('@')[0];
+        const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
         const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
-        await sb.from('profiles').insert({ id: user.id, name, role, whatsapp: '' });
+        await sb.from('profiles').insert({ id: user.id, name: fullName, first_name: firstName, last_name: lastName, role, whatsapp: '' });
       }
 
       // Consume invite if any
