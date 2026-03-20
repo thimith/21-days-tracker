@@ -454,6 +454,7 @@
       const typeLabel = { daily_boolean:'Daily ✓', daily_count:'Daily count', weekly_count:'Weekly count', daily_time:'Max time', daily_time_max:'Max time', daily_time_min:'Min time', milestone:'21-day goal', total_count:'21-day count', total_time_min:'21-day min time', total_time_max:'21-day max time' };
       const configLabel = g => {
         const c = g.config || {};
+        if (g.type==='daily_count')   return `${c.dailyTarget}x/day`;
         if (g.type==='weekly_count')  return `${c.weeklyTarget}x/week`;
         if (g.type==='daily_time' || g.type==='daily_time_max') return `max ${((c.weeklyMaxMinutes||0)/60).toFixed(1)}h/week`;
         if (g.type==='daily_time_min') return `min ${((c.weeklyTargetMinutes||0)/60).toFixed(1)}h/week`;

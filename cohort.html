@@ -277,6 +277,13 @@
           if (!c || !c.value) return { status: cDay > 1 ? 'pending' : 'no-data', label: '—' };
           return { status: 'on-track', label: '✓' };
         }
+        if (goal.type === 'daily_count') {
+          const c = this.getCheckin(goal.id, today);
+          const val = c ? Number(c.value)||0 : 0;
+          const target = (goal.config && goal.config.dailyTarget) || 1;
+          if (val < target) return { status: cDay > 1 ? 'pending' : 'no-data', label: `${val}/${target}` };
+          return { status: 'on-track', label: `${val}/${target}` };
+        }
         if (goal.type === 'weekly_count') {
           const wk = this.getCohortWeekNum(cohort.start_date);
           const wkDates = this.getWeekDates(cohort.start_date, wk);
