@@ -957,7 +957,11 @@
 
       // ── Goal cards (grouped) ──
       if (!goals.length) {
-        html.push('<div class="empty-state">No goals yet.<br>Add your goals below before Day 2.</div>');
+        const currentDay = db.getCohortDay(cohort.startDate);
+        const msg = currentDay >= 2
+          ? 'Thierry will soon add your Goals here.'
+          : 'No goals yet.<br>Add your goals below before Day 2.';
+        html.push(`<div class="empty-state">${msg}</div>`);
       }
 
       const daily     = goals.filter(g => ['daily_boolean','daily_time','daily_time_min','daily_time_max'].includes(g.type));
@@ -1796,6 +1800,8 @@
         _live = false;
         _dir  = null;
       }, { passive: true });
+
+      window.addEventListener('resize', () => goToPage(_pageIdx, false));
     }
 
     function checkFailed() {
