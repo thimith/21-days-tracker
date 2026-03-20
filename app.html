@@ -1245,26 +1245,20 @@
         const done       = !!(c?.value);
         const daysHit    = wkDates.filter(d => d <= todayStr && !!db.getCheckin(g.id, d)?.value).length;
         const weekMet    = daysHit >= daysTarget;
-        const pips       = wkDates.map(d => {
-          const hit   = !!db.getCheckin(g.id, d)?.value;
-          const past  = d < todayStr;
-          const isToday = d === todayStr;
-          let cls = hit ? 'done' : (past ? 'missed' : '');
-          if (isToday) cls += ' today';
-          return `<div class="wk-pip ${cls}"></div>`;
-        }).join('');
+        const pct        = Math.min(100, daysTarget > 0 ? Math.round(daysHit / daysTarget * 100) : 0);
+        const barColor   = weekMet ? 'var(--green)' : 'var(--orange)';
         return `
           <div class="goal-card${done?' is-done':''} is-tappable" onclick="${!isFuture?`toggleBoolean('${g.id}','${date}')`:''}" style="${isFuture?'cursor:default':''}">
             ${deleteBtn}
             <div class="bool-row">
               <div class="goal-title">${g.title}</div>
+              <div class="ctr-wrap">
+                <span class="time-counter${weekMet?' met':''}">${weekMet?'✓ ':''}${daysHit}/${daysTarget} days this week</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
-            </div>
-            <div class="wk-strip">
-              <div class="wk-pips">${pips}</div>
-              <div class="wk-days-label${weekMet?' met':''}"> ${weekMet?'✓ ':''}${daysHit}/${daysTarget} days</div>
             </div>
           </div>`;
       }
@@ -1279,32 +1273,26 @@
         const todayDone   = todayV >= dailyTarget;
         const daysHit     = wkDates.filter(d => d <= todayStr && (Number(db.getCheckin(g.id,d)?.value)||0) >= dailyTarget).length;
         const weekMet     = daysHit >= daysTarget;
-        const pips        = Array.from({length: dailyTarget}, (_,i) =>
-          `<div class="session-pip${i<todayV?' done':''}"></div>`).join('');
-        const wkPips      = wkDates.map(d => {
-          const v = Number(db.getCheckin(g.id, d)?.value)||0;
-          const past = d < todayStr;
-          const isToday = d === todayStr;
-          let cls = v >= dailyTarget ? 'done' : (past ? 'missed' : '');
-          if (isToday) cls += ' today';
-          return `<div class="wk-pip ${cls}"></div>`;
-        }).join('');
+        const dayPct      = Math.min(100, dailyTarget > 0 ? Math.round(todayV / dailyTarget * 100) : 0);
+        const wkPct       = Math.min(100, daysTarget > 0 ? Math.round(daysHit / daysTarget * 100) : 0);
         return `
           <div class="goal-card${todayDone?' is-done':''} is-tappable" onclick="${!isFuture?`incrementDailyCount('${g.id}','${date}',${dailyTarget})`:''}" style="${isFuture?'cursor:default':''}">
             ${deleteBtn}
             <div class="bool-row">
               <div class="goal-title">${g.title}</div>
-              <div class="session-inline">
-                <div class="session-dots-row">${pips}</div>
-                <div class="session-count-label"><strong>${todayV}</strong>/${dailyTarget} today</div>
+              <div class="ctr-wrap" style="gap:5px;">
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  <span class="time-counter${todayDone?' met':''}">${todayDone?'✓ ':''}${todayV}/${dailyTarget} today</span>
+                  <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${dayPct}%;background:${todayDone?'var(--green)':'var(--orange)'}"></div></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  <span class="time-counter${weekMet?' met':''}">${weekMet?'✓ ':''}${daysHit}/${daysTarget} days</span>
+                  <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${wkPct}%;background:${weekMet?'var(--green)':'var(--orange)'}"></div></div>
+                </div>
               </div>
               <div class="check-circle${todayDone?' checked':''}">
                 <svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
-            </div>
-            <div class="wk-strip">
-              <div class="wk-pips">${wkPips}</div>
-              <div class="wk-days-label${weekMet?' met':''}"> ${weekMet?'✓ ':''}${daysHit}/${daysTarget} days this week</div>
             </div>
           </div>`;
       }
@@ -1317,8 +1305,8 @@
         const todayV      = c ? Number(c.value)||0 : 0;
         const checked     = wkTotal >= target;
         const multiPerDay = !!(g.config && g.config.multiPerDay);
-        const pips        = Array.from({length:target}, (_,i) =>
-          `<div class="session-pip${i<wkTotal?' done':''}"></div>`).join('');
+        const pct         = Math.min(100, target > 0 ? Math.round(wkTotal / target * 100) : 0);
+        const barColor    = checked ? 'var(--green)' : 'var(--orange)';
         const tapFn = isFuture ? '' : multiPerDay
           ? `incrementDailyCount('${g.id}','${date}',${target})`
           : `toggleSession('${g.id}','${date}')`;
@@ -1331,9 +1319,9 @@
             ${deleteBtn}${resetBtn}
             <div class="bool-row">
               <div class="goal-title">${g.title}</div>
-              <div class="session-inline">
-                <div class="session-dots-row">${pips}</div>
-                <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${multiPerDay&&todayV>0?` · <strong>${todayV}</strong> today`:''}${g.config?.sessionMinMinutes?` <span style="color:var(--muted);font-weight:500">≥${g.config.sessionMinMinutes}min each</span>`:''}</div>
+              <div class="ctr-wrap">
+                <span class="time-counter${checked?' met':''}">${checked?'✓ ':''}${wkTotal}/${target} this week${g.config?.sessionMinMinutes?` <span style="font-weight:400">≥${g.config.sessionMinMinutes}min</span>`:''}</span>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
               </div>
               <div class="check-circle${todayV>0?' checked':''}" style="${multiPerDay&&todayV>0?'font-size:0.78rem;font-weight:800;':''}">
                 ${multiPerDay && todayV>0 ? todayV : checkmark}
