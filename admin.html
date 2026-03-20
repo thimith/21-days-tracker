@@ -254,7 +254,7 @@
 
       // Load members of this cohort
       const { data: memberRows } = await sb.from('cohort_members')
-        .select('user_id, profiles(id, name, role)')
+        .select('user_id, profiles(id, first_name, role)')
         .eq('cohort_id', mc.id);
       const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
 
@@ -281,9 +281,9 @@
           : `<span class="redemption-status clear">Clear</span>`;
         return `
           <div class="member-row">
-            <div class="member-avatar">${m.name[0].toUpperCase()}</div>
+            <div class="member-avatar">${(m.first_name||'?')[0].toUpperCase()}</div>
             <div class="member-info">
-              <div class="member-name" id="mname-${m.id}">${m.name}</div>
+              <div class="member-name" id="mname-${m.id}">${m.first_name}</div>
               <div class="strikes-row">${pips} ${status}</div>
             </div>
             <div class="member-actions">
@@ -378,7 +378,7 @@
       const commit = async () => {
         const newName = input.value.trim();
         if (newName && newName !== current) {
-          const { error } = await sb.from('profiles').update({ name: newName }).eq('id', userId);
+          const { error } = await sb.from('profiles').update({ first_name: newName }).eq('id', userId);
           if (error) { alert('Failed: ' + error.message); renderMembers(); return; }
         }
         renderMembers();
@@ -416,7 +416,7 @@
       goalsMemberCohortId = mc.id;
 
       const { data: memberRows } = await sb.from('cohort_members')
-        .select('user_id, profiles(id, name)').eq('cohort_id', mc.id);
+        .select('user_id, profiles(id, first_name)').eq('cohort_id', mc.id);
       const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
 
       const cohortOptions = cohorts.map(c => `<option value="${c.id}"${c.id === mc.id ? ' selected' : ''}>${c.name}</option>`).join('');
@@ -519,7 +519,7 @@
       el.innerHTML = `
         ${memberPicker}
         <div class="card">
-          <div class="card-title">${member?.name}'s Goals <small>${goals.length}/10</small></div>
+          <div class="card-title">${member?.first_name}'s Goals <small>${goals.length}/10</small></div>
           <div class="goals-list">${goalRows || '<div class="empty-state" style="padding:16px 0;">No goals yet.</div>'}</div>
           ${addForm}
         </div>`;
@@ -630,7 +630,7 @@
       stakesCohortId = mc.id;
 
       const { data: memberRows } = await sb.from('cohort_members')
-        .select('user_id, profiles(id, name)').eq('cohort_id', mc.id);
+        .select('user_id, profiles(id, first_name)').eq('cohort_id', mc.id);
       const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
 
       const cohortOptions = cohorts.map(c => `<option value="${c.id}"${c.id === mc.id ? ' selected' : ''}>${c.name}</option>`).join('');
@@ -663,7 +663,7 @@
 
       el.innerHTML = `
         <div class="card">
-          <div class="card-title">${member?.name}'s Stakes</div>
+          <div class="card-title">${member?.first_name}'s Stakes</div>
           ${memberPicker}
           <div style="margin-top:8px;">
             <div class="form-field">
@@ -718,7 +718,7 @@
       const activeCohort = cohorts.find(c => { const d = getCohortDay(c.start_date); return d >= 1 && d <= 21; }) || cohorts[0];
 
       const { data: memberRows } = await sb.from('cohort_members')
-        .select('user_id, profiles(id, name)').eq('cohort_id', activeCohort.id);
+        .select('user_id, profiles(id, first_name)').eq('cohort_id', activeCohort.id);
       const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
 
       const memberPicker = `
@@ -893,7 +893,7 @@
     // ── Unassigned members banner ─────────────────────────────────────────
     async function checkUnassignedMembers() {
       const [{ data: allProfiles }, { data: assigned }, { data: cohortsRaw }] = await Promise.all([
-        sb.from('profiles').select('id, name').eq('role', 'member'),
+        sb.from('profiles').select('id, first_name').eq('role', 'member'),
         sb.from('cohort_members').select('user_id'),
         sb.from('cohorts').select('*').order('start_date', { ascending: false })
       ]);
@@ -908,8 +908,8 @@
       const cohortOptions = cohorts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       const rows = unassigned.map(p => `
         <div class="pending-row" id="pending-row-${p.id}">
-          <div class="member-avatar">${p.name[0].toUpperCase()}</div>
-          <div class="pending-name">${p.name}</div>
+          <div class="member-avatar">${(p.first_name||'?')[0].toUpperCase()}</div>
+          <div class="pending-name">${p.first_name}</div>
           <select class="form-input" id="pending-cohort-${p.id}" style="width:auto;font-size:0.8rem;padding:6px 10px;">${cohortOptions}</select>
           <button type="button" class="btn primary" style="padding:7px 14px;font-size:0.8rem;flex-shrink:0;" onclick="assignToCohort('${p.id}')">Add</button>
         </div>`).join('');
