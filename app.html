@@ -1599,7 +1599,7 @@
 
     function _nextGoalEl(el) {
       let s = el.nextElementSibling;
-      while (s) { if (s.dataset?.goalId) return s; s = s.nextElementSibling; }
+      while (s) { if (s.dataset?.goalId && s.style.display !== 'none') return s; s = s.nextElementSibling; }
       return null;
     }
 
