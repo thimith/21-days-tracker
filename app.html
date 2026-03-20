@@ -1482,42 +1482,41 @@
         return `
           <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleMilestone('${g.id}')">
             ${deleteBtn}
-            <div class="milestone-row">              <div class="goal-title">${g.title}</div>
+            <div class="bool-row">
+              <div class="goal-title">${g.title}</div>
+              <span class="milestone-chip${done?' done':''}" style="flex-shrink:0;">${done?'✓ Complete':'21-day goal'}</span>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
                   <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
             </div>
-            <div style="margin-top:10px;">
-              <span class="milestone-chip${done?' done':''}">${done?'✓ Complete':'21-day commitment'}</span>
-            </div>
           </div>`;
       }
 
       if (g.type === 'total_count') {
         const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
-        const total    = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
+        const total    = allDates.reduce((s,d) => s + Number(db.getCheckin(g.id,d)?.value||0), 0);
         const target   = g.config.totalTarget || 10;
         const met      = total >= target;
-        const todayV   = c ? Number(c.value)||'' : '';
-        const pct      = Math.min(100, target > 0 ? (total / target * 100) : 0);
-        const barColor = met ? 'var(--green)' : (accentColor || 'var(--orange)');
-        const thisCtrStyle = met ? ' style="background:var(--green);color:#fff;padding:2px 8px;border-radius:99px;"' : ctrStyle;
+        const todayV   = c ? Number(c.value)||0 : 0;
+        const pct      = Math.min(100, target > 0 ? Math.round(total / target * 100) : 0);
+        const barColor = met ? 'var(--green)' : 'var(--orange)';
+        const checkmark = `<svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        const resetBtn = todayV > 0 && !isFuture
+          ? `<button onclick="event.stopPropagation();resetDailyCount('${g.id}','${date}')" style="position:absolute;top:8px;right:8px;background:#fff;border:none;border-radius:100px;cursor:pointer;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:#999;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,0.15);padding:0;" title="Reset today">✕</button>`
+          : '';
         return `
-          <div class="goal-card">
-            ${deleteBtn}
-            <div class="time-inline-row">              <div class="goal-title">${g.title}</div>
-              <input class="time-input" type="number" inputmode="numeric" min="0" max="1"
-                value="${todayV}" placeholder=""
-                onchange="updateTime('${g.id}','${date}',this.value)"
-                onkeydown="if(event.key==='Enter')this.blur()"
-                onwheel="this.blur()"
-                ${isFuture?'disabled':''} />
-              <span class="time-unit">today</span>
+          <div class="goal-card${met?' is-done':''} is-tappable" onclick="${!isFuture?`incrementDailyCount('${g.id}','${date}',${target})`:''}" style="${isFuture?'cursor:default;':''}position:relative">
+            ${deleteBtn}${resetBtn}
+            <div class="bool-row">
+              <div class="goal-title">${g.title}</div>
               <div class="ctr-wrap">
-                <span class="time-counter${met?' met':''}"${thisCtrStyle}>${met?'✓ ':''}${total}/${target}</span>
+                <span class="time-counter${met?' met':''}">${met?'✓ ':''}${total}/${target} total</span>
                 <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              </div>
+              <div class="check-circle${todayV>0?' checked':''}" style="${todayV>0?'font-size:0.78rem;font-weight:800;':''}">
+                ${todayV>0 ? todayV : checkmark}
               </div>
             </div>
           </div>`;
