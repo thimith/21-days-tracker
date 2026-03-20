@@ -433,7 +433,7 @@
           <div class="form-field">
             <select class="form-select" onchange="goalsMemberId=this.value;renderGoals()">
               <option value="">— choose member —</option>
-              ${members.map(m => `<option value="${m.id}"${goalsMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
+              ${members.map(m => `<option value="${m.id}"${goalsMemberId===m.id?' selected':''}>${m.first_name}</option>`).join('')}
             </select>
           </div>
         </div>`;
@@ -646,7 +646,7 @@
           <label class="form-label">Member</label>
           <select class="form-select" onchange="stakesMemberId=this.value;renderStakes()">
             <option value="">— choose member —</option>
-            ${members.map(m => `<option value="${m.id}"${stakesMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
+            ${members.map(m => `<option value="${m.id}"${stakesMemberId===m.id?' selected':''}>${m.first_name}</option>`).join('')}
           </select>
         </div>`;
 
@@ -726,7 +726,7 @@
           <label class="form-label">Member</label>
           <select class="form-select" onchange="overrideMemberId=this.value;renderOverride()">
             <option value="">— choose member —</option>
-            ${members.map(m => `<option value="${m.id}"${overrideMemberId===m.id?' selected':''}>${m.name}</option>`).join('')}
+            ${members.map(m => `<option value="${m.id}"${overrideMemberId===m.id?' selected':''}>${m.first_name}</option>`).join('')}
           </select>
         </div>`;
 

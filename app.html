@@ -945,7 +945,7 @@
       const sel = document.getElementById('memberSelect');
       if (session.role === 'admin' && _c.cohortMembers.length > 1) {
         sel.innerHTML = _c.cohortMembers.map(m =>
-          `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name || m.name}</option>`
+          `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name}</option>`
         ).join('');
         sel.style.display = '';
       } else {
@@ -957,7 +957,7 @@
       const isViewingOther = _c.viewingUserId && _c.viewingUserId !== _c.userId;
       if (isViewingOther) {
         const m = _c.cohortMembers.find(x => x.id === _c.viewingUserId);
-        banner.textContent = `Viewing ${m?.name || 'member'}'s tracker (read-only)`;
+        banner.textContent = `Viewing ${m?.first_name || 'member'}'s tracker (read-only)`;
         banner.style.display = '';
       } else {
         banner.style.display = 'none';
@@ -986,14 +986,14 @@
         .select('user_id, profiles(*)')
         .eq('cohort_id', _c.cohort.id);
       _c.cohortMembers = (memberRows || []).map(r => r.profiles).filter(Boolean)
-        .sort((a,b) => (a.first_name||a.name||'').localeCompare(b.first_name||b.name||''));
+        .sort((a,b) => (a.first_name||'').localeCompare(b.first_name||''));
     }
 
     function _updateMemberDropdown() {
       const sel = document.getElementById('memberSelect');
       if (_c.profile?.role !== 'admin' || _c.cohortMembers.length < 1) { sel.style.display = 'none'; return; }
       sel.innerHTML = _c.cohortMembers.map(m =>
-        `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name || m.name}</option>`
+        `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name}</option>`
       ).join('');
       sel.style.display = '';
     }

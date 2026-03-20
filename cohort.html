@@ -564,7 +564,7 @@
 
       document.getElementById('content').innerHTML = members.map((m, i) => {
         try { return renderMemberCard(m, i); }
-        catch(e) { return `<div style="padding:10px 14px;background:#FF3B30;color:#fff;border-radius:10px;font-size:0.8rem;font-weight:600;">${m.name}: ${e.message}</div>`; }
+        catch(e) { return `<div style="padding:10px 14px;background:#FF3B30;color:#fff;border-radius:10px;font-size:0.8rem;font-weight:600;">${m.first_name}: ${e.message}</div>`; }
       }).join('');
     }
 

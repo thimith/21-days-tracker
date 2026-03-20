@@ -201,7 +201,7 @@
       // 'Me' label stays as "Me"
 
 
-      const initial = (profile.name || '?')[0].toUpperCase();
+      const initial = (profile.first_name || '?')[0].toUpperCase();
       document.getElementById('profileCard').innerHTML = `
         <div class="profile-avatar">${initial}</div>
         <div class="profile-info">
