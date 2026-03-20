@@ -91,15 +91,36 @@
     .progress-pct { font-size: 0.72rem; color: var(--muted); }
     .dots-strip { display: flex; gap: 3px; align-items: center; }
     .dot {
-      flex: 1; height: 7px; border-radius: 4px;
+      flex: 1; height: 22px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.46rem; font-weight: 800; color: rgba(255,255,255,0.9);
       transition: background 0.3s;
     }
     .dot.done    { background: var(--green); }
-    .dot.missed  { background: rgba(255,59,48,0.35); }
+    .dot.missed  { background: rgba(255,59,48,0.35); color: var(--red); }
     .dot.partial { background: var(--yellow); }
     .dot.today   { background: var(--orange); }
     .dot.current { animation: pulse-dot 2s ease-in-out infinite; }
-    .dot.future  { background: var(--border); }
+    .dot.future  { background: var(--border); color: var(--muted); }
+
+    /* ── Admin member select ── */
+    .member-select {
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      color: var(--text); background: var(--bg);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 5px 28px 5px 10px;
+      outline: none; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238E8E93' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 9px center;
+      max-width: 130px; transition: border-color 0.15s;
+    }
+    .member-select:focus { border-color: var(--orange); }
+    .viewing-banner {
+      background: var(--orange-lt); border-bottom: 1px solid rgba(255,85,0,0.15);
+      padding: 6px 20px; font-size: 0.75rem; font-weight: 600;
+      color: var(--orange); text-align: center;
+    }
     @keyframes pulse-dot {
       0%,100% { opacity:1; transform:scaleY(1); }
       50%     { opacity:0.65; transform:scaleY(1.5); }
@@ -462,15 +483,16 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
+    <select class="member-select" id="memberSelect" style="display:none;" onchange="switchToMember(this.value)"></select>
     <div class="header-right">
       <div class="xp-badge" id="xpBadge" style="display:none;">
         <span class="xp-level-icon" id="xpIcon">🌱</span>
         <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
         <span id="xpLabel">0 XP</span>
       </div>
-      <div class="day-badge" id="headerDayLabel" style="display:none;"></div>
     </div>
   </div>
+  <div class="viewing-banner" id="viewingBanner" style="display:none;"></div>
 
   <!-- Progress strip -->
   <div class="progress-section">
@@ -520,11 +542,12 @@
     // CACHE
     // ══════════════════════════════════════════════════════════════════════
     const _c = {
-      userId: null, profile: null,
+      userId: null, viewingUserId: null, profile: null,
       cohort: null,
       goals: [],
       checkins: {},
-      stakes: null, redemptions: []
+      stakes: null, redemptions: [],
+      cohortMembers: []   // admin only
     };
 
     // ══════════════════════════════════════════════════════════════════════
@@ -601,6 +624,7 @@
 
       // ── Cache writes + async Supabase saves ──
       setCheckin(goalId, date, value) {
+        if (_c.viewingUserId && _c.viewingUserId !== _c.userId) return; // read-only when viewing another member
         const v = typeof value === 'boolean' ? (value ? 1 : 0) : (parseInt(value)||0);
         _c.checkins[`${goalId}_${date}`] = v;
         sb.from('checkins').upsert({
@@ -608,6 +632,7 @@
         }, { onConflict: 'goal_id,date' }).then(() => {});
       },
       upsertGoal(g) {
+        if (_c.viewingUserId && _c.viewingUserId !== _c.userId) return;
         const idx = _c.goals.findIndex(x => x.id === g.id);
         if (idx >= 0) _c.goals[idx] = g; else _c.goals.push(g);
         sb.from('goals').upsert({
@@ -638,6 +663,7 @@
         sb.from('goals').upsert(rows).then(() => {});
       },
       deleteGoal(id) {
+        if (_c.viewingUserId && _c.viewingUserId !== _c.userId) return;
         _c.goals = _c.goals.filter(g => g.id !== id);
         sb.from('goals').delete().eq('id', id).then(() => {});
       },
@@ -817,11 +843,27 @@
 
       if (!_c.cohort) { _saveAppCache(); return; }
 
+      // If admin: also fetch all cohort members for the dropdown
+      if (profile?.role === 'admin') {
+        const { data: memberRows } = await sb.from('cohort_members')
+          .select('user_id, profiles(id,first_name,last_name,name)')
+          .eq('cohort_id', _c.cohort.id);
+        _c.cohortMembers = (memberRows || []).map(r => r.profiles).filter(Boolean)
+          .sort((a,b) => (a.first_name||a.name).localeCompare(b.first_name||b.name));
+      }
+
+      await _fetchDataForUser(userId);
+      _saveAppCache();
+    }
+
+    async function _fetchDataForUser(targetUserId) {
+      if (!_c.cohort) return;
+
       // Parallel: goals + stakes + redemptions
       const [goalsRes, stakesRes, redemptionsRes] = await Promise.all([
-        sb.from('goals').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).order('sort_order'),
-        sb.from('stakes').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).single(),
-        sb.from('redemptions').select('*').eq('user_id', userId).eq('cohort_id', _c.cohort.id).order('strike_number')
+        sb.from('goals').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).order('sort_order'),
+        sb.from('stakes').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).single(),
+        sb.from('redemptions').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).order('strike_number')
       ]);
 
       _c.goals = (goalsRes.data || []).map(g => ({
@@ -836,7 +878,7 @@
         reason: r.reason, status: r.status
       }));
 
-      // Checkins: only up to today (no future dates needed)
+      // Checkins: only up to today
       if (_c.goals.length) {
         const { data: checkinsRaw } = await sb.from('checkins')
           .select('goal_id, date, value')
@@ -846,9 +888,9 @@
         for (const c of (checkinsRaw || [])) {
           _c.checkins[`${c.goal_id}_${c.date}`] = c.value;
         }
+      } else {
+        _c.checkins = {};
       }
-
-      _saveAppCache();
     }
 
     function _saveAppCache() {
@@ -868,7 +910,32 @@
       user    = _c.profile;
       cohort  = _c.cohort;
 
-      if (cohort) db.evalRedemptions(session.userId, cohort.id);
+      // Default viewing user to self on every fresh load
+      if (!_c.viewingUserId) _c.viewingUserId = _c.userId;
+
+      // Populate admin dropdown
+      const sel = document.getElementById('memberSelect');
+      if (session.role === 'admin' && _c.cohortMembers.length > 1) {
+        sel.innerHTML = _c.cohortMembers.map(m =>
+          `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name || m.name}</option>`
+        ).join('');
+        sel.style.display = '';
+      } else {
+        sel.style.display = 'none';
+      }
+
+      // Show viewing banner when admin is looking at someone else
+      const banner = document.getElementById('viewingBanner');
+      const isViewingOther = _c.viewingUserId && _c.viewingUserId !== _c.userId;
+      if (isViewingOther) {
+        const m = _c.cohortMembers.find(x => x.id === _c.viewingUserId);
+        banner.textContent = `Viewing ${m?.name || 'member'}'s tracker (read-only)`;
+        banner.style.display = '';
+      } else {
+        banner.style.display = 'none';
+      }
+
+      if (cohort) db.evalRedemptions(_c.viewingUserId, cohort.id);
 
       if (!cohort) {
         document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
@@ -876,6 +943,13 @@
         render();
         updateXPBadge();
       }
+    }
+
+    async function switchToMember(memberId) {
+      _c.viewingUserId = memberId;
+      document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">Loading…</div></div>';
+      await _fetchDataForUser(memberId);
+      _applyDataAndRender();
     }
 
     (async () => {
@@ -909,8 +983,6 @@
 
       document.getElementById('cohortLabel').textContent = cohort.name;
       document.getElementById('progressPct').textContent = `${pct}% complete`;
-      const headerDay = document.getElementById('headerDayLabel');
-      if (headerDay) { const label = day >= 1 && day <= 21 ? `Day ${day}` : ''; headerDay.textContent = label; headerDay.style.display = label ? '' : 'none'; }
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
       document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {
@@ -920,7 +992,6 @@
           cls += db.isDayDone(session.userId,cohort.id,d) ? ' done' : ' today';
           cls += ' current';
         } else if (d < todayStr) {
-          // Last day of a week with a redemption → red slip dot
           const weekNum = Math.ceil(dayNum / 7);
           const isLastDayOfWeek = dayNum % 7 === 0;
           if (isLastDayOfWeek && redemptionWeeks.has(weekNum)) {
@@ -931,7 +1002,7 @@
         } else {
           cls += ' future';
         }
-        return `<div class="${cls}" title="Day ${i+1}"></div>`;
+        return `<div class="${cls}">${dayNum}</div>`;
       }).join('');
     }
 
