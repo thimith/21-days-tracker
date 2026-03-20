@@ -31,122 +31,6 @@
       --border:    #E5E5EA;
       --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
     }
-    /* ── Dark mode ──────────────────────────────────────────────────────── */
-    html.dark {
-      --bg:     #0F0F11;
-      --card:   #1C1C1E;
-      --text:   #F2F2F7;
-      --muted:  #636366;
-      --border: #2C2C2E;
-      --shadow: 0 1px 4px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.3);
-      color-scheme: dark;
-    }
-    html.dark .progress-section,
-    html.dark .date-tabs { background: var(--card); }
-    html.dark .goal-edit-overlay { background: rgba(28,28,30,0.96); }
-    html.dark .form-input,
-    html.dark .time-input { background: #2C2C2E; }
-    html.dark .type-pill:not(.sel),
-    html.dark .btn-add-goal { background: #2C2C2E; }
-    html.dark .session-pip:not(.done) { background: #2C2C2E; border-color: #3A3A3C; }
-    html.dark .ctr-progress-track { background: rgba(255,255,255,0.1); }
-    html.dark .date-tab:not(.active) { background: #2C2C2E; border-color: #3A3A3C; }
-    html.dark .failed-card { background: #1C1C1E; }
-    html.dark .setup-banner { background: var(--card); }
-    @media (min-width: 768px) {
-      html.dark { background: #000; }
-    }
-
-    /* ── Dark mode toggle ────────────────────────────────────────────────── */
-    .dark-toggle {
-      background: none; border: none; cursor: pointer;
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; color: var(--muted);
-      transition: background 0.15s, transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    .dark-toggle:hover { background: var(--bg); }
-    .dark-toggle:active { transform: scale(0.88); }
-
-    /* ── XP badge ────────────────────────────────────────────────────────── */
-    .xp-badge {
-      display: flex; align-items: center; gap: 5px;
-      background: var(--bg); border-radius: 100px;
-      padding: 4px 10px 4px 6px;
-      font-size: 0.68rem; font-weight: 800; color: var(--text);
-      letter-spacing: -0.01em; cursor: pointer;
-      transition: background 0.15s;
-    }
-    .xp-badge:hover { background: var(--border); }
-    .xp-level-icon { font-size: 0.9rem; line-height: 1; }
-    .xp-bar-wrap {
-      width: 44px; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden;
-    }
-    .xp-bar-fill {
-      height: 100%; background: var(--orange); border-radius: 99px;
-      transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
-    }
-
-    /* ── Completion screen ───────────────────────────────────────────────── */
-    .completion-screen {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.88);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      z-index: 998;
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px;
-      animation: fadeIn 0.3s ease;
-    }
-    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-    .completion-card {
-      background: var(--card); border-radius: 28px;
-      padding: 36px 28px 28px; text-align: center;
-      max-width: 320px; width: 100%;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.4);
-      animation: cardPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
-      position: relative; overflow: hidden;
-    }
-    @keyframes cardPop { from { opacity:0; transform:scale(0.8) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
-    .completion-emoji { font-size: 3.5rem; margin-bottom: 12px; animation: emojiBounce 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
-    @keyframes emojiBounce { from { transform:scale(0) rotate(-20deg); } to { transform:scale(1) rotate(0deg); } }
-    .completion-day-label { font-size: 0.7rem; font-weight: 800; color: var(--orange); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px; }
-    .completion-title { font-size: 1.7rem; font-weight: 900; color: var(--text); letter-spacing: -0.03em; margin-bottom: 8px; }
-    .completion-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.55; margin-bottom: 20px; }
-    .completion-xp { font-size: 0.8rem; font-weight: 700; color: var(--orange); margin-bottom: 20px; }
-    .completion-btn {
-      width: 100%; padding: 14px;
-      background: var(--orange); color: #fff;
-      font-family: inherit; font-size: 0.95rem; font-weight: 700;
-      border: none; border-radius: 14px; cursor: pointer;
-      letter-spacing: -0.01em;
-      transition: background 0.15s, transform 0.15s;
-    }
-    .completion-btn:active { background: var(--orange-dk); transform: scale(0.98); }
-    .confetti-piece {
-      position: absolute; width: 8px; height: 8px;
-      border-radius: 2px; opacity: 0;
-      animation: confettiFall var(--dur) var(--delay) ease-in forwards;
-    }
-    @keyframes confettiFall {
-      0%   { opacity:1; transform: translate(var(--x0), -20px) rotate(0deg); }
-      100% { opacity:0; transform: translate(var(--x1), 200px) rotate(var(--rot)); }
-    }
-
-    /* ── Enhanced check animation ────────────────────────────────────────── */
-    @keyframes checkPop {
-      0%   { transform:scale(1); }
-      40%  { transform:scale(1.18); }
-      70%  { transform:scale(0.94); }
-      100% { transform:scale(1); }
-    }
-    .goal-card.just-checked { animation: checkPop 0.35s cubic-bezier(0.34,1.56,0.64,1); }
-    @keyframes pipPop {
-      0%   { transform:scale(0.4); opacity:0; }
-      60%  { transform:scale(1.3); }
-      100% { transform:scale(1); opacity:1; }
-    }
-    .session-pip.done { animation: pipPop 0.28s cubic-bezier(0.34,1.56,0.64,1); }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
       background: var(--bg);
@@ -572,15 +456,7 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-    <div class="header-right">
-      <div class="xp-badge" id="xpBadge" onclick="showXPDetail()" style="display:none;">
-        <span class="xp-level-icon" id="xpIcon">🌱</span>
-        <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
-        <span id="xpLabel">0 XP</span>
-      </div>
-      <div class="day-badge" id="headerDayLabel" style="display:none;"></div>
-      <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
-    </div>
+    <div class="header-right"><div class="day-badge" id="headerDayLabel" style="display:none;"></div></div>
   </div>
 
   <!-- Progress strip -->
@@ -599,19 +475,6 @@
   <div class="pager-wrap" id="pagerWrap"><div class="pager-track" id="pagerTrack"><div class="day-page"><div class="empty-state">Loading…</div></div></div></div>
 
 
-
-  <!-- Completion screen -->
-  <div class="completion-screen" id="completionScreen" style="display:none;" onclick="dismissCompletion()">
-    <div class="completion-card" onclick="event.stopPropagation()">
-      <div id="confettiContainer"></div>
-      <div class="completion-emoji">🔥</div>
-      <div class="completion-day-label">Day <span id="completionDayNum">1</span> Complete</div>
-      <div class="completion-title">All done.</div>
-      <div class="completion-sub">You showed up today.<br>That's what it takes.</div>
-      <div class="completion-xp">+<span id="completionXPEarned">0</span> XP earned today</div>
-      <button class="completion-btn" onclick="dismissCompletion()">Keep going →</button>
-    </div>
-  </div>
 
   <!-- Bottom nav -->
   <nav class="bottom-nav">
@@ -998,7 +861,6 @@
         document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
       } else {
         render();
-        updateXPBadge();
       }
     }
 
@@ -1997,7 +1859,6 @@
       db.setCheckin(goalId, date, !(c?.value));
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent(); renderDots();
-      updateXPBadge(); checkCompletion();
     }
 
     function incrementDailyCount(goalId, date, target) {
@@ -2005,7 +1866,7 @@
       const cur = c ? Number(c.value)||0 : 0;
       db.setCheckin(goalId, date, cur >= target ? 0 : cur + 1);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
-      renderContent(); updateXPBadge(); checkCompletion();
+      renderContent();
     }
 
     function toggleSession(goalId, date) {
@@ -2119,153 +1980,6 @@
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // DARK MODE
-    // ══════════════════════════════════════════════════════════════════════
-    function initDark() {
-      if (localStorage.getItem('ft_dark') === '1') {
-        document.documentElement.classList.add('dark');
-        document.getElementById('darkToggle').textContent = '☀️';
-      }
-    }
-    function toggleDark() {
-      const dark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('ft_dark', dark ? '1' : '0');
-      document.getElementById('darkToggle').textContent = dark ? '☀️' : '🌙';
-    }
-    initDark();
-
-    // ══════════════════════════════════════════════════════════════════════
-    // XP + LEVELS
-    // ══════════════════════════════════════════════════════════════════════
-    const LEVELS = [
-      { min:0,   label:'Beginner',    icon:'🌱' },
-      { min:75,  label:'Focused',     icon:'⚡' },
-      { min:200, label:'Consistent',  icon:'🔥' },
-      { min:400, label:'Disciplined', icon:'💪' },
-      { min:700, label:'Elite',       icon:'🏆' },
-    ];
-
-    function calcXP() {
-      if (!cohort) return 0;
-      const dates = db.getCohortDates(cohort.startDate);
-      const today = localDateStr();
-      let xp = 0;
-      for (const g of _c.goals) {
-        for (const d of dates) {
-          if (d > today) continue;
-          const val = Number(_c.checkins[`${g.id}_${d}`] || 0);
-          if (!val) continue;
-          if (g.type === 'daily_boolean') xp += 10;
-          else if (g.type === 'daily_count') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
-          else if (g.type === 'weekly_count') xp += 5;
-          else if (['daily_time','daily_time_min','daily_time_max','weekly_time_min','weekly_time_max'].includes(g.type)) xp += 8;
-          else if (g.type === 'milestone' || g.type === 'total_count' || g.type === 'total_time_min' || g.type === 'total_time_max') xp += 50;
-        }
-      }
-      return xp;
-    }
-
-    function calcTodayXP() {
-      if (!cohort) return 0;
-      const today = localDateStr();
-      let xp = 0;
-      for (const g of _c.goals) {
-        const val = Number(_c.checkins[`${g.id}_${today}`] || 0);
-        if (!val) continue;
-        if (g.type === 'daily_boolean') xp += 10;
-        else if (g.type === 'daily_count') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
-        else if (g.type === 'weekly_count') xp += 5;
-        else if (['daily_time','daily_time_min','daily_time_max'].includes(g.type)) xp += 8;
-      }
-      return xp;
-    }
-
-    function getLevel(xp) {
-      let lv = LEVELS[0];
-      for (const l of LEVELS) { if (xp >= l.min) lv = l; }
-      return lv;
-    }
-
-    function updateXPBadge() {
-      if (!cohort) return;
-      const xp  = calcXP();
-      const lv  = getLevel(xp);
-      const idx = LEVELS.indexOf(lv);
-      const next = LEVELS[idx + 1];
-      const pct = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
-      document.getElementById('xpIcon').textContent   = lv.icon;
-      document.getElementById('xpLabel').textContent  = `${xp} XP`;
-      document.getElementById('xpBarFill').style.width = `${pct}%`;
-      document.getElementById('xpBadge').style.display = '';
-    }
-
-    function showXPDetail() {
-      if (!cohort) return;
-      const xp  = calcXP();
-      const lv  = getLevel(xp);
-      const idx = LEVELS.indexOf(lv);
-      const next = LEVELS[idx + 1];
-      const msg = next
-        ? `${lv.icon} ${lv.label} — ${xp} XP\n${next.min - xp} XP to ${next.label} ${next.icon}`
-        : `${lv.icon} ${lv.label} — ${xp} XP\nMax level reached!`;
-      alert(msg);
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    // COMPLETION SCREEN
-    // ══════════════════════════════════════════════════════════════════════
-    function checkCompletion() {
-      if (!cohort || selectedDate !== localDateStr()) return;
-      const dailyGoals = _c.goals.filter(g => ['daily_boolean','daily_count'].includes(g.type));
-      if (!dailyGoals.length) return;
-      const allDone = dailyGoals.every(g => {
-        const val = Number(_c.checkins[`${g.id}_${selectedDate}`] || 0);
-        if (g.type === 'daily_boolean') return val > 0;
-        if (g.type === 'daily_count')   return val >= (g.config?.dailyTarget || 1);
-        return false;
-      });
-      if (!allDone) return;
-      const key = `ft_done_${selectedDate}`;
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(key, '1');
-      const day = db.getCohortDay(cohort.startDate);
-      document.getElementById('completionDayNum').textContent  = day;
-      document.getElementById('completionXPEarned').textContent = calcTodayXP();
-      spawnConfetti();
-      document.getElementById('completionScreen').style.display = 'flex';
-    }
-
-    function dismissCompletion() {
-      const el = document.getElementById('completionScreen');
-      el.style.opacity = '0';
-      el.style.transition = 'opacity 0.25s';
-      setTimeout(() => { el.style.display = 'none'; el.style.opacity = ''; el.style.transition = ''; }, 260);
-    }
-
-    function spawnConfetti() {
-      const container = document.getElementById('confettiContainer');
-      container.innerHTML = '';
-      const colors = ['#FF5500','#FF9F0A','#34C759','#007AFF','#FF3B30','#FF2D55','#5856D6'];
-      for (let i = 0; i < 40; i++) {
-        const el = document.createElement('div');
-        el.className = 'confetti-piece';
-        el.style.cssText = `
-          background: ${colors[i % colors.length]};
-          left: ${Math.random() * 100}%;
-          --x0: ${(Math.random()-0.5)*40}px;
-          --x1: ${(Math.random()-0.5)*120}px;
-          --rot: ${Math.random()*720}deg;
-          --dur: ${0.8 + Math.random()*0.8}s;
-          --delay: ${Math.random()*0.5}s;
-          border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
-          width: ${6 + Math.random()*6}px;
-          height: ${6 + Math.random()*6}px;
-        `;
-        container.appendChild(el);
-      }
-    }
   </script>
 </body>
 </html>
