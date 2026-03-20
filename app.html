@@ -60,6 +60,12 @@
     }
     .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
     .header-right { display: flex; align-items: center; gap: 10px; }
+    .day-badge {
+      background: var(--orange); color: #fff;
+      font-size: 0.7rem; font-weight: 800;
+      padding: 4px 10px; border-radius: 100px;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
 
 
     /* ── Progress strip ──────────────────────────────────────────────────── */
@@ -450,7 +456,7 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-    <div class="header-right"><span id="headerDayLabel" style="font-size:0.82rem;font-weight:700;color:var(--muted);letter-spacing:-0.01em;"></span></div>
+    <div class="header-right"><div class="day-badge" id="headerDayLabel" style="display:none;"></div></div>
   </div>
 
   <!-- Progress strip -->
@@ -883,7 +889,7 @@
       document.getElementById('cohortLabel').textContent = cohort.name;
       document.getElementById('progressPct').textContent = `${pct}% complete`;
       const headerDay = document.getElementById('headerDayLabel');
-      if (headerDay) headerDay.textContent = day >= 1 && day <= 21 ? `Day ${day}` : '';
+      if (headerDay) { const label = day >= 1 && day <= 21 ? `Day ${day}` : ''; headerDay.textContent = label; headerDay.style.display = label ? '' : 'none'; }
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
       document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {
