@@ -1260,7 +1260,7 @@
               <div class="goal-title">${g.title}</div>
               <div class="ctr-wrap">
                 <span class="time-counter${weekMet?' met':''}">${weekMet?'✓ ':''}${daysHit}/${daysTarget} days this week</span>
-                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div>${segDividers(7)}</div>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div>${segDividers(daysTarget)}</div>
               </div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1293,7 +1293,7 @@
                 </div>
                 <div style="display:flex;flex-direction:column;gap:2px;">
                   <span class="time-counter${weekMet?' met':''}">${weekMet?'✓ ':''}${daysHit}/${daysTarget} days</span>
-                  <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${wkPct}%;background:${weekMet?'var(--green)':'var(--orange)'}"></div>${segDividers(7)}</div>
+                  <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${wkPct}%;background:${weekMet?'var(--green)':'var(--orange)'}"></div>${segDividers(daysTarget)}</div>
                 </div>
               </div>
               <div class="check-circle${todayDone?' checked':''}" style="${todayV>0?'font-size:0.78rem;font-weight:800;':''}">
@@ -1327,7 +1327,7 @@
               <div class="goal-title">${g.title}</div>
               <div class="ctr-wrap">
                 <span class="time-counter${checked?' met':''}">${checked?'✓ ':''}${wkTotal}/${target} this week${g.config?.sessionMinMinutes?` <span style="font-weight:400">≥${g.config.sessionMinMinutes}min</span>`:''}</span>
-                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div>${segDividers(7)}</div>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div>${segDividers(target)}</div>
               </div>
               <div class="check-circle${todayV>0?' checked':''}" style="${multiPerDay&&todayV>0?'font-size:0.78rem;font-weight:800;':''}">
                 ${multiPerDay && todayV>0 ? todayV : checkmark}
@@ -1519,7 +1519,7 @@
               <div class="goal-title">${g.title}</div>
               <div class="ctr-wrap">
                 <span class="time-counter${met?' met':''}">${met?'✓ ':''}${total}/${target} total</span>
-                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div>${segDividers(21)}</div>
+                <div class="ctr-progress-track"><div class="ctr-progress-fill" style="width:${pct}%;background:${barColor}"></div>${segDividers(target)}</div>
               </div>
               <div class="check-circle${todayV>0?' checked':''}" style="${todayV>0?'font-size:0.78rem;font-weight:800;':''}">
                 ${todayV>0 ? todayV : checkmark}
