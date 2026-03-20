@@ -31,6 +31,10 @@
       --border:    #E5E5EA;
       --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
     }
+    html.dark { --bg:#0F0F11; --card:#1C1C1E; --text:#F2F2F7; --muted:#636366; --border:#2C2C2E; --shadow:0 1px 4px rgba(0,0,0,0.5),0 4px 20px rgba(0,0,0,0.3); color-scheme:dark; }
+    .dark-toggle { background:none; border:none; cursor:pointer; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; transition:background 0.15s; }
+    .dark-toggle:hover { background:var(--bg); }
+    @media (min-width:768px) { html.dark { background:#000; } }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
       background: var(--bg);
@@ -141,6 +145,7 @@
     <div style="display:flex;align-items:center;gap:8px;">
       <span id="lastPushDate" style="font-size:0.48rem;color:var(--muted);"></span>
       <div class="admin-badge">Admin</div>
+      <button class="dark-toggle" id="darkToggle" onclick="toggleDark()">🌙</button>
     </div>
   </div>
 
@@ -862,6 +867,9 @@
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+    function initDark() { if (localStorage.getItem('ft_dark')==='1') { document.documentElement.classList.add('dark'); document.getElementById('darkToggle').textContent='☀️'; } }
+    function toggleDark() { const d=document.documentElement.classList.toggle('dark'); localStorage.setItem('ft_dark',d?'1':'0'); document.getElementById('darkToggle').textContent=d?'☀️':'🌙'; }
+    initDark();
 
     // ── Unassigned members banner ─────────────────────────────────────────
     async function checkUnassignedMembers() {
