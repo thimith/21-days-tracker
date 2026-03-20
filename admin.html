@@ -451,7 +451,7 @@
 
       const member = members.find(m => m.id === goalsMemberId);
 
-      const typeLabel = { daily_boolean:'Daily ✓', weekly_count:'Weekly count', daily_time:'Max time', daily_time_max:'Max time', daily_time_min:'Min time', milestone:'21-day goal', total_count:'21-day count', total_time_min:'21-day min time', total_time_max:'21-day max time' };
+      const typeLabel = { daily_boolean:'Daily ✓', daily_count:'Daily count', weekly_count:'Weekly count', daily_time:'Max time', daily_time_max:'Max time', daily_time_min:'Min time', milestone:'21-day goal', total_count:'21-day count', total_time_min:'21-day min time', total_time_max:'21-day max time' };
       const configLabel = g => {
         const c = g.config || {};
         if (g.type==='weekly_count')  return `${c.weeklyTarget}x/week`;
@@ -568,7 +568,7 @@
         if (addGoalMetric === 'max_time') { type = 'weekly_time_max'; config.weeklyMaxMinutes      = parseInt(document.getElementById('agTime')?.value)||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
-        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('agCount')?.value)||3; }
+        if (addGoalMetric === 'count')    { type = 'daily_count';     config.dailyTarget           = parseInt(document.getElementById('agCount')?.value)||1; }
         if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('agTime')?.value)||60; }
         if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('agTime')?.value)||120; }
       }
