@@ -508,6 +508,7 @@
           <div class="form-field" id="agCountField" style="${['count','count_days'].includes(addGoalMetric)?'':'display:none'}"><label class="form-label" id="agCountLabel">${addGoalFrame==='milestone'?'Total over 21 days':addGoalMetric==='count_days'?'Count per day':'Sessions per '+(addGoalFrame==='daily'?'day':'week')}</label><input class="form-input" id="agCount" type="number" min="1" max="999" placeholder="${addGoalFrame==='milestone'?'10':'4'}" /></div>
           <div class="form-field" id="agDaysField" style="${['days','count_days'].includes(addGoalMetric)?'':'display:none'}"><label class="form-label">Days per week (out of 7)</label><input class="form-input" id="agDays" type="number" min="1" max="7" placeholder="5" /></div>
           <div class="form-field" id="agSessionMinField" style="${addGoalFrame==='weekly'&&addGoalMetric==='count'?'':'display:none'}"><label class="form-label">Min. duration per session (min) <span style="font-weight:400;color:var(--muted)">optional</span></label><input class="form-input" id="agSessionMin" type="number" min="1" max="480" placeholder="e.g. 45" /></div>
+          <div class="form-field" id="agMultiPerDayField" style="${addGoalFrame==='weekly'&&addGoalMetric==='count'?'':'display:none'}"><label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="agMultiPerDay" style="width:16px;height:16px;accent-color:var(--orange)" /> Can do multiple times per day (e.g. 2 workouts in a day)</label></div>
           <div class="form-field" id="agTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}"><label class="form-label" id="agTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':addGoalFrame==='daily'?'Daily minimum (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':addGoalFrame==='daily'?'Daily maximum (minutes)':'Weekly maximum (minutes)')}</label><input class="form-input" id="agTime" type="number" min="1" placeholder="${addGoalMetric==='min_time'?'60':'120'}" /></div>
           <div class="btn-row">
             <button type="button" class="btn secondary" onclick="addGoalFormOpen=false;addGoalTitle='';renderGoals()">Cancel</button>
@@ -549,6 +550,8 @@
       if (df)  df.style.display  = ["days","count_days"].includes(addGoalMetric) ? "" : "none";
       if (tf)  tf.style.display  = (addGoalMetric === "min_time" || addGoalMetric === "max_time") ? "" : "none";
       if (smf) smf.style.display = (addGoalFrame === "weekly" && addGoalMetric === "count") ? "" : "none";
+      const mpf = document.getElementById("agMultiPerDayField");
+      if (mpf) mpf.style.display = (addGoalFrame === "weekly" && addGoalMetric === "count") ? "" : "none";
       const cl = document.getElementById("agCountLabel");
       const tl = document.getElementById("agTimeLabel");
       if (cl) cl.textContent = addGoalFrame === "milestone" ? "Total over 21 days" : addGoalMetric === "count_days" ? "Count per day" : addGoalFrame === "daily" ? "Sessions per day" : "Sessions per week";
@@ -585,7 +588,8 @@
         if (addGoalMetric === 'days')      { type = 'weekly_days';        config.daysTarget            = parseInt(document.getElementById('agDays')?.value)||5; }
         if (addGoalMetric === 'count')     { type = 'weekly_count';       config.weeklyTarget          = parseInt(document.getElementById('agCount')?.value)||3;
                                              const sm = parseInt(document.getElementById('agSessionMin')?.value);
-                                             if (sm > 0) config.sessionMinMinutes = sm; }
+                                             if (sm > 0) config.sessionMinMinutes = sm;
+                                             config.multiPerDay = document.getElementById('agMultiPerDay')?.checked ? true : false; }
         if (addGoalMetric === 'count_days'){ type = 'daily_count_weekly'; config.dailyTarget           = parseInt(document.getElementById('agCount')?.value)||1;
                                                                            config.daysTarget            = parseInt(document.getElementById('agDays')?.value)||5; }
         if (addGoalMetric === 'min_time')  { type = 'weekly_time_min';    config.weeklyTargetMinutes   = parseInt(document.getElementById('agTime')?.value)||60; }

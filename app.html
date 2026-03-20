@@ -1311,14 +1311,19 @@
       if (g.type === 'weekly_count') {
         const wk      = db.getCohortWeekNum(cohort.startDate, date);
         const wkDates = db.getWeekDates(cohort.startDate, wk);
-        const wkTotal = db.getWeeklyTotal(g.id, wkDates);
-        const target  = (g.config && g.config.weeklyTarget) || 1;
-        const todayV  = c ? Number(c.value)||0 : 0;
-        const checked = wkTotal >= target;
-        const pips    = Array.from({length:target}, (_,i) =>
+        const wkTotal     = db.getWeeklyTotal(g.id, wkDates);
+        const target      = (g.config && g.config.weeklyTarget) || 1;
+        const todayV      = c ? Number(c.value)||0 : 0;
+        const checked     = wkTotal >= target;
+        const multiPerDay = !!(g.config && g.config.multiPerDay);
+        const pips        = Array.from({length:target}, (_,i) =>
           `<div class="session-pip${i<wkTotal?' done':''}"></div>`).join('');
+        const tapFn = isFuture ? '' : multiPerDay
+          ? `incrementDailyCount('${g.id}','${date}',${target})`
+          : `toggleSession('${g.id}','${date}')`;
+        const checkmark = `<svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
         return `
-          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`incrementDailyCount('${g.id}','${date}',${target})`:''}" style="${isFuture?'cursor:default':''}">
+          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${tapFn}" style="${isFuture?'cursor:default':''}">
             ${deleteBtn}
             <div class="bool-row">
               <div class="goal-title">${g.title}</div>
@@ -1326,8 +1331,8 @@
                 <div class="session-dots-row">${pips}</div>
                 <div class="session-count-label"><strong>${wkTotal}</strong>/${target} this week${todayV>0?` · <strong>${todayV}</strong> today`:''}${g.config?.sessionMinMinutes?` <span style="color:var(--muted);font-weight:500">≥${g.config.sessionMinMinutes}min each</span>`:''}</div>
               </div>
-              <div class="check-circle${todayV>0?' checked':''}" style="${todayV>0?'font-size:0.78rem;font-weight:800;':''}">
-                ${todayV>0 ? todayV : `<svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+              <div class="check-circle${todayV>0?' checked':''}" style="${multiPerDay&&todayV>0?'font-size:0.78rem;font-weight:800;':''}">
+                ${multiPerDay && todayV>0 ? todayV : checkmark}
               </div>
             </div>
           </div>`;
