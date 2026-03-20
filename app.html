@@ -709,19 +709,21 @@
 
         for (const g of goals) {
 
-          // ── Daily: evaluate at end of each day (check yesterday) ──────────
+          // ── Daily: check all past days (not just yesterday) ──────────
           if (g.type === 'daily_boolean') {
-            const yDay = currentDay - 1;
-            if (yDay >= 1 && yDay <= 21) {
-              const v = _c.checkins[`${g.id}_${yesterdayStr}`];
-              if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `Missed: ${g.title}`);
+            const allDates = this.getCohortDates(cohortObj.startDate);
+            for (const d of allDates) {
+              if (d >= todayStr) continue;
+              const v = _c.checkins[`${g.id}_${d}`];
+              if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, d), `Missed: ${g.title}`);
             }
           } else if (g.type === 'daily_count') {
-            const yDay = currentDay - 1;
-            if (yDay >= 1 && yDay <= 21) {
-              const v = Number(_c.checkins[`${g.id}_${yesterdayStr}`])||0;
-              const target = g.config?.dailyTarget || 1;
-              if (v < target) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `${g.title}: ${v}/${target}`);
+            const allDates = this.getCohortDates(cohortObj.startDate);
+            const target = g.config?.dailyTarget || 1;
+            for (const d of allDates) {
+              if (d >= todayStr) continue;
+              const v = Number(_c.checkins[`${g.id}_${d}`])||0;
+              if (v < target) addF(this.getCohortWeekNum(cohortObj.startDate, d), `${g.title}: ${v}/${target}`);
             }
 
           // ── Weekly: evaluate at end of each week (day 8, 15, 22) ─────────
