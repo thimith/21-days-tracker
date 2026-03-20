@@ -1323,7 +1323,7 @@
           : `toggleSession('${g.id}','${date}')`;
         const checkmark = `<svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
         const resetBtn = multiPerDay && todayV > 0 && !isFuture
-          ? `<button onclick="event.stopPropagation();resetDailyCount('${g.id}','${date}')" style="position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;padding:2px 4px;font-size:0.7rem;color:var(--muted);line-height:1;opacity:0.6;" title="Reset today">✕</button>`
+          ? `<button onclick="event.stopPropagation();resetDailyCount('${g.id}','${date}')" style="position:absolute;top:8px;right:8px;background:#fff;border:none;border-radius:100px;cursor:pointer;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:#999;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,0.15);padding:0;" title="Reset today">✕</button>`
           : '';
         return `
           <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${tapFn}" style="${isFuture?'cursor:default;':''}position:relative">
