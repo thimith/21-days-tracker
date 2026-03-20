@@ -661,6 +661,13 @@
               const v = _c.checkins[`${g.id}_${yesterdayStr}`];
               if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `Missed: ${g.title}`);
             }
+          } else if (g.type === 'daily_count') {
+            const yDay = currentDay - 1;
+            if (yDay >= 1 && yDay <= 21) {
+              const v = Number(_c.checkins[`${g.id}_${yesterdayStr}`])||0;
+              const target = g.config?.dailyTarget || 1;
+              if (v < target) addF(this.getCohortWeekNum(cohortObj.startDate, yesterdayStr), `${g.title}: ${v}/${target}`);
+            }
 
           // ── Weekly: evaluate at end of each week (day 8, 15, 22) ─────────
           } else if (g.type === 'weekly_count') {
@@ -964,7 +971,7 @@
         html.push(`<div class="empty-state">${msg}</div>`);
       }
 
-      const daily     = goals.filter(g => ['daily_boolean','daily_time','daily_time_min','daily_time_max'].includes(g.type));
+      const daily     = goals.filter(g => ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'].includes(g.type));
       const weekly    = goals.filter(g => ['weekly_count','weekly_time_min','weekly_time_max'].includes(g.type));
       const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
 
@@ -1054,7 +1061,7 @@
       const c = db.getCheckin(g.id, date);
       const accentColor = g.config?.color || '';
       const ctrStyle = accentColor ? ` style="background:${accentColor};color:#fff;padding:2px 8px;border-radius:99px;"` : '';
-      const typeLabel ={ daily_boolean:'Daily habit', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
+      const typeLabel ={ daily_boolean:'Daily habit', daily_count:'Daily count', weekly_count:'Weekly target', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', milestone:'21-day goal' }[g.type] || g.type;
       const deleteBtn = !locked ? `<button type="button" class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
 
       if (g.type === 'daily_boolean') {
@@ -1066,6 +1073,30 @@
               <div class="goal-title">${g.title}</div>
               <div class="check-circle${done?' checked':''}">
                 <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+                  <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'daily_count') {
+        const target  = (g.config && g.config.dailyTarget) || 1;
+        const todayV  = c ? Number(c.value)||0 : 0;
+        const checked = todayV >= target;
+        const pips    = Array.from({length:target}, (_,i) =>
+          `<div class="session-pip${i<todayV?' done':''}"></div>`).join('');
+        return `
+          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${!isFuture?`incrementDailyCount('${g.id}','${date}',${target})`:''}" style="${isFuture?'cursor:default':''}">
+            ${deleteBtn}
+            <div class="bool-row">
+              <div class="goal-title">${g.title}</div>
+              <div class="session-inline">
+                <div class="session-dots-row">${pips}</div>
+                <div class="session-count-label"><strong>${todayV}</strong>/${target} today</div>
+              </div>
+              <div class="check-circle${checked?' checked':''}">
+                <svg width="12" height="9" viewBox="0 0 13 10" fill="none">
                   <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
@@ -1354,7 +1385,7 @@
 
     // ── Drag-and-drop goal reordering ────────────────────────────────────
     const _dndGroups = {
-      daily:     ['daily_boolean','daily_time','daily_time_min','daily_time_max'],
+      daily:     ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'],
       weekly:    ['weekly_count','weekly_time_min','weekly_time_max'],
       milestone: ['milestone','total_count','total_time_min','total_time_max'],
     };
@@ -1830,6 +1861,14 @@
       renderContent(); renderDots();
     }
 
+    function incrementDailyCount(goalId, date, target) {
+      const c = db.getCheckin(goalId, date);
+      const cur = c ? Number(c.value)||0 : 0;
+      db.setCheckin(goalId, date, cur >= target ? 0 : cur + 1);
+      if (cohort) db.evalRedemptions(session.userId, cohort.id);
+      renderContent();
+    }
+
     function toggleSession(goalId, date) {
       const c = db.getCheckin(goalId, date);
       const cur = c ? Number(c.value)||0 : 0;
@@ -1924,7 +1963,7 @@
         if (addGoalMetric === 'max_time') { type = 'weekly_time_max'; config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
-        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
+        if (addGoalMetric === 'count')    { type = 'daily_count';     config.dailyTarget           = parseInt(document.getElementById('cfgCountVal')?.value)||1; }
         if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
         if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       }
