@@ -1927,6 +1927,7 @@
       if (idx < 0 || idx >= _pgDates.length) return;
       _pageIdx    = idx;
       selectedDate = _pgDates[idx];
+      renderContent(); // rebuild the now-visible page so weekly totals are always fresh
       renderDateTabs();
       renderDots();
       // Keep active tab scrolled into view
@@ -1940,6 +1941,7 @@
       if (idx < 0) return;
       selectedDate = date;
       goToPage(idx, true);
+      renderContent();
       renderDateTabs();
       const tabsEl = document.getElementById('dateTabs');
       const active = tabsEl.querySelector('.date-tab.active');
