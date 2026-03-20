@@ -1326,7 +1326,7 @@
           ? `<button onclick="event.stopPropagation();resetDailyCount('${g.id}','${date}')" style="position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;padding:2px 4px;font-size:0.7rem;color:var(--muted);line-height:1;opacity:0.6;" title="Reset today">✕</button>`
           : '';
         return `
-          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${tapFn}" style="${isFuture?'cursor:default':'';position:relative}">
+          <div class="goal-card${checked?' is-done':''} is-tappable" onclick="${tapFn}" style="${isFuture?'cursor:default;':''}position:relative">
             ${deleteBtn}${resetBtn}
             <div class="bool-row">
               <div class="goal-title">${g.title}</div>
