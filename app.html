@@ -99,19 +99,11 @@
     /* ── Progress strip ──────────────────────────────────────────────────── */
     .progress-section {
       background: var(--card);
-      padding: 14px 20px 16px;
+      padding: 10px 20px;
       border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
     }
-    .progress-meta {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .cohort-label {
-      font-size: 0.72rem; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.07em;
-    }
-    .progress-pct { font-size: 0.72rem; color: var(--muted); }
-    .dots-strip { display: flex; gap: 3px; align-items: center; }
+    .dots-strip { display: flex; gap: 3px; align-items: center; flex: 1; }
     .dot {
       flex: 1; height: 7px; border-radius: 4px;
       transition: background 0.3s;
@@ -536,10 +528,7 @@
 
   <!-- Progress strip -->
   <div class="progress-section">
-    <div class="progress-meta">
-      <div class="cohort-day-bubble" id="cohortLabel">—</div>
-      <div class="progress-pct" id="progressPct">—</div>
-    </div>
+    <div class="cohort-day-bubble" id="cohortLabel">—</div>
     <div class="dots-strip" id="dotsStrip"></div>
   </div>
 
@@ -1057,7 +1046,6 @@
 
       const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? 'Upcoming' : 'Complete';
       document.getElementById('cohortLabel').textContent = dayLabel;
-      document.getElementById('progressPct').textContent = `${pct}% complete`;
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
       document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {
