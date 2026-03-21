@@ -2128,7 +2128,8 @@
 
     // ── Celebration effects ───────────────────────────────────────────────
     function celebrateCard(goalId) {
-      const card = document.querySelector(`[data-goal-id="${goalId}"]`);
+      const pageEl = document.querySelector(`.day-page[data-date="${selectedDate}"]`);
+      const card = (pageEl || document).querySelector(`[data-goal-id="${goalId}"]`);
       if (!card) return;
 
       // Spring bounce
@@ -2178,9 +2179,11 @@
     function incrementDailyCount(goalId, date, target) {
       const c = db.getCheckin(goalId, date);
       const cur = c ? Number(c.value)||0 : 0;
-      db.setCheckin(goalId, date, cur >= target ? 0 : cur + 1);
+      const next = cur >= target ? 0 : cur + 1;
+      db.setCheckin(goalId, date, next);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent(); updateXPBadge();
+      if (next > 0) requestAnimationFrame(() => celebrateCard(goalId));
     }
 
     function resetDailyCount(goalId, date) {
