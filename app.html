@@ -2074,8 +2074,9 @@
         if (dx < -w * 0.25 && _pageIdx < _maxPageIdx) nextIdx = _pageIdx + 1;
         else if (dx >  w * 0.25 && _pageIdx > 0)     nextIdx = _pageIdx - 1;
 
+        const prevIdx = _pageIdx;
         goToPage(nextIdx, true);
-        _onPageChanged(nextIdx);
+        if (nextIdx !== prevIdx) _onPageChanged(nextIdx);
         _live = false;
         _dir  = null;
       }, { passive: true });
