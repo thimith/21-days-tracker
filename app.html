@@ -1970,9 +1970,12 @@
       if (!pill || !cohort) return;
       const date = _pgDates[_pageIdx];
       if (!date) return;
-      const isToday = date === localDateStr();
-      if (isToday) {
+      const today = localDateStr();
+      const yesterday = localDateStr(new Date(Date.now() - 864e5));
+      if (date === today) {
         pill.textContent = 'TODAY';
+      } else if (date === yesterday) {
+        pill.textContent = 'YESTERDAY';
       } else {
         const d = new Date(date + 'T12:00:00');
         pill.textContent = d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
