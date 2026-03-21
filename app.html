@@ -1089,7 +1089,7 @@
         const ds = localDateStr(d);
         const cd = db.getCohortDay(cohort.startDate, ds);
         if (cd < 1 || cd > 21) continue;
-        const label = i===0 ? 'Today' : d.toLocaleDateString('en',{weekday:'short'});
+        const label = i===0 ? 'TODAY' : d.toLocaleDateString('en',{weekday:'short'});
         tabs.push(`<button type="button" class="date-tab${ds===selectedDate?' active':''}" onclick="selectDate('${ds}')">${label}</button>`);
       }
       document.getElementById('dateTabs').innerHTML = tabs.join('');
@@ -1970,15 +1970,17 @@
       if (!pill || !cohort) return;
       const date = _pgDates[_pageIdx];
       if (!date) return;
-      const today = localDateStr();
+      const today     = localDateStr();
       const yesterday = localDateStr(new Date(Date.now() - 864e5));
       if (date === today) {
         pill.textContent = 'TODAY';
       } else if (date === yesterday) {
-        pill.textContent = 'YESTERDAY';
+        pill.textContent = 'Yesterday';
       } else {
-        const d = new Date(date + 'T12:00:00');
-        pill.textContent = d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+        const d       = new Date(date + 'T12:00:00');
+        const dayNum  = db.getCohortDay(cohort.startDate, date);
+        const weekday = d.toLocaleDateString('en-US', { weekday: 'long' });
+        pill.textContent = `Day ${dayNum} · ${weekday}`;
       }
     }
 
