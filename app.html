@@ -62,9 +62,7 @@
       top: max(14px, env(safe-area-inset-top));
       left: 50%;
       transform: translateX(-50%) translateY(-140%);
-      background: rgba(28,28,30,0.80);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: var(--orange);
       color: #fff;
       font-size: 0.68rem;
       font-weight: 800;
@@ -1980,7 +1978,7 @@
 
     function _initScrollPill() {
       _updateScrollPill();
-      const THRESHOLD = 52; // px — roughly header height
+      const THRESHOLD = 78; // px — 1.5× header height
       window.addEventListener('scroll', () => {
         const pill = document.getElementById('scrollPill');
         if (!pill) return;
