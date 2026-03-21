@@ -1973,7 +1973,7 @@
       const isToday = date === localDateStr();
       const dayNum = db.getCohortDay(cohort.startDate, date);
       if (isToday) {
-        pill.textContent = `Day ${dayNum} · Today`;
+        pill.textContent = 'TODAY';
       } else {
         const d = new Date(date + 'T12:00:00');
         const mon = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
