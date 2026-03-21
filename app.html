@@ -1971,13 +1971,11 @@
       const date = _pgDates[_pageIdx];
       if (!date) return;
       const isToday = date === localDateStr();
-      const dayNum = db.getCohortDay(cohort.startDate, date);
       if (isToday) {
         pill.textContent = 'TODAY';
       } else {
         const d = new Date(date + 'T12:00:00');
-        const mon = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        pill.textContent = `Day ${dayNum} · ${mon}`;
+        pill.textContent = d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
       }
     }
 
