@@ -1970,10 +1970,15 @@
       if (!pill || !cohort) return;
       const date = _pgDates[_pageIdx];
       if (!date) return;
-      const d = new Date(date + 'T12:00:00');
-      const mon = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const isToday = date === localDateStr();
       const dayNum = db.getCohortDay(cohort.startDate, date);
-      pill.textContent = `Day ${dayNum} · ${mon}`;
+      if (isToday) {
+        pill.textContent = `Day ${dayNum} · Today`;
+      } else {
+        const d = new Date(date + 'T12:00:00');
+        const mon = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        pill.textContent = `Day ${dayNum} · ${mon}`;
+      }
     }
 
     function _initScrollPill() {
