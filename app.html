@@ -155,6 +155,37 @@
       50%     { opacity:0.65; transform:scaleY(1.5); }
     }
 
+    /* ── Activity strip ─────────────────────────────────────────────────── */
+    .activity-strip {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 16px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .activity-strip::-webkit-scrollbar { display: none; }
+    .activity-count-label {
+      font-size: 0.66rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .activity-member { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+    .activity-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--bg); color: var(--muted);
+      font-size: 0.82rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      border: 2.5px solid var(--border);
+      transition: border-color 0.3s, background 0.3s, color 0.3s;
+    }
+    .activity-avatar.done  { border-color: var(--green); background: var(--green-lt); color: var(--green); }
+    .activity-avatar.self  { border-color: var(--orange); }
+    .activity-avatar.done.self { border-color: var(--green); }
+    .activity-name {
+      font-size: 0.58rem; font-weight: 600; color: var(--muted);
+      max-width: 38px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
     /* ── Date tabs ───────────────────────────────────────────────────────── */
     .date-tabs {
       background: var(--card);
@@ -531,6 +562,9 @@
     <div class="cohort-day-bubble" id="cohortLabel">—</div>
     <div class="dots-strip" id="dotsStrip"></div>
   </div>
+
+  <!-- Activity strip -->
+  <div class="activity-strip" id="activityStrip" style="display:none;"></div>
 
   <!-- Date tabs -->
   <div class="date-tabs" id="dateTabs"></div>
@@ -984,6 +1018,8 @@
         render();
         updateXPBadge();
         _initScrollPill();
+        renderActivityStrip();
+        setInterval(renderActivityStrip, 60000);
       }
     }
 
@@ -2274,6 +2310,51 @@
       for (const l of XP_LEVELS) { if (xp >= l.min) lv = l; }
       return lv;
     }
+    async function renderActivityStrip() {
+      const strip = document.getElementById('activityStrip');
+      if (!strip || !cohort) return;
+
+      const today = localDateStr();
+      const [membersRes, goalsRes] = await Promise.all([
+        sb.from('cohort_members').select('user_id, profiles(id, name)').eq('cohort_id', cohort.id),
+        sb.from('goals').select('id, user_id').eq('cohort_id', cohort.id)
+      ]);
+
+      const members = (membersRes.data || []).map(r => r.profiles).filter(Boolean);
+      const goals   = goalsRes.data || [];
+      const goalIds = goals.map(g => g.id);
+
+      let activeUserIds = new Set();
+      if (goalIds.length) {
+        const { data: checkins } = await sb.from('checkins')
+          .select('goal_id').in('goal_id', goalIds).eq('date', today);
+        const checkedGoalIds = new Set((checkins || []).map(c => c.goal_id));
+        for (const g of goals) { if (checkedGoalIds.has(g.id)) activeUserIds.add(g.user_id); }
+      }
+
+      // Sort: self first, then active, then inactive
+      members.sort((a, b) => {
+        if (a.id === session.userId) return -1;
+        if (b.id === session.userId) return 1;
+        return (activeUserIds.has(b.id) ? 1 : 0) - (activeUserIds.has(a.id) ? 1 : 0);
+      });
+
+      const activeCount = members.filter(m => activeUserIds.has(m.id)).length;
+
+      strip.style.display = '';
+      strip.innerHTML = `
+        <span class="activity-count-label">${activeCount}/${members.length}<br>active</span>
+        ${members.map(m => {
+          const done   = activeUserIds.has(m.id);
+          const isSelf = m.id === session.userId;
+          const name   = (m.name || '?').split(' ')[0];
+          return `<div class="activity-member">
+            <div class="activity-avatar${done?' done':''}${isSelf?' self':''}">${name[0].toUpperCase()}</div>
+            <div class="activity-name">${isSelf ? 'You' : name}</div>
+          </div>`;
+        }).join('')}`;
+    }
+
     function updateXPBadge() {
       if (!cohort) return;
       const xp   = calcXP();
