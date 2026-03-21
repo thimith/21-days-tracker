@@ -155,37 +155,6 @@
       50%     { opacity:0.65; transform:scaleY(1.5); }
     }
 
-    /* ── Activity strip ─────────────────────────────────────────────────── */
-    .activity-strip {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 20px;
-      display: flex; align-items: center; gap: 16px;
-      overflow-x: auto; scrollbar-width: none;
-    }
-    .activity-strip::-webkit-scrollbar { display: none; }
-    .activity-count-label {
-      font-size: 0.66rem; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.07em;
-      white-space: nowrap; flex-shrink: 0;
-    }
-    .activity-member { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
-    .activity-avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: var(--bg); color: var(--muted);
-      font-size: 0.82rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-      border: 2.5px solid var(--border);
-      transition: border-color 0.3s, background 0.3s, color 0.3s;
-    }
-    .activity-avatar.done  { border-color: var(--green); background: var(--green-lt); color: var(--green); }
-    .activity-avatar.self  { border-color: var(--orange); }
-    .activity-avatar.done.self { border-color: var(--green); }
-    .activity-name {
-      font-size: 0.58rem; font-weight: 600; color: var(--muted);
-      max-width: 38px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-
     /* ── Date tabs ───────────────────────────────────────────────────────── */
     .date-tabs {
       background: var(--card);
@@ -263,6 +232,22 @@
       position: relative;
     }
     .goal-card.is-done { background: var(--green-lt); }
+
+    /* ── Celebrate animation ─────────────────────────────────────────────── */
+    @keyframes card-pop {
+      0%   { transform: scale(1); }
+      15%  { transform: scale(0.93); }
+      45%  { transform: scale(1.08); }
+      70%  { transform: scale(0.97); }
+      85%  { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shimmer-sweep {
+      from { transform: translateX(-130%) skewX(-18deg); }
+      to   { transform: translateX(230%)  skewX(-18deg); }
+    }
+    .card-celebrating { animation: card-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+
     .dnd-placeholder {
       border-radius: 14px;
       background: rgba(255,85,0,0.06);
@@ -562,9 +547,6 @@
     <div class="cohort-day-bubble" id="cohortLabel">—</div>
     <div class="dots-strip" id="dotsStrip"></div>
   </div>
-
-  <!-- Activity strip -->
-  <div class="activity-strip" id="activityStrip" style="display:none;"></div>
 
   <!-- Date tabs -->
   <div class="date-tabs" id="dateTabs"></div>
@@ -1018,8 +1000,6 @@
         render();
         updateXPBadge();
         _initScrollPill();
-        renderActivityStrip();
-        setInterval(renderActivityStrip, 60000);
       }
     }
 
@@ -2143,11 +2123,53 @@
     // INTERACTIONS
     // ══════════════════════════════════════════════════════════════════════
 
+    // ── Celebration effects ───────────────────────────────────────────────
+    function celebrateCard(goalId) {
+      const card = document.querySelector(`[data-goal-id="${goalId}"]`);
+      if (!card) return;
+
+      // Spring bounce
+      card.classList.remove('card-celebrating');
+      void card.offsetWidth;
+      card.classList.add('card-celebrating');
+      card.addEventListener('animationend', () => card.classList.remove('card-celebrating'), { once: true });
+
+      // Shimmer overlay (fixed, matches card bounds)
+      const rect = card.getBoundingClientRect();
+      const shimmer = document.createElement('div');
+      shimmer.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;border-radius:14px;overflow:hidden;pointer-events:none;z-index:9998;`;
+      const shine = document.createElement('div');
+      shine.style.cssText = `position:absolute;inset:0;width:50%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.65),transparent);animation:shimmer-sweep 0.52s ease-out forwards;`;
+      shimmer.appendChild(shine);
+      document.body.appendChild(shimmer);
+      setTimeout(() => shimmer.remove(), 600);
+
+      // Confetti burst
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const colors = ['#FF5500','#34C759','#FFD60A','#007AFF','#FF2D55','#AF52DE','#FF9500'];
+      for (let i = 0; i < 14; i++) {
+        const el = document.createElement('div');
+        const size = 5 + Math.random() * 5;
+        el.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;background:${colors[i % colors.length]};border-radius:${Math.random()>.5?'50%':'3px'};pointer-events:none;z-index:9999;`;
+        document.body.appendChild(el);
+        const angle = (Math.random() * 360) * Math.PI / 180;
+        const spd   = 70 + Math.random() * 110;
+        el.animate([
+          { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${Math.cos(angle)*spd}px), calc(-50% + ${Math.sin(angle)*spd - 40}px)) scale(0)`, opacity: 0 }
+        ], { duration: 550 + Math.random() * 350, easing: 'cubic-bezier(0,.9,.57,1)', fill: 'forwards' })
+          .onfinish = () => el.remove();
+      }
+    }
+
     function toggleBoolean(goalId, date) {
       const c = db.getCheckin(goalId, date);
-      db.setCheckin(goalId, date, !(c?.value));
+      const newVal = !(c?.value);
+      db.setCheckin(goalId, date, newVal);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent(); renderDots(); updateXPBadge();
+      if (newVal) celebrateCard(goalId);
     }
 
     function incrementDailyCount(goalId, date, target) {
@@ -2167,9 +2189,11 @@
     function toggleSession(goalId, date) {
       const c = db.getCheckin(goalId, date);
       const cur = c ? Number(c.value)||0 : 0;
-      db.setCheckin(goalId, date, cur > 0 ? 0 : 1);
+      const newVal = cur > 0 ? 0 : 1;
+      db.setCheckin(goalId, date, newVal);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent(); updateXPBadge();
+      if (newVal) celebrateCard(goalId);
     }
 
     function updateTime(goalId, date, val) {
@@ -2188,6 +2212,7 @@
       db.setCheckin(goalId, canonDate, !done);
       if (cohort) db.evalRedemptions(session.userId, cohort.id);
       renderContent(); updateXPBadge();
+      if (!done) celebrateCard(goalId);
     }
 
     function doneRedemption(id) { db.markRedemptionDone(id); renderContent(); }
@@ -2310,51 +2335,6 @@
       for (const l of XP_LEVELS) { if (xp >= l.min) lv = l; }
       return lv;
     }
-    async function renderActivityStrip() {
-      const strip = document.getElementById('activityStrip');
-      if (!strip || !cohort) return;
-
-      const today = localDateStr();
-      const [membersRes, goalsRes] = await Promise.all([
-        sb.from('cohort_members').select('user_id, profiles(id, name)').eq('cohort_id', cohort.id),
-        sb.from('goals').select('id, user_id').eq('cohort_id', cohort.id)
-      ]);
-
-      const members = (membersRes.data || []).map(r => r.profiles).filter(Boolean);
-      const goals   = goalsRes.data || [];
-      const goalIds = goals.map(g => g.id);
-
-      let activeUserIds = new Set();
-      if (goalIds.length) {
-        const { data: checkins } = await sb.from('checkins')
-          .select('goal_id').in('goal_id', goalIds).eq('date', today);
-        const checkedGoalIds = new Set((checkins || []).map(c => c.goal_id));
-        for (const g of goals) { if (checkedGoalIds.has(g.id)) activeUserIds.add(g.user_id); }
-      }
-
-      // Sort: self first, then active, then inactive
-      members.sort((a, b) => {
-        if (a.id === session.userId) return -1;
-        if (b.id === session.userId) return 1;
-        return (activeUserIds.has(b.id) ? 1 : 0) - (activeUserIds.has(a.id) ? 1 : 0);
-      });
-
-      const activeCount = members.filter(m => activeUserIds.has(m.id)).length;
-
-      strip.style.display = '';
-      strip.innerHTML = `
-        <span class="activity-count-label">${activeCount}/${members.length}<br>active</span>
-        ${members.map(m => {
-          const done   = activeUserIds.has(m.id);
-          const isSelf = m.id === session.userId;
-          const name   = (m.name || '?').split(' ')[0];
-          return `<div class="activity-member">
-            <div class="activity-avatar${done?' done':''}${isSelf?' self':''}">${name[0].toUpperCase()}</div>
-            <div class="activity-name">${isSelf ? 'You' : name}</div>
-          </div>`;
-        }).join('')}`;
-    }
-
     function updateXPBadge() {
       if (!cohort) return;
       const xp   = calcXP();
