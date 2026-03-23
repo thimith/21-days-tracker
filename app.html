@@ -1493,8 +1493,8 @@
         const wkDates = db.getWeekDates(cohort.startDate, wk);
         const wkTotal = db.getWeeklyTotal(g.id, wkDates);
         const target  = g.config.weeklyTargetMinutes || 60;
-        const elapsed = Math.min(7, db.getCohortDay(cohort.startDate, date) - (wk-1)*7);
-        const met     = elapsed >= 7 ? wkTotal >= target : true;
+        const weekEnded = wkDates[wkDates.length - 1] < date;
+        const met       = weekEnded ? wkTotal >= target : true;
         const todayV  = c ? Number(c.value)||'' : '';
         const pct      = Math.min(100, target > 0 ? (wkTotal / target * 100) : 0);
         const barColor = wkTotal >= target ? 'var(--green)' : (accentColor || 'var(--orange)');
