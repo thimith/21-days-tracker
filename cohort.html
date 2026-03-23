@@ -530,7 +530,6 @@
             <span class="lb-rank${isTop?' top':''}">${rankLabel}</span>
             <span class="lb-icon">${lv.icon}</span>
             <span class="lb-name${isSelf?' is-self':''}">${m.first_name || m.name}</span>
-            <div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:${pct}%"></div></div>
             <span class="lb-xp">${xp} XP</span>
           </div>`;
         }).join('');
@@ -621,7 +620,6 @@
             <div class="member-name">${member.first_name || member.name}${isSelf?' <span class="member-meta-inline">(you)</span>':''}</div>
             <div class="member-right">
               <span style="font-size:0.9rem;">${lv.icon}</span>
-              <div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:${pct}%"></div></div>
               <span style="font-size:0.72rem;font-weight:800;color:var(--text);min-width:42px;text-align:right;">${xp} XP</span>
               ${badge}
               <span class="member-chevron">▼</span>
