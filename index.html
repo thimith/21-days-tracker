@@ -177,11 +177,21 @@
 
     let redirected = false;
 
-    // ── Redirect if already logged in ───────────────────────────────────
+    // ── Redirect if already logged in, or auto-trigger Google if returning user ──
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
         window.location.href = 'app.html';
+      } else if (localStorage.getItem('ft_has_logged_in')) {
+        // Returning user — auto-trigger Google sign-in silently
+        redirected = true;
+        sb.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin + '/21-days-tracker/index.html' }
+        }).catch(() => {
+          redirected = false;
+          document.body.style.visibility = 'visible';
+        });
       } else {
         document.body.style.visibility = 'visible';
       }
@@ -226,6 +236,7 @@
         localStorage.removeItem('ft_pending_invite');
       }
 
+      localStorage.setItem('ft_has_logged_in', '1');
       window.location.href = 'app.html';
     }
 

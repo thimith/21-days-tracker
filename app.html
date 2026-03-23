@@ -1099,7 +1099,10 @@
         const label = i===0 ? 'TODAY' : d.toLocaleDateString('en',{weekday:'short'});
         tabs.push(`<button type="button" class="date-tab${ds===selectedDate?' active':''}" onclick="selectDate('${ds}')">${label}</button>`);
       }
-      document.getElementById('dateTabs').innerHTML = tabs.join('');
+      const tabsEl = document.getElementById('dateTabs');
+      tabsEl.innerHTML = tabs.join('');
+      // Always keep Today (rightmost tab) in view; active tab is visible since it's within the last 7
+      tabsEl.scrollLeft = tabsEl.scrollWidth;
     }
 
     // Builds the inner HTML for a single day page
@@ -1964,10 +1967,6 @@
       renderContent(); // rebuild the now-visible page so weekly totals are always fresh
       renderDateTabs();
       renderDots();
-      // Keep active tab scrolled into view
-      const tabsEl = document.getElementById('dateTabs');
-      const active = tabsEl.querySelector('.date-tab.active');
-      if (active) tabsEl.scrollLeft = active.offsetLeft - tabsEl.clientWidth / 2 + active.clientWidth / 2;
       _updateScrollPill();
     }
 
@@ -2008,9 +2007,6 @@
       goToPage(idx, true);
       renderContent();
       renderDateTabs();
-      const tabsEl = document.getElementById('dateTabs');
-      const active = tabsEl.querySelector('.date-tab.active');
-      if (active) tabsEl.scrollLeft = active.offsetLeft - tabsEl.clientWidth / 2 + active.clientWidth / 2;
     }
 
     function renderPager() {
