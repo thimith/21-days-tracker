@@ -92,6 +92,7 @@
       transition: transform 0.12s;
     }
     .member-card:active { transform: scale(0.985); }
+    .member-card.at-risk  { border-left: 4px solid var(--red);   background: var(--red-lt); }
     .member-card.complete { border-left: 4px solid var(--green); }
 
     /* Single-row layout */
@@ -575,7 +576,9 @@
 
       const cardClass = (atRisk ? 'at-risk' : strikeCount===0 ? 'complete' : '') + (isOpen ? ' open' : '');
 
-      const badge = atRisk ? '' : `<span class="status-badge on-track">✓ On Track</span>`;
+      const badge = atRisk
+        ? `<span class="status-badge at-risk">⚠ At Risk</span>`
+        : `<span class="status-badge on-track">✓ On Track</span>`;
 
       // Detail section — only built when checkins are loaded
       let detailHTML = '';
@@ -619,6 +622,7 @@
             <div class="member-right">
               <span style="font-size:0.9rem;">${lv.icon}</span>
               <div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:${pct}%"></div></div>
+              <span style="font-size:0.72rem;font-weight:800;color:var(--text);min-width:42px;text-align:right;">${xp} XP</span>
               ${badge}
               <span class="member-chevron">▼</span>
             </div>
