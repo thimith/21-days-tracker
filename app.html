@@ -2340,12 +2340,8 @@
       if (!cohort) return;
       const xp   = calcXP();
       const lv   = getXPLevel(xp);
-      const idx  = XP_LEVELS.indexOf(lv);
-      const next = XP_LEVELS[idx + 1];
-      const pct  = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
       document.getElementById('xpIcon').textContent    = lv.icon;
       document.getElementById('xpLabel').textContent   = `${xp} XP`;
-      document.getElementById('xpBarFill').style.width = `${pct}%`;
       document.getElementById('xpBadge').style.display = '';
     }
   </script>
