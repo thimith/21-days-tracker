@@ -534,12 +534,8 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-    <select class="member-select" id="memberSelect" style="display:none;" onchange="switchToMember(this.value)"></select>
     <div class="header-right">
-      <div class="xp-badge" id="xpBadge" style="display:none;">
-        <span class="xp-level-icon" id="xpIcon">🌱</span>
-<span id="xpLabel">0 XP</span>
-      </div>
+      <select class="member-select" id="memberSelect" style="display:none;" onchange="switchToMember(this.value)"></select>
     </div>
   </div>
   <div class="viewing-banner" id="viewingBanner" style="display:none;"></div>
@@ -548,6 +544,10 @@
   <div class="progress-section">
     <div class="cohort-day-bubble" id="cohortLabel">—</div>
     <div class="dots-strip" id="dotsStrip"></div>
+    <div class="xp-badge" id="xpBadge" style="display:none;">
+      <span class="xp-level-icon" id="xpIcon">🌱</span>
+      <span id="xpLabel">0 XP</span>
+    </div>
   </div>
 
   <!-- Date tabs -->
@@ -972,9 +972,9 @@
       // Default viewing user to self on every fresh load
       if (!_c.viewingUserId) _c.viewingUserId = _c.userId;
 
-      // Populate admin dropdown
+      // Member dropdown — visible to everyone
       const sel = document.getElementById('memberSelect');
-      if (session.role === 'admin' && _c.cohortMembers.length > 1) {
+      if (_c.cohortMembers.length > 1) {
         sel.innerHTML = _c.cohortMembers.map(m =>
           `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name}</option>`
         ).join('');
@@ -1013,9 +1013,9 @@
     }
 
     async function _fetchCohortMembers() {
-      if (!_c.cohort || _c.profile?.role !== 'admin') return;
+      if (!_c.cohort) return;
       const { data: memberRows } = await sb.from('cohort_members')
-        .select('user_id, profiles(*)')
+        .select('user_id, profiles(id, first_name)')
         .eq('cohort_id', _c.cohort.id);
       _c.cohortMembers = (memberRows || []).map(r => r.profiles).filter(Boolean)
         .sort((a,b) => (a.first_name||'').localeCompare(b.first_name||''));
@@ -1023,7 +1023,7 @@
 
     function _updateMemberDropdown() {
       const sel = document.getElementById('memberSelect');
-      if (_c.profile?.role !== 'admin' || _c.cohortMembers.length < 1) { sel.style.display = 'none'; return; }
+      if (_c.cohortMembers.length < 1) { sel.style.display = 'none'; return; }
       sel.innerHTML = _c.cohortMembers.map(m =>
         `<option value="${m.id}"${m.id === _c.viewingUserId ? ' selected' : ''}>${m.first_name}</option>`
       ).join('');
