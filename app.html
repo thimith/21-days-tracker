@@ -834,16 +834,33 @@
         }
 
         const currentWk = this.getCohortWeekNum(cohortObj.startDate);
-        const pendingCurrent = existing.find(r => r.status === 'pending' && r.weekNumber === currentWk);
-        if (pendingCurrent) {
-          if (!failuresByWeek[currentWk]) {
-            _c.redemptions = _c.redemptions.filter(r => r.id !== pendingCurrent.id);
-            sb.from('redemptions').delete().eq('id', pendingCurrent.id).then(() => {});
-            return;
-          } else {
-            pendingCurrent.reason = [...new Set(failuresByWeek[currentWk])].join(' · ');
-            sb.from('redemptions').update({ reason: pendingCurrent.reason }).eq('id', pendingCurrent.id).then(() => {});
-            return;
+        const isEvalDay = currentDay === 8 || currentDay === 15 || currentDay === 22;
+        if (isEvalDay) {
+          // On eval days re-check all pending redemptions against fresh failure data
+          const pendingAll = existing.filter(r => r.status === 'pending');
+          for (const pending of pendingAll) {
+            const wk = pending.weekNumber;
+            if (!failuresByWeek[wk]) {
+              _c.redemptions = _c.redemptions.filter(r => r.id !== pending.id);
+              sb.from('redemptions').delete().eq('id', pending.id).then(() => {});
+            } else {
+              pending.reason = [...new Set(failuresByWeek[wk])].join(' · ');
+              sb.from('redemptions').update({ reason: pending.reason }).eq('id', pending.id).then(() => {});
+            }
+          }
+          if (pendingAll.length > 0) return;
+        } else {
+          const pendingCurrent = existing.find(r => r.status === 'pending' && r.weekNumber === currentWk);
+          if (pendingCurrent) {
+            if (!failuresByWeek[currentWk]) {
+              _c.redemptions = _c.redemptions.filter(r => r.id !== pendingCurrent.id);
+              sb.from('redemptions').delete().eq('id', pendingCurrent.id).then(() => {});
+              return;
+            } else {
+              pendingCurrent.reason = [...new Set(failuresByWeek[currentWk])].join(' · ');
+              sb.from('redemptions').update({ reason: pendingCurrent.reason }).eq('id', pendingCurrent.id).then(() => {});
+              return;
+            }
           }
         }
 
