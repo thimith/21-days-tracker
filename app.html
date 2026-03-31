@@ -1116,17 +1116,17 @@
         if (ds > todayStr) break; // stop at today, no future dates
         const cd = db.getCohortDay(cohort.startDate, ds);
         if (cd < 1 || cd > 21) continue;
-        const label = ds === todayStr ? 'TODAY' : `D${cd}`;
+        const label = ds === todayStr ? 'TODAY' : parseLocalDate(ds).toLocaleDateString('en', { weekday: 'short' });
         tabs.push(`<button type="button" class="date-tab${ds===selectedDate?' active':''}" onclick="selectDate('${ds}')">${label}</button>`);
       }
       const tabsEl = document.getElementById('dateTabs');
       tabsEl.innerHTML = tabs.join('');
-      // Scroll active tab into view; if none active, show the rightmost (today)
-      const activeTab = tabsEl.querySelector('.date-tab.active');
+      // Center the active tab (or TODAY) in the scroll container
+      const activeTab = tabsEl.querySelector('.date-tab.active') || tabsEl.lastElementChild;
       if (activeTab) {
-        activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      } else {
-        tabsEl.scrollLeft = tabsEl.scrollWidth;
+        const tabLeft = activeTab.offsetLeft;
+        const tabWidth = activeTab.offsetWidth;
+        tabsEl.scrollLeft = tabLeft - (tabsEl.clientWidth / 2) + (tabWidth / 2);
       }
     }
 
