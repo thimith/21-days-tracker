@@ -1123,7 +1123,9 @@
       tabsEl.innerHTML = tabs.join('');
       // Center the active tab (or TODAY) in the scroll container
       const activeTab = tabsEl.querySelector('.date-tab.active') || tabsEl.lastElementChild;
-      if (activeTab) requestAnimationFrame(() => activeTab.scrollIntoView({ inline: 'center', block: 'nearest' }));
+      if (activeTab) requestAnimationFrame(() => {
+        tabsEl.scrollLeft = activeTab.offsetLeft - (tabsEl.clientWidth / 2) + (activeTab.offsetWidth / 2);
+      });
     }
 
     // Builds the inner HTML for a single day page
