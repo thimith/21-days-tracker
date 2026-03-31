@@ -163,6 +163,7 @@
       padding: 10px 20px;
       display: flex; gap: 6px;
       overflow-x: auto; scrollbar-width: none;
+      position: relative;
     }
     .date-tabs::-webkit-scrollbar { display: none; }
     .date-tab {
@@ -1124,9 +1125,7 @@
       // Center the active tab (or TODAY) in the scroll container
       const activeTab = tabsEl.querySelector('.date-tab.active') || tabsEl.lastElementChild;
       if (activeTab) requestAnimationFrame(() => {
-        const cr = tabsEl.getBoundingClientRect();
-        const tr = activeTab.getBoundingClientRect();
-        tabsEl.scrollLeft += tr.left - cr.left - (cr.width / 2) + (tr.width / 2);
+        tabsEl.scrollLeft = activeTab.offsetLeft - (tabsEl.clientWidth / 2) + (activeTab.offsetWidth / 2);
       });
     }
 
