@@ -79,6 +79,7 @@
     .member-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .icon-btn { width: 30px; height: 30px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
     .icon-btn.edit   { background: var(--blue-lt); color: var(--blue); }
+    .icon-btn.add    { background: var(--green-lt); color: var(--green); }
     .icon-btn.remove { background: var(--red-lt);  color: var(--red); }
     .strikes-row { display: flex; gap: 4px; align-items: center; margin-top: 2px; }
     .strike-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
@@ -287,9 +288,10 @@
               <div class="strikes-row">${pips} ${status}</div>
             </div>
             <div class="member-actions">
-              <button type="button" class="icon-btn" onclick="editMemberName('${m.id}')" title="Edit name">✎</button>
+              <button type="button" class="icon-btn" onclick="removeRedemption('${m.id}')" title="Remove redemption">−</button>
+              <button type="button" class="icon-btn add" onclick="addRedemption('${m.id}')" title="Add redemption">+</button>
+              <button type="button" class="icon-btn edit" onclick="editMemberName('${m.id}')" title="Edit name">✎</button>
               <button type="button" class="icon-btn remove" onclick="removeMember('${m.id}')" title="Remove">✕</button>
-              <button type="button" class="icon-btn" style="background:var(--red-lt);color:var(--red);" onclick="clearStrikes('${m.id}')" title="Clear strikes">↺</button>
             </div>
           </div>`;
       }).join('');
@@ -393,9 +395,22 @@
       renderMembers();
     }
 
-    async function clearStrikes(userId) {
-      if (!confirm('Clear all redemption strikes for this member?')) return;
-      await sb.from('redemptions').delete().eq('cohort_id', membersCohortId).eq('user_id', userId);
+    async function addRedemption(userId) {
+      const mc = (await sb.from('cohorts').select('start_date').eq('id', membersCohortId).single()).data;
+      if (!mc) return;
+      const dayNum = getCohortDay(mc.start_date);
+      const wk = Math.ceil(dayNum / 7);
+      const { data: existing } = await sb.from('redemptions').select('strike_number').eq('cohort_id', membersCohortId).eq('user_id', userId);
+      const count = (existing?.length || 0) + 1;
+      const id = `r_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+      await sb.from('redemptions').insert({ id, user_id: userId, cohort_id: membersCohortId, week_number: wk, strike_number: count, reason: 'Manual (admin)', status: 'pending' });
+      renderMembers();
+    }
+
+    async function removeRedemption(userId) {
+      const { data: existing } = await sb.from('redemptions').select('id, created_at').eq('cohort_id', membersCohortId).eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+      if (!existing?.length) return;
+      await sb.from('redemptions').delete().eq('id', existing[0].id);
       renderMembers();
     }
 

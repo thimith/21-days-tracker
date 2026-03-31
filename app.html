@@ -871,6 +871,9 @@
         for (const [wkStr, reasons] of Object.entries(failuresByWeek)) {
           if (count >= 3) break;
           const wk = parseInt(wkStr);
+          // On non-eval days only create redemptions for the current week —
+          // prevents goals added mid-challenge from generating false strikes for prior weeks
+          if (!isEvalDay && wk !== currentWk) continue;
           if (existing.some(r => r.weekNumber === wk)) continue;
           count++;
           const id = `r_${this.uid()}`;
