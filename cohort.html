@@ -623,6 +623,7 @@
             <div class="member-right">
               <span style="font-size:0.9rem;">${lv.icon}</span>
               <span style="font-size:0.72rem;font-weight:800;color:var(--text);min-width:42px;text-align:right;">${xp} XP</span>
+              <div class="member-strikes">${[1,2,3].map(n=>`<div class="strike-pip${n<=strikeCount?' active':''}"></div>`).join('')}</div>
               ${badge}
               <span class="member-chevron">▼</span>
             </div>
