@@ -738,7 +738,18 @@
         if (existing.length >= 3) return;
 
         const failuresByWeek = {};
-        const addF = (wk, msg) => { if (!failuresByWeek[wk]) failuresByWeek[wk]=[]; failuresByWeek[wk].push(msg); };
+        const weeklyFailedWeeks = new Set(); // weeks where a WEEKLY-type goal failed
+        const addF = (wk, msg, isWeeklyType = false) => {
+          if (!failuresByWeek[wk]) failuresByWeek[wk] = [];
+          failuresByWeek[wk].push(msg);
+          if (isWeeklyType) weeklyFailedWeeks.add(wk);
+        };
+
+        // Completed weeks: week N is definitively over when currentDay > N*7
+        const completedWeeks = [];
+        if (currentDay > 7)  completedWeeks.push(1);
+        if (currentDay > 14) completedWeeks.push(2);
+        if (currentDay > 21) completedWeeks.push(3);
 
         for (const g of goals) {
 
@@ -759,49 +770,44 @@
               if (v < target) addF(this.getCohortWeekNum(cohortObj.startDate, d), `${g.title}: ${v}/${target}`);
             }
 
-          // ── Weekly: evaluate at end of each week (day 8, 15, 22) ─────────
+          // ── Weekly: evaluate all completed weeks (retroactive) ────────
           } else if (g.type === 'weekly_days') {
-            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
-              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+            for (const prevWk of completedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const daysHit = wkDates.filter(d => !!_c.checkins[`${g.id}_${d}`]).length;
               const daysTarget = g.config?.daysTarget || 5;
               if (daysHit < daysTarget)
-                addF(prevWk, `${g.title}: ${daysHit}/${daysTarget} days`);
+                addF(prevWk, `${g.title}: ${daysHit}/${daysTarget} days`, true);
             }
           } else if (g.type === 'daily_count_weekly') {
-            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
-              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+            for (const prevWk of completedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const dailyTarget = g.config?.dailyTarget || 1;
               const daysTarget  = g.config?.daysTarget  || 5;
               const daysHit = wkDates.filter(d => (Number(_c.checkins[`${g.id}_${d}`])||0) >= dailyTarget).length;
               if (daysHit < daysTarget)
-                addF(prevWk, `${g.title}: ${daysHit}/${daysTarget} days`);
+                addF(prevWk, `${g.title}: ${daysHit}/${daysTarget} days`, true);
             }
           } else if (g.type === 'weekly_count') {
-            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
-              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+            for (const prevWk of completedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total < (g.config.weeklyTarget||1))
-                addF(prevWk, `${g.title}: ${total}/${g.config.weeklyTarget} sessions`);
+                addF(prevWk, `${g.title}: ${total}/${g.config.weeklyTarget} sessions`, true);
             }
           } else if (g.type === 'weekly_time_min' || g.type === 'daily_time_min') {
-            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
-              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+            for (const prevWk of completedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total < (g.config.weeklyTargetMinutes||60))
-                addF(prevWk, `${g.title}: ${total}min/${g.config.weeklyTargetMinutes}min target`);
+                addF(prevWk, `${g.title}: ${total}min/${g.config.weeklyTargetMinutes}min target`, true);
             }
           } else if (g.type === 'weekly_time_max' || g.type === 'daily_time_max' || g.type === 'daily_time') {
-            if (currentDay === 8 || currentDay === 15 || currentDay === 22) {
-              const prevWk = currentDay===8 ? 1 : currentDay===15 ? 2 : 3;
+            for (const prevWk of completedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total > (g.config.weeklyMaxMinutes||120))
-                addF(prevWk, `${g.title}: over weekly limit`);
+                addF(prevWk, `${g.title}: over weekly limit`, true);
             }
 
           // ── 21-day: evaluate at end of challenge (day 22) ─────────────────
@@ -871,9 +877,10 @@
         for (const [wkStr, reasons] of Object.entries(failuresByWeek)) {
           if (count >= 3) break;
           const wk = parseInt(wkStr);
-          // On non-eval days only create redemptions for the current week —
-          // prevents goals added mid-challenge from generating false strikes for prior weeks
-          if (!isEvalDay && wk !== currentWk) continue;
+          // On non-eval days, allow past-week creation only if a WEEKLY-type goal failed that week.
+          // This lets missed weekly targets surface retroactively while preventing
+          // newly-added daily goals from generating false past-week strikes.
+          if (!isEvalDay && wk !== currentWk && !weeklyFailedWeeks.has(wk)) continue;
           if (existing.some(r => r.weekNumber === wk)) continue;
           count++;
           const id = `r_${this.uid()}`;
