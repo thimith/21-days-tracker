@@ -1122,11 +1122,14 @@
       }
       const tabsEl = document.getElementById('dateTabs');
       tabsEl.innerHTML = tabs.join('');
-      // Center the active tab (or TODAY) in the scroll container
-      const activeTab = tabsEl.querySelector('.date-tab.active') || tabsEl.lastElementChild;
-      if (activeTab) requestAnimationFrame(() => {
-        tabsEl.scrollLeft = activeTab.offsetLeft - (tabsEl.clientWidth / 2) + (activeTab.offsetWidth / 2);
-      });
+      // Add pixel spacers so TODAY can physically scroll to center
+      const halfW = Math.floor(tabsEl.clientWidth / 2);
+      const spacer = `<div style="flex-shrink:0;width:${halfW}px;min-width:${halfW}px"></div>`;
+      tabsEl.innerHTML = spacer + tabsEl.innerHTML + spacer;
+      // Force layout reflow, then scroll active tab to center
+      void tabsEl.offsetHeight;
+      const activeTab = tabsEl.querySelector('.date-tab.active') || tabsEl.querySelector('.date-tab:last-of-type');
+      if (activeTab) tabsEl.scrollLeft = activeTab.offsetLeft - halfW + (activeTab.offsetWidth / 2);
     }
 
     // Builds the inner HTML for a single day page
