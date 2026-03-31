@@ -430,6 +430,8 @@
 
       const cohort = _c.cohort;
       const session = { userId: _c.userId, role: _c.profile?.role };
+      const adminNavEl = document.getElementById('adminNav');
+      if (adminNavEl) adminNavEl.style.display = _c.profile?.role === 'admin' ? '' : 'none';
 
 
 

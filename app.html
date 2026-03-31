@@ -104,6 +104,7 @@
       display: flex; align-items: center; gap: 12px;
     }
     .dots-strip { display: flex; gap: 3px; align-items: center; flex: 1; }
+    .dots-week-sep { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; margin: 0 2px; }
     .dot {
       flex: 1; height: 7px; border-radius: 4px;
       transition: background 0.3s;
@@ -985,6 +986,8 @@
       session = { userId: _c.userId, role: _c.profile?.role };
       user    = _c.profile;
       cohort  = _c.cohort;
+      const adminNavEl = document.getElementById('adminNav');
+      if (adminNavEl) adminNavEl.style.display = _c.profile?.role === 'admin' ? '' : 'none';
 
       // Default viewing user to self on every fresh load
       if (!_c.viewingUserId) _c.viewingUserId = _c.userId;
@@ -1011,7 +1014,7 @@
         banner.style.display = 'none';
       }
 
-      if (cohort) db.evalRedemptions(_c.viewingUserId, cohort.id);
+      if (cohort && !isViewingOther) db.evalRedemptions(_c.userId, cohort.id);
 
       if (!cohort) {
         document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
@@ -1100,25 +1103,31 @@
         } else {
           cls += ' future';
         }
-        return `<div class="${cls}"></div>`;
+        const sep = (dayNum === 7 || dayNum === 14) ? '<div class="dots-week-sep"></div>' : '';
+        return `<div class="${cls}"></div>${sep}`;
       }).join('');
     }
 
     function renderDateTabs() {
-      const today = new Date();
-      const tabs  = [];
-      for (let i=6; i>=0; i--) {
-        const d  = new Date(today); d.setDate(d.getDate()-i);
-        const ds = localDateStr(d);
+      const todayStr = localDateStr();
+      const allDates = db.getCohortDates(cohort.startDate);
+      const tabs = [];
+      for (const ds of allDates) {
+        if (ds > todayStr) break; // stop at today, no future dates
         const cd = db.getCohortDay(cohort.startDate, ds);
         if (cd < 1 || cd > 21) continue;
-        const label = i===0 ? 'TODAY' : d.toLocaleDateString('en',{weekday:'short'});
+        const label = ds === todayStr ? 'TODAY' : `D${cd}`;
         tabs.push(`<button type="button" class="date-tab${ds===selectedDate?' active':''}" onclick="selectDate('${ds}')">${label}</button>`);
       }
       const tabsEl = document.getElementById('dateTabs');
       tabsEl.innerHTML = tabs.join('');
-      // Always keep Today (rightmost tab) in view; active tab is visible since it's within the last 7
-      tabsEl.scrollLeft = tabsEl.scrollWidth;
+      // Scroll active tab into view; if none active, show the rightmost (today)
+      const activeTab = tabsEl.querySelector('.date-tab.active');
+      if (activeTab) {
+        activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      } else {
+        tabsEl.scrollLeft = tabsEl.scrollWidth;
+      }
     }
 
     // Builds the inner HTML for a single day page
