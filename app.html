@@ -455,8 +455,27 @@
       font-size: 0.76rem; font-weight: 600;
       color: var(--muted); background: var(--bg);
       border: 1.5px solid var(--border); cursor: pointer; transition: all 0.15s;
+      position: relative;
     }
     .type-pill.sel { background: var(--orange); color: #fff; border-color: var(--orange); }
+    @media (hover: hover) {
+      .type-pill[data-tip]:hover::after {
+        content: attr(data-tip);
+        position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+        background: #1a1a1a; color: #fff;
+        font-size: 0.7rem; font-weight: 400; line-height: 1.4;
+        padding: 6px 10px; border-radius: 8px;
+        white-space: pre; pointer-events: none; z-index: 100;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        min-width: 140px; text-align: left;
+      }
+      .type-pill[data-tip]:hover::before {
+        content: '';
+        position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%);
+        border: 5px solid transparent; border-top-color: #1a1a1a;
+        pointer-events: none; z-index: 100;
+      }
+    }
     .config-field { display: none; }
     .config-field.show { display: block; margin-top: 10px; }
     .form-row { display: flex; gap: 8px; margin-top: 4px; }
@@ -1211,24 +1230,24 @@
               <div class="form-field">
                 <label class="form-label">Time frame</label>
                 <div class="type-pills">
-                  <button type="button" class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')">Daily</button>
-                  <button type="button" class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')">Weekly</button>
-                  <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')">21 Days</button>
+                  <button type="button" class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')" data-tip="Tracked every day&#10;e.g. Meditate, No alcohol">Daily</button>
+                  <button type="button" class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')" data-tip="Tracked over 7 days&#10;e.g. Work out 4x this week">Weekly</button>
+                  <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')" data-tip="One goal over all 21 days&#10;e.g. Read 1 book">21 Days</button>
                 </div>
               </div>
               <div class="form-field">
                 <label class="form-label">Type</label>
                 <div class="type-pills" id="cfgMetricPills">
                   ${addGoalFrame === 'weekly'
-                    ? `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')">Days/week</button>
-                       <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count/Week</button>
-                       <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count/Day</button>
-                       <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
-                       <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`
-                    : `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')">Yes / No</button>
-                       <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
-                       <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
-                       <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`}
+                    ? `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')"       data-tip="How many days you show up&#10;e.g. Work out 4 days/week">Days/week</button>
+                       <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="Total reps over the week&#10;e.g. 20 cold showers this week&#10;Multiple per day allowed">Count/Week</button>
+                       <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')" data-tip="A count target each day&#10;e.g. 3 glasses of water/day&#10;for at least N days/week">Count/Day</button>
+                       <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per week&#10;e.g. At least 150 min of exercise">Min time</button>
+                       <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')"   data-tip="Maximum minutes per week&#10;e.g. No more than 7h of TV">Max time</button>`
+                    : `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')"    data-tip="Did you do it today? Yes or No&#10;e.g. Meditate, Cold shower">Yes / No</button>
+                       <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="How many times today&#10;e.g. 20 pushups, 8 glasses of water">Count</button>
+                       <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per day&#10;e.g. Study at least 30 min">Min time</button>
+                       <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')"   data-tip="Maximum minutes per day&#10;e.g. No more than 1h of social media">Max time</button>`}
                 </div>
               </div>
               <div class="form-field" id="cfgCountField" style="${['count','count_days'].includes(addGoalMetric)?'':'display:none'}">
@@ -2308,16 +2327,16 @@
       const mp = document.getElementById('cfgMetricPills');
       if (mp) {
         if (frame === 'weekly') {
-          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')">Days/week</button>
-                          <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count/Week</button>
-                          <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count/Day</button>
-                          <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
-                          <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`;
+          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')"       data-tip="How many days you show up&#10;e.g. Work out 4 days/week">Days/week</button>
+                          <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="Total reps over the week&#10;e.g. 20 cold showers this week&#10;Multiple per day allowed">Count/Week</button>
+                          <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')" data-tip="A count target each day&#10;e.g. 3 glasses of water/day&#10;for at least N days/week">Count/Day</button>
+                          <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per week&#10;e.g. At least 150 min of exercise">Min time</button>
+                          <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')"   data-tip="Maximum minutes per week&#10;e.g. No more than 7h of TV">Max time</button>`;
         } else {
-          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')">Yes / No</button>
-                          <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
-                          <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
-                          <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`;
+          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')"    data-tip="Did you do it today? Yes or No&#10;e.g. Meditate, Cold shower">Yes / No</button>
+                          <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="How many times today&#10;e.g. 20 pushups, 8 glasses of water">Count</button>
+                          <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per day&#10;e.g. Study at least 30 min">Min time</button>
+                          <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')"   data-tip="Maximum minutes per day&#10;e.g. No more than 1h of social media">Max time</button>`;
         }
       }
       _syncCfgFields();
