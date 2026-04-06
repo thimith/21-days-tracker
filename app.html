@@ -1221,7 +1221,7 @@
                   ${addGoalFrame === 'weekly'
                     ? `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')">Days/week</button>
                        <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
-                       <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count + Days</button>
+                       <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count/Day</button>
                        <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
                        <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`
                     : `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')">Yes / No</button>
@@ -2300,7 +2300,7 @@
         if (frame === 'weekly') {
           mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')">Days/week</button>
                           <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
-                          <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count + Days</button>
+                          <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count/Day</button>
                           <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
                           <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`;
         } else {
