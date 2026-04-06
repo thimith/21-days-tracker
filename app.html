@@ -988,6 +988,19 @@
       ]);
       _c.profile = profile;
 
+      // Create profile if missing (e.g. user bypassed handleNewSignIn via existing session)
+      if (!profile) {
+        const { data: { user: authUser } } = await sb.auth.getUser();
+        if (authUser) {
+          const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '';
+          const nameParts = fullName.trim().split(' ');
+          const role = authUser.email === 'thierry.muller@gmail.com' ? 'admin' : 'member';
+          const newProfile = { id: userId, name: fullName, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '', role, whatsapp: '' };
+          await sb.from('profiles').insert(newProfile).select().single();
+          _c.profile = newProfile;
+        }
+      }
+
       if (memberships?.length) {
         const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
         const actives = cohorts.filter(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });

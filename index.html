@@ -187,7 +187,7 @@
         redirected = true;
         sb.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin + '/21-days-tracker/index.html' }
+          options: { redirectTo: window.location.origin + '/21-days-tracker/index.html', queryParams: { prompt: 'select_account' } }
         }).catch(() => {
           redirected = false;
           document.body.style.visibility = 'visible';
@@ -248,7 +248,7 @@
       errEl.classList.remove('show');
       const { error } = await sb.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/21-days-tracker/index.html' }
+        options: { redirectTo: window.location.origin + '/21-days-tracker/index.html', queryParams: { prompt: 'select_account' } }
       });
       if (error) {
         errEl.textContent = error.message; errEl.classList.add('show');
