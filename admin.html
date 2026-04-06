@@ -917,7 +917,7 @@
     // ── Unassigned members banner ─────────────────────────────────────────
     async function checkUnassignedMembers() {
       const [{ data: allProfiles }, { data: assigned }, { data: cohortsRaw }] = await Promise.all([
-        sb.from('profiles').select('id, first_name').eq('role', 'member'),
+        sb.from('profiles').select('id, first_name, email').eq('role', 'member'),
         sb.from('cohort_members').select('user_id'),
         sb.from('cohorts').select('*').order('start_date', { ascending: false })
       ]);
@@ -933,9 +933,10 @@
       const rows = unassigned.map(p => `
         <div class="pending-row" id="pending-row-${p.id}">
           <div class="member-avatar">${(p.first_name||'?')[0].toUpperCase()}</div>
-          <div class="pending-name">${p.first_name}</div>
+          <div class="pending-name">${p.first_name}<div style="font-size:0.72rem;color:var(--muted);font-weight:400;">${p.email||''}</div></div>
           <select class="form-input" id="pending-cohort-${p.id}" style="width:auto;font-size:0.8rem;padding:6px 10px;">${cohortOptions}</select>
           <button type="button" class="btn primary" style="padding:7px 14px;font-size:0.8rem;flex-shrink:0;" onclick="assignToCohort('${p.id}')">Add</button>
+          <button type="button" class="btn" style="padding:7px 12px;font-size:0.8rem;flex-shrink:0;background:var(--red);color:#fff;" onclick="deleteProfile('${p.id}','${p.first_name}')">✕</button>
         </div>`).join('');
 
       banner.style.display = 'block';
@@ -953,6 +954,14 @@
       await sb.from('cohort_members').insert({ cohort_id: cohortId, user_id: userId });
       await checkUnassignedMembers();
       if (document.getElementById('tab-members').classList.contains('active')) renderMembers();
+    }
+
+    async function deleteProfile(userId, name) {
+      if (!confirm(`Remove ${name} from the app? This deletes their profile and cannot be undone.`)) return;
+      const row = document.getElementById(`pending-row-${userId}`);
+      if (row) row.style.opacity = '0.4';
+      await sb.from('profiles').delete().eq('id', userId);
+      await checkUnassignedMembers();
     }
 
     // ── Init ─────────────────────────────────────────────────────────────
