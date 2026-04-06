@@ -996,7 +996,8 @@
           const nameParts = fullName.trim().split(' ');
           const role = authUser.email === 'thierry.muller@gmail.com' ? 'admin' : 'member';
           const newProfile = { id: userId, name: fullName, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '', email: authUser.email || '', role, whatsapp: '' };
-          const { data: created } = await sb.from('profiles').insert(newProfile).select().single();
+          const { data: created, error: profileErr } = await sb.from('profiles').insert(newProfile).select().single();
+          if (profileErr) console.error('Profile insert error:', JSON.stringify(profileErr));
           _c.profile = created || newProfile;
         }
       }
