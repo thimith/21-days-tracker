@@ -1281,7 +1281,7 @@
             </div>
             <button type="button" class="btn-forgot" onclick="unfinalizeGoals()">I forgot something</button>
           </div>`);
-      } else if (!locked) {
+      } else if (!locked && !isViewingOther) {
         html.push(`
           <div class="setup-banner">
             <div class="setup-banner-title">⚙ Goal Setup</div>
