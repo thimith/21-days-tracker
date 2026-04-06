@@ -499,6 +499,25 @@
     }
     .goal-delete:hover { background: rgba(255,59,48,0.2); }
 
+    /* ── Goals finalized banner ─────────────────────────────────────────── */
+    .goals-done-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--green-lt, #f0faf3); border: 1.5px solid var(--green, #34C759);
+      border-radius: 14px; padding: 12px 16px; margin-top: 12px; gap: 10px;
+    }
+    .goals-done-label { font-size: 0.85rem; font-weight: 700; color: var(--green, #34C759); }
+    .goals-done-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .btn-forgot { font-size: 0.78rem; color: var(--orange); background: none; border: none;
+      cursor: pointer; font-weight: 600; white-space: nowrap; padding: 0; text-decoration: underline; }
+    .btn-im-done {
+      width: 100%; margin-top: 12px;
+      padding: 11px; border-radius: 10px;
+      background: var(--green, #34C759); color: #fff;
+      border: none; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-im-done:hover { opacity: 0.85; }
+
     /* ── Bottom nav ──────────────────────────────────────────────────────── */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -630,6 +649,11 @@
     let addGoalTitle  = '';
     let addGoalColor  = '';
     let addFormOpen   = false;
+
+    function _finalizeKey() { return `ft_goals_done_${session?.userId}_${cohort?.id}`; }
+    function isGoalsFinalized() { return !!localStorage.getItem(_finalizeKey()); }
+    function finalizeGoals()   { localStorage.setItem(_finalizeKey(), '1'); renderContent(); }
+    function unfinalizeGoals() { localStorage.removeItem(_finalizeKey()); renderContent(); }
 
     // ══════════════════════════════════════════════════════════════════════
     // DATA LAYER
@@ -1166,7 +1190,8 @@
     // Builds the inner HTML for a single day page
     function _buildDayHTML(date) {
       const goals   = db.getGoalsForUser();
-      const locked  = db.areGoalsLocked();
+      const locked     = db.areGoalsLocked();
+      const finalized  = !locked && isGoalsFinalized();
       const pending = db.getPendingRedemptions();
       const strikes = db.getRedemptionsForUser().length;
       const html    = [];
@@ -1205,19 +1230,28 @@
 
       if (daily.length) {
         html.push('<div class="goal-group-label">Daily</div>');
-        daily.forEach(g => html.push(renderGoalCard(g, date, locked)));
+        daily.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
       }
       if (weekly.length) {
         html.push('<div class="goal-group-label">Weekly</div>');
-        weekly.forEach(g => html.push(renderGoalCard(g, date, locked)));
+        weekly.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
       }
       if (milestone.length) {
         html.push('<div class="goal-group-label">21-Day</div>');
-        milestone.forEach(g => html.push(renderGoalCard(g, date, locked)));
+        milestone.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
       }
 
       // ── Goal setup (pre Day-2) ──
-      if (!locked) {
+      if (!locked && finalized) {
+        html.push(`
+          <div class="goals-done-banner">
+            <div>
+              <div class="goals-done-label">✓ Goals set</div>
+              <div class="goals-done-sub">You can still add more until end of Day 2.</div>
+            </div>
+            <button type="button" class="btn-forgot" onclick="unfinalizeGoals()">I forgot something</button>
+          </div>`);
+      } else if (!locked) {
         html.push(`
           <div class="setup-banner">
             <div class="setup-banner-title">⚙ Goal Setup</div>
@@ -1277,6 +1311,7 @@
               </div>
             </div>
             <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
+            ${!addFormOpen && goals.length > 0 ? `<button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
       }
 
