@@ -654,7 +654,7 @@
         }, 0);
       },
       areGoalsLocked() {
-        return _c.cohort ? this.getCohortDay(_c.cohort.startDate) >= 2 : false;
+        return _c.cohort ? this.getCohortDay(_c.cohort.startDate) >= 3 : false;
       },
       getPendingRedemptions() {
         return _c.redemptions.filter(r => r.status === 'pending');
@@ -1217,16 +1217,26 @@
               </div>
               <div class="form-field">
                 <label class="form-label">Type</label>
-                <div class="type-pills">
-                  <button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}" onclick="setAddMetric(this,'boolean')">Yes / No</button>
-                  <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}" onclick="setAddMetric(this,'count')">Count</button>
-                  <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}" onclick="setAddMetric(this,'min_time')">Min time</button>
-                  <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}" onclick="setAddMetric(this,'max_time')">Max time</button>
+                <div class="type-pills" id="cfgMetricPills">
+                  ${addGoalFrame === 'weekly'
+                    ? `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')">Days/week</button>
+                       <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
+                       <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count + Days</button>
+                       <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
+                       <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`
+                    : `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')">Yes / No</button>
+                       <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
+                       <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
+                       <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`}
                 </div>
               </div>
-              <div class="form-field" id="cfgCountField" style="${addGoalMetric==='count'?'':'display:none'}">
-                <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
+              <div class="form-field" id="cfgCountField" style="${['count','count_days'].includes(addGoalMetric)?'':'display:none'}">
+                <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':addGoalMetric==='count_days'?'Count per day':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
                 <input class="form-input" id="cfgCountVal" type="number" inputmode="numeric" min="1" max="63" onwheel="this.blur()" />
+              </div>
+              <div class="form-field" id="cfgDaysField" style="${['days','count_days'].includes(addGoalMetric)?'':'display:none'}">
+                <label class="form-label">Days per week (out of 7)</label>
+                <input class="form-input" id="cfgDaysVal" type="number" inputmode="numeric" min="1" max="7" onwheel="this.blur()" />
               </div>
               <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
                 <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':addGoalFrame==='daily'?'Daily minimum (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':addGoalFrame==='daily'?'Daily maximum (minutes)':'Weekly maximum (minutes)')}</label>
@@ -2281,6 +2291,25 @@
       addGoalFrame = frame;
       btn.closest('.type-pills').querySelectorAll('.type-pill').forEach(p => p.classList.remove('sel'));
       btn.classList.add('sel');
+      // Reset metric to valid default for frame
+      if (frame === 'weekly' && !['days','count','count_days','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'days';
+      if (frame !== 'weekly' && !['boolean','count','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'boolean';
+      // Rebuild metric pills for new frame
+      const mp = document.getElementById('cfgMetricPills');
+      if (mp) {
+        if (frame === 'weekly') {
+          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')">Days/week</button>
+                          <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
+                          <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')">Count + Days</button>
+                          <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
+                          <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`;
+        } else {
+          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')">Yes / No</button>
+                          <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')">Count</button>
+                          <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')">Min time</button>
+                          <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')">Max time</button>`;
+        }
+      }
       _syncCfgFields();
     }
 
@@ -2293,16 +2322,18 @@
 
     function _syncCfgFields() {
       const cf = document.getElementById('cfgCountField');
+      const df = document.getElementById('cfgDaysField');
       const tf = document.getElementById('cfgTimeField');
       if (!cf || !tf) return;
-      cf.style.display = addGoalMetric === 'count' ? '' : 'none';
+      cf.style.display = ['count','count_days'].includes(addGoalMetric) ? '' : 'none';
+      if (df) df.style.display = ['days','count_days'].includes(addGoalMetric) ? '' : 'none';
       tf.style.display = (addGoalMetric === 'min_time' || addGoalMetric === 'max_time') ? '' : 'none';
       const cl = document.getElementById('cfgCountLabel');
       const tl = document.getElementById('cfgTimeLabel');
-      if (cl) cl.textContent = addGoalFrame === 'milestone' ? 'Total sessions over 21 days' : 'Sessions per week';
+      if (cl) cl.textContent = addGoalFrame === 'milestone' ? 'Total sessions over 21 days' : addGoalMetric === 'count_days' ? 'Count per day' : addGoalFrame === 'daily' ? 'Sessions per day' : 'Sessions per week';
       if (tl) tl.textContent = addGoalMetric === 'min_time'
-        ? (addGoalFrame === 'milestone' ? 'Total minimum over 21 days (minutes)' : 'Weekly minimum (minutes)')
-        : (addGoalFrame === 'milestone' ? 'Total maximum over 21 days (minutes)' : 'Weekly maximum (minutes)');
+        ? (addGoalFrame === 'milestone' ? 'Total minimum over 21 days (minutes)' : addGoalFrame === 'daily' ? 'Daily minimum (minutes)' : 'Weekly minimum (minutes)')
+        : (addGoalFrame === 'milestone' ? 'Total maximum over 21 days (minutes)' : addGoalFrame === 'daily' ? 'Daily maximum (minutes)' : 'Weekly maximum (minutes)');
     }
 
     function saveGoal() {
@@ -2318,10 +2349,12 @@
         if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
         if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||300; }
       } else if (addGoalFrame === 'weekly') {
-        if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
-        if (addGoalMetric === 'count')    { type = 'weekly_count';    config.weeklyTarget          = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
-        if (addGoalMetric === 'min_time') { type = 'weekly_time_min'; config.weeklyTargetMinutes   = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
-        if (addGoalMetric === 'max_time') { type = 'weekly_time_max'; config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
+        if (addGoalMetric === 'days')      { type = 'weekly_days';        config.daysTarget          = parseInt(document.getElementById('cfgDaysVal')?.value)||5; }
+        if (addGoalMetric === 'count')     { type = 'weekly_count';       config.weeklyTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
+        if (addGoalMetric === 'count_days'){ type = 'daily_count_weekly'; config.dailyTarget         = parseInt(document.getElementById('cfgCountVal')?.value)||1;
+                                                                          config.daysTarget          = parseInt(document.getElementById('cfgDaysVal')?.value)||5; }
+        if (addGoalMetric === 'min_time')  { type = 'weekly_time_min';    config.weeklyTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
+        if (addGoalMetric === 'max_time')  { type = 'weekly_time_max';    config.weeklyMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
         if (addGoalMetric === 'count')    { type = 'daily_count';     config.dailyTarget           = parseInt(document.getElementById('cfgCountVal')?.value)||1; }
