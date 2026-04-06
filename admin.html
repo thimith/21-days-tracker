@@ -509,7 +509,7 @@
             <div style="display:flex;gap:6px;flex-wrap:wrap;" id="agMetricPills">
               ${addGoalFrame === 'weekly'
                 ? `<button type="button" ${pillStyle(addGoalMetric==='days')}       onclick="setAdminMetric(this,'days')">Days/week</button>
-                   <button type="button" ${pillStyle(addGoalMetric==='count')}      onclick="setAdminMetric(this,'count')">Count</button>
+                   <button type="button" ${pillStyle(addGoalMetric==='count')}      onclick="setAdminMetric(this,'count')">Count/Week</button>
                    <button type="button" ${pillStyle(addGoalMetric==='count_days')} onclick="setAdminMetric(this,'count_days')">Count/Day</button>
                    <button type="button" ${pillStyle(addGoalMetric==='min_time')}   onclick="setAdminMetric(this,'min_time')">Min time</button>
                    <button type="button" ${pillStyle(addGoalMetric==='max_time')}   onclick="setAdminMetric(this,'max_time')">Max time</button>`
@@ -572,7 +572,7 @@
       if (mp) {
         if (addGoalFrame === 'weekly') {
           mp.innerHTML = `<button type="button" ${pillStyle(addGoalMetric==='days')}       onclick="setAdminMetric(this,'days')">Days/week</button>
-                          <button type="button" ${pillStyle(addGoalMetric==='count')}      onclick="setAdminMetric(this,'count')">Count</button>
+                          <button type="button" ${pillStyle(addGoalMetric==='count')}      onclick="setAdminMetric(this,'count')">Count/Week</button>
                           <button type="button" ${pillStyle(addGoalMetric==='count_days')} onclick="setAdminMetric(this,'count_days')">Count/Day</button>
                           <button type="button" ${pillStyle(addGoalMetric==='min_time')}   onclick="setAdminMetric(this,'min_time')">Min time</button>
                           <button type="button" ${pillStyle(addGoalMetric==='max_time')}   onclick="setAdminMetric(this,'max_time')">Max time</button>`;
