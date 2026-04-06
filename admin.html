@@ -216,6 +216,7 @@
     let addGoalFrame     = 'daily';
     let addGoalMetric    = 'boolean';
     let addGoalTitle     = '';
+    let addGoalTimeUnit  = 'min';
     let stakesMemberId   = null;
     let stakesCohortId   = null;
 
@@ -522,9 +523,9 @@
           </div>
           <div class="form-field" id="agCountField" style="${['count','count_days'].includes(addGoalMetric)?'':'display:none'}"><label class="form-label" id="agCountLabel">${addGoalFrame==='milestone'?'Total over 21 days':addGoalMetric==='count_days'?'Count per day':'Sessions per '+(addGoalFrame==='daily'?'day':'week')}</label><input class="form-input" id="agCount" type="number" min="1" max="999" placeholder="" /></div>
           <div class="form-field" id="agDaysField" style="${['days','count_days'].includes(addGoalMetric)?'':'display:none'}"><label class="form-label">Days per week (out of 7)</label><input class="form-input" id="agDays" type="number" min="1" max="7" placeholder="" /></div>
-          <div class="form-field" id="agTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}"><label class="form-label" id="agTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':addGoalFrame==='daily'?'Daily minimum (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':addGoalFrame==='daily'?'Daily maximum (minutes)':'Weekly maximum (minutes)')}</label><input class="form-input" id="agTime" type="number" min="1" placeholder="" /></div>
+          <div class="form-field" id="agTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}"><label class="form-label" id="agTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days':addGoalFrame==='daily'?'Daily minimum':'Weekly minimum'):(addGoalFrame==='milestone'?'Total maximum over 21 days':addGoalFrame==='daily'?'Daily maximum':'Weekly maximum')}</label><div style="display:flex;gap:8px;align-items:center;"><input class="form-input" id="agTime" type="number" min="1" placeholder="" style="flex:1;" /><div style="display:flex;border:1.5px solid var(--border,#e2e2e2);border-radius:8px;overflow:hidden;flex-shrink:0;"><button type="button" onclick="addGoalTimeUnit='min';_syncAdminCfg()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange,#FF6B35)':'#f5f5f5'};color:${addGoalTimeUnit==='min'?'#fff':'#999'};">min</button><button type="button" onclick="addGoalTimeUnit='hr';_syncAdminCfg()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange,#FF6B35)':'#f5f5f5'};color:${addGoalTimeUnit==='hr'?'#fff':'#999'};">hr</button></div></div></div>
           <div class="btn-row">
-            <button type="button" class="btn secondary" onclick="addGoalFormOpen=false;addGoalTitle='';renderGoals()">Cancel</button>
+            <button type="button" class="btn secondary" onclick="addGoalFormOpen=false;addGoalTitle='';addGoalTimeUnit='min';renderGoals()">Cancel</button>
             <button type="button" class="btn primary" onclick="adminSaveGoal()">Add</button>
           </div>
         </div>` : `<button type="button" class="btn secondary full" style="margin-top:12px;" onclick="addGoalFormOpen=true;renderGoals()">+ Add Goal</button>`;
@@ -601,24 +602,25 @@
 
       const config = {};
       let type;
+      const _tv = v => (parseInt(document.getElementById(v)?.value)||0) * (addGoalTimeUnit === 'hr' ? 60 : 1);
       if (addGoalFrame === 'milestone') {
         if (addGoalMetric === 'boolean')  { type = 'milestone'; }
         if (addGoalMetric === 'count')    { type = 'total_count';    config.totalTarget        = parseInt(document.getElementById('agCount')?.value)||10; }
-        if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = parseInt(document.getElementById('agTime')?.value)||120; }
-        if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('agTime')?.value)||300; }
+        if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = _tv('agTime')||120; }
+        if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = _tv('agTime')||300; }
       } else if (addGoalFrame === 'weekly') {
         if (addGoalMetric === 'days')      { type = 'weekly_days';        config.daysTarget            = parseInt(document.getElementById('agDays')?.value)||5; }
         if (addGoalMetric === 'count')     { type = 'weekly_count';       config.weeklyTarget          = parseInt(document.getElementById('agCount')?.value)||3;
                                              config.multiPerDay = true; }
         if (addGoalMetric === 'count_days'){ type = 'daily_count_weekly'; config.dailyTarget           = parseInt(document.getElementById('agCount')?.value)||1;
                                                                            config.daysTarget            = parseInt(document.getElementById('agDays')?.value)||5; }
-        if (addGoalMetric === 'min_time')  { type = 'weekly_time_min';    config.weeklyTargetMinutes   = parseInt(document.getElementById('agTime')?.value)||60; }
-        if (addGoalMetric === 'max_time')  { type = 'weekly_time_max';    config.weeklyMaxMinutes      = parseInt(document.getElementById('agTime')?.value)||120; }
+        if (addGoalMetric === 'min_time')  { type = 'weekly_time_min';    config.weeklyTargetMinutes   = _tv('agTime')||60; }
+        if (addGoalMetric === 'max_time')  { type = 'weekly_time_max';    config.weeklyMaxMinutes      = _tv('agTime')||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
         if (addGoalMetric === 'count')    { type = 'daily_count';     config.dailyTarget           = parseInt(document.getElementById('agCount')?.value)||1; }
-        if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('agTime')?.value)||60; }
-        if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('agTime')?.value)||120; }
+        if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = _tv('agTime')||60; }
+        if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = _tv('agTime')||120; }
       }
 
       await sb.from('goals').insert({
@@ -627,10 +629,11 @@
         locked: false, sort_order: count || 0
       });
 
-      addGoalFormOpen = false;
-      addGoalFrame    = 'daily';
-      addGoalMetric   = 'boolean';
-      addGoalTitle    = '';
+      addGoalFormOpen  = false;
+      addGoalFrame     = 'daily';
+      addGoalMetric    = 'boolean';
+      addGoalTitle     = '';
+      addGoalTimeUnit  = 'min';
       renderGoals();
     }
 

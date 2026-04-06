@@ -644,16 +644,27 @@
     const localDateStr  = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const parseLocalDate = s => { const [y,m,dd] = s.split('-').map(Number); return new Date(y, m-1, dd); };
     let selectedDate = localDateStr();
-    let addGoalFrame  = 'daily';
-    let addGoalMetric = 'boolean';
-    let addGoalTitle  = '';
-    let addGoalColor  = '';
-    let addFormOpen   = false;
+    let addGoalFrame    = 'daily';
+    let addGoalMetric   = 'boolean';
+    let addGoalTitle    = '';
+    let addGoalColor    = '';
+    let addGoalTimeUnit = 'min';
+    let addFormOpen     = false;
 
-    function _finalizeKey() { return `ft_goals_done_${session?.userId}_${cohort?.id}`; }
-    function isGoalsFinalized() { return !!localStorage.getItem(_finalizeKey()); }
-    function finalizeGoals()   { localStorage.setItem(_finalizeKey(), '1'); renderContent(); }
-    function unfinalizeGoals() { localStorage.removeItem(_finalizeKey()); renderContent(); }
+    function _finalizeKey() { return `goals_done_${cohort?.id}`; }
+    function isGoalsFinalized() { return !!_c.userMeta?.[_finalizeKey()]; }
+    async function finalizeGoals() {
+      const k = _finalizeKey(); if (!k) return;
+      _c.userMeta = { ..._c.userMeta, [k]: true };
+      renderContent();
+      await sb.auth.updateUser({ data: { [k]: true } });
+    }
+    async function unfinalizeGoals() {
+      const k = _finalizeKey(); if (!k) return;
+      _c.userMeta = { ..._c.userMeta, [k]: null };
+      renderContent();
+      await sb.auth.updateUser({ data: { [k]: null } });
+    }
 
     // ══════════════════════════════════════════════════════════════════════
     // DATA LAYER
@@ -953,12 +964,13 @@
       const { data: { session } } = await sb.auth.getSession();
       const authUser = session?.user;
       if (!authUser) { window.location.href = 'index.html'; return 'noauth'; }
-      _c.userId = authUser.id;
+      _c.userId   = authUser.id;
+      _c.userMeta = authUser.user_metadata || {};
 
       // Serve from cache instantly, refresh in background
       try {
         const raw = localStorage.getItem(`ft_app_${authUser.id}`);
-        if (raw) { Object.assign(_c, JSON.parse(raw)); return 'cache'; }
+        if (raw) { Object.assign(_c, JSON.parse(raw)); _c.userMeta = authUser.user_metadata || {}; return 'cache'; }
       } catch(e) {}
 
       await _fetchFreshApp();
@@ -1293,8 +1305,14 @@
                 <input class="form-input" id="cfgDaysVal" type="number" inputmode="numeric" min="1" max="7" onwheel="this.blur()" />
               </div>
               <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
-                <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':addGoalFrame==='daily'?'Daily minimum (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':addGoalFrame==='daily'?'Daily maximum (minutes)':'Weekly maximum (minutes)')}</label>
-                <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" />
+                <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days':addGoalFrame==='daily'?'Daily minimum':'Weekly minimum'):(addGoalFrame==='milestone'?'Total maximum over 21 days':addGoalFrame==='daily'?'Daily maximum':'Weekly maximum')}</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" style="flex:1;" />
+                  <div style="display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
+                    <button type="button" onclick="addGoalTimeUnit='min';renderContent()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
+                    <button type="button" onclick="addGoalTimeUnit='hr';renderContent()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
+                  </div>
+                </div>
               </div>
               <div class="form-field">
                 <label class="form-label">Card color</label>
@@ -2345,7 +2363,7 @@
       document.getElementById('addGoalBtn').style.display = 'none';
     }
     function closeAddForm() {
-      addFormOpen = false; addGoalTitle = ''; addGoalColor = '';
+      addFormOpen = false; addGoalTitle = ''; addGoalColor = ''; addGoalTimeUnit = 'min';
       document.getElementById('addForm').classList.remove('open');
       document.getElementById('addGoalBtn').style.display = '';
       const t = document.getElementById('newTitle'); if (t) t.value = '';
@@ -2407,23 +2425,24 @@
       if (goals.length >= 15) { alert('Max 15 goals per cohort.'); return; }
       const config = {};
       let type;
+      const _tv = v => (parseInt(document.getElementById(v)?.value)||0) * (addGoalTimeUnit === 'hr' ? 60 : 1);
       if (addGoalFrame === 'milestone') {
         if (addGoalMetric === 'boolean')  { type = 'milestone'; }
         if (addGoalMetric === 'count')    { type = 'total_count';    config.totalTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||10; }
-        if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
-        if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||300; }
+        if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = _tv('cfgTimeVal')||120; }
+        if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = _tv('cfgTimeVal')||300; }
       } else if (addGoalFrame === 'weekly') {
         if (addGoalMetric === 'days')      { type = 'weekly_days';        config.daysTarget          = parseInt(document.getElementById('cfgDaysVal')?.value)||5; }
         if (addGoalMetric === 'count')     { type = 'weekly_count';       config.weeklyTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||3; config.multiPerDay = true; }
         if (addGoalMetric === 'count_days'){ type = 'daily_count_weekly'; config.dailyTarget         = parseInt(document.getElementById('cfgCountVal')?.value)||1;
                                                                           config.daysTarget          = parseInt(document.getElementById('cfgDaysVal')?.value)||5; }
-        if (addGoalMetric === 'min_time')  { type = 'weekly_time_min';    config.weeklyTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
-        if (addGoalMetric === 'max_time')  { type = 'weekly_time_max';    config.weeklyMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
+        if (addGoalMetric === 'min_time')  { type = 'weekly_time_min';    config.weeklyTargetMinutes = _tv('cfgTimeVal')||60; }
+        if (addGoalMetric === 'max_time')  { type = 'weekly_time_max';    config.weeklyMaxMinutes    = _tv('cfgTimeVal')||120; }
       } else {
         if (addGoalMetric === 'boolean')  { type = 'daily_boolean'; }
         if (addGoalMetric === 'count')    { type = 'daily_count';     config.dailyTarget           = parseInt(document.getElementById('cfgCountVal')?.value)||1; }
-        if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
-        if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
+        if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = _tv('cfgTimeVal')||60; }
+        if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = _tv('cfgTimeVal')||120; }
       }
       if (addGoalColor) config.color = addGoalColor;
       db.upsertGoal({
@@ -2431,11 +2450,12 @@
         userId:session.userId, cohortId:cohort.id,
         locked:false, createdAt:new Date().toISOString(), order:goals.length
       });
-      addGoalFrame  = 'daily';
-      addGoalMetric = 'boolean';
-      addGoalTitle  = '';
-      addGoalColor  = '';
-      addFormOpen   = false;
+      addGoalFrame    = 'daily';
+      addGoalMetric   = 'boolean';
+      addGoalTitle    = '';
+      addGoalColor    = '';
+      addGoalTimeUnit = 'min';
+      addFormOpen     = false;
       renderContent();
     }
 
