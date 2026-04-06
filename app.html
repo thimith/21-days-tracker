@@ -2350,7 +2350,7 @@
         if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = parseInt(document.getElementById('cfgTimeVal')?.value)||300; }
       } else if (addGoalFrame === 'weekly') {
         if (addGoalMetric === 'days')      { type = 'weekly_days';        config.daysTarget          = parseInt(document.getElementById('cfgDaysVal')?.value)||5; }
-        if (addGoalMetric === 'count')     { type = 'weekly_count';       config.weeklyTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||3; }
+        if (addGoalMetric === 'count')     { type = 'weekly_count';       config.weeklyTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||3; config.multiPerDay = true; }
         if (addGoalMetric === 'count_days'){ type = 'daily_count_weekly'; config.dailyTarget         = parseInt(document.getElementById('cfgCountVal')?.value)||1;
                                                                           config.daysTarget          = parseInt(document.getElementById('cfgDaysVal')?.value)||5; }
         if (addGoalMetric === 'min_time')  { type = 'weekly_time_min';    config.weeklyTargetMinutes = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
