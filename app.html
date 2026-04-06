@@ -651,6 +651,7 @@
     let addGoalTimeUnit = 'min';
     let addFormOpen     = false;
 
+    function _rerender() { if (cohort) renderContent(); else renderNoCohort(); }
     function _finalizeKey() { return `goals_done_${cohort?.id}`; }
     function isGoalsFinalized() { return !!_c.userMeta?.[_finalizeKey()]; }
     async function finalizeGoals() {
@@ -1085,8 +1086,10 @@
       if (cohort && !isViewingOther) db.evalRedemptions(_c.userId, cohort.id);
 
       if (!cohort) {
-        document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">You\'re not in any cohort yet.<br>Ask Thierry to add you.</div></div>';
+        _migrateDraftGoals(); // no-op if no cohort, just in case called again later
+        renderNoCohort();
       } else {
+        _migrateDraftGoals();
         render();
         updateXPBadge();
         _initScrollPill();
@@ -1309,8 +1312,8 @@
                 <div style="display:flex;gap:8px;align-items:center;">
                   <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" style="flex:1;" />
                   <div style="display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
-                    <button type="button" onclick="addGoalTimeUnit='min';renderContent()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
-                    <button type="button" onclick="addGoalTimeUnit='hr';renderContent()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
+                    <button type="button" onclick="addGoalTimeUnit='min';_rerender()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
+                    <button type="button" onclick="addGoalTimeUnit='hr';_rerender()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
                   </div>
                 </div>
               </div>
@@ -1318,8 +1321,8 @@
                 <label class="form-label">Card color</label>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                   ${_GOAL_COLORS.map(({hex,label}) => hex
-                    ? `<button type="button" onclick="addGoalColor='${hex}';renderContent()" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
-                    : `<button type="button" onclick="addGoalColor='';renderContent()" title="None" style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
+                    ? `<button type="button" onclick="addGoalColor='${hex}';_rerender()" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
+                    : `<button type="button" onclick="addGoalColor='';_rerender()" title="None" style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
                   ).join('')}
                 </div>
               </div>
@@ -2404,6 +2407,7 @@
     }
     function closeAddForm() {
       addFormOpen = false; addGoalTitle = ''; addGoalColor = ''; addGoalTimeUnit = 'min';
+      if (!cohort) { renderNoCohort(); return; }
       document.getElementById('addForm').classList.remove('open');
       document.getElementById('addGoalBtn').style.display = '';
       const t = document.getElementById('newTitle'); if (t) t.value = '';
@@ -2458,6 +2462,99 @@
         : (addGoalFrame === 'milestone' ? 'Total maximum over 21 days (minutes)' : addGoalFrame === 'daily' ? 'Daily maximum (minutes)' : 'Weekly maximum (minutes)');
     }
 
+    // ── Draft goals (no cohort yet) ──────────────────────────────────────
+    function _draftKey() { return `ft_draft_goals_${session?.userId}`; }
+    function getDraftGoals() { try { return JSON.parse(localStorage.getItem(_draftKey()) || '[]'); } catch(e) { return []; } }
+    function saveDraftGoals(goals) { localStorage.setItem(_draftKey(), JSON.stringify(goals)); }
+
+    function _migrateDraftGoals() {
+      if (!cohort) return;
+      const drafts = getDraftGoals();
+      if (!drafts.length) return;
+      drafts.forEach((g, i) => {
+        db.upsertGoal({ ...g, cohortId: cohort.id, userId: session.userId, order: i });
+      });
+      localStorage.removeItem(_draftKey());
+    }
+
+    function renderNoCohort() {
+      const drafts = getDraftGoals();
+      const listHTML = drafts.length ? drafts.map((g, i) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border-radius:10px;border:1.5px solid var(--border);margin-bottom:6px;position:relative;">
+          <span style="font-size:0.88rem;font-weight:600;color:var(--text);">${g.title}</span>
+          <button onclick="deleteDraftGoal(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:2px 4px;">✕</button>
+        </div>`).join('') : '';
+
+      const formHTML = `
+        <div style="margin-top:16px;">
+          <div class="add-form${addFormOpen?' open':''}" id="addForm">
+            <div class="form-field">
+              <label class="form-label">Goal name</label>
+              <input class="form-input" id="newTitle" placeholder="e.g. Meditate, Workout, No YouTube…" value="${addGoalTitle}" oninput="addGoalTitle=this.value" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Time frame</label>
+              <div class="type-pills">
+                <button type="button" class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')" data-tip="Tracked every day&#10;e.g. Meditate, No alcohol">Daily</button>
+                <button type="button" class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')" data-tip="Tracked over 7 days&#10;e.g. Work out 4x this week">Weekly</button>
+                <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')" data-tip="One goal over all 21 days&#10;e.g. Read 1 book">21 Days</button>
+              </div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Type</label>
+              <div class="type-pills" id="cfgMetricPills">
+                ${addGoalFrame === 'weekly'
+                  ? `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')"       data-tip="How many days you show up&#10;e.g. Work out 4 days/week">Days/week</button>
+                     <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="Total reps over the week&#10;e.g. 20 cold showers this week&#10;Multiple per day allowed">Count/Week</button>
+                     <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')" data-tip="A count target each day&#10;e.g. 3 glasses of water/day&#10;for at least N days/week">Count/Day</button>
+                     <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per week&#10;e.g. At least 150 min of exercise">Min time</button>
+                     <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')"   data-tip="Maximum minutes per week&#10;e.g. No more than 7h of TV">Max time</button>`
+                  : `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')"    data-tip="Did you do it today? Yes or No&#10;e.g. Meditate, Cold shower">Yes / No</button>
+                     <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="How many times today&#10;e.g. 20 pushups, 8 glasses of water">Count</button>
+                     <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per day&#10;e.g. Study at least 30 min">Min time</button>
+                     <button type="button" class="type-pill${addGoalMetric==='max_time'?' sel':''}"  onclick="setAddMetric(this,'max_time')"   data-tip="Maximum minutes per day&#10;e.g. No more than 1h of social media">Max time</button>`}
+              </div>
+            </div>
+            <div class="form-field" id="cfgCountField" style="${['count','count_days'].includes(addGoalMetric)?'':'display:none'}">
+              <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':addGoalMetric==='count_days'?'Count per day':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
+              <input class="form-input" id="cfgCountVal" type="number" inputmode="numeric" min="1" max="63" onwheel="this.blur()" />
+            </div>
+            <div class="form-field" id="cfgDaysField" style="${['days','count_days'].includes(addGoalMetric)?'':'display:none'}">
+              <label class="form-label">Days per week (out of 7)</label>
+              <input class="form-input" id="cfgDaysVal" type="number" inputmode="numeric" min="1" max="7" onwheel="this.blur()" />
+            </div>
+            <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
+              <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days':addGoalFrame==='daily'?'Daily minimum':'Weekly minimum'):(addGoalFrame==='milestone'?'Total maximum over 21 days':addGoalFrame==='daily'?'Daily maximum':'Weekly maximum')}</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" style="flex:1;" />
+                <div style="display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
+                  <button type="button" onclick="addGoalTimeUnit='min';renderNoCohort()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
+                  <button type="button" onclick="addGoalTimeUnit='hr';renderNoCohort()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <button type="button" class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
+              <button type="button" class="btn-xs pri" onclick="saveGoal()">Add Goal</button>
+            </div>
+          </div>
+          <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
+        </div>`;
+
+      document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
+        <div class="empty-state" style="margin-bottom:20px;">You're not in a cohort yet.<br>Ask Thierry to add you.<br><span style="font-size:0.78rem;color:var(--muted);margin-top:6px;display:block;">In the meantime, start planning your goals.</span></div>
+        ${listHTML}
+        ${formHTML}
+      </div>`;
+    }
+
+    function deleteDraftGoal(index) {
+      const drafts = getDraftGoals();
+      drafts.splice(index, 1);
+      saveDraftGoals(drafts);
+      renderNoCohort();
+    }
+
     function saveGoal() {
       const title = addGoalTitle.trim();
       if (!title) return;
@@ -2486,18 +2583,27 @@
       }
       if (addGoalColor) config.color = addGoalColor;
       if (['min_time','max_time'].includes(addGoalMetric)) config.timeUnit = addGoalTimeUnit;
-      db.upsertGoal({
-        id:`g_${db.uid()}`, type, title, config,
-        userId:session.userId, cohortId:cohort.id,
-        locked:false, createdAt:new Date().toISOString(), order:goals.length
-      });
+
+      if (!cohort) {
+        // No cohort yet — save as draft in localStorage
+        const drafts = getDraftGoals();
+        drafts.push({ id:`g_${db.uid()}`, type, title, config, locked:false, createdAt:new Date().toISOString() });
+        saveDraftGoals(drafts);
+      } else {
+        db.upsertGoal({
+          id:`g_${db.uid()}`, type, title, config,
+          userId:session.userId, cohortId:cohort.id,
+          locked:false, createdAt:new Date().toISOString(), order:goals.length
+        });
+      }
+
       addGoalFrame    = 'daily';
       addGoalMetric   = 'boolean';
       addGoalTitle    = '';
       addGoalColor    = '';
       addGoalTimeUnit = 'min';
       addFormOpen     = false;
-      renderContent();
+      if (!cohort) renderNoCohort(); else renderContent();
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
