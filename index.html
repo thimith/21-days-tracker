@@ -221,7 +221,7 @@
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
         const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
-        await sb.from('profiles').insert({ id: user.id, name: fullName, first_name: firstName, last_name: lastName, role, whatsapp: '' });
+        await sb.from('profiles').insert({ id: user.id, first_name: firstName, last_name: lastName, email: user.email || '', role, whatsapp: '' });
       }
 
       // Consume invite if any
