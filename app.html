@@ -1219,8 +1219,8 @@
     // Builds the inner HTML for a single day page
     function _buildDayHTML(date) {
       const goals   = db.getGoalsForUser();
-      const locked     = db.areGoalsLocked();
       const isViewingOther = _c.viewingUserId && _c.viewingUserId !== _c.userId;
+      const locked     = db.areGoalsLocked() || isViewingOther;
       const finalized  = !locked && !isViewingOther && isGoalsFinalized();
       const pending = db.getPendingRedemptions();
       const strikes = db.getRedemptionsForUser().length;
