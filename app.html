@@ -609,6 +609,7 @@
     let addGoalFrame  = 'daily';
     let addGoalMetric = 'boolean';
     let addGoalTitle  = '';
+    let addGoalColor  = '';
     let addFormOpen   = false;
 
     // ══════════════════════════════════════════════════════════════════════
@@ -1241,6 +1242,15 @@
               <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
                 <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days (minutes)':addGoalFrame==='daily'?'Daily minimum (minutes)':'Weekly minimum (minutes)'):(addGoalFrame==='milestone'?'Total maximum over 21 days (minutes)':addGoalFrame==='daily'?'Daily maximum (minutes)':'Weekly maximum (minutes)')}</label>
                 <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Card color</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                  ${_GOAL_COLORS.map(({hex,label}) => hex
+                    ? `<button type="button" onclick="addGoalColor='${hex}';renderContent()" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
+                    : `<button type="button" onclick="addGoalColor='';renderContent()" title="None" style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
+                  ).join('')}
+                </div>
               </div>
               <div class="form-row">
                 <button type="button" class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
@@ -2281,7 +2291,7 @@
       document.getElementById('addGoalBtn').style.display = 'none';
     }
     function closeAddForm() {
-      addFormOpen = false; addGoalTitle = '';
+      addFormOpen = false; addGoalTitle = ''; addGoalColor = '';
       document.getElementById('addForm').classList.remove('open');
       document.getElementById('addGoalBtn').style.display = '';
       const t = document.getElementById('newTitle'); if (t) t.value = '';
@@ -2361,6 +2371,7 @@
         if (addGoalMetric === 'min_time') { type = 'daily_time_min';  config.weeklyTargetMinutes   = parseInt(document.getElementById('cfgTimeVal')?.value)||60; }
         if (addGoalMetric === 'max_time') { type = 'daily_time_max';  config.weeklyMaxMinutes      = parseInt(document.getElementById('cfgTimeVal')?.value)||120; }
       }
+      if (addGoalColor) config.color = addGoalColor;
       db.upsertGoal({
         id:`g_${db.uid()}`, type, title, config,
         userId:session.userId, cohortId:cohort.id,
@@ -2369,6 +2380,7 @@
       addGoalFrame  = 'daily';
       addGoalMetric = 'boolean';
       addGoalTitle  = '';
+      addGoalColor  = '';
       addFormOpen   = false;
       renderContent();
     }
