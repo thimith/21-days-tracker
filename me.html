@@ -168,8 +168,8 @@
       
       <span class="nav-label">Cohort</span>
     </a>
-    <a class="nav-item" id="adminNav" href="admin.html">
-      
+    <a class="nav-item" id="adminNav" href="admin.html" style="display:none;">
+
       <span class="nav-label">Admin</span>
     </a>
     <a class="nav-item active" href="me.html">
@@ -205,7 +205,7 @@
         profile = created || newProfile;
       }
 
-      // 'Me' label stays as "Me"
+      if (profile.role === 'admin') document.getElementById('adminNav').style.display = '';
 
 
       const displayName = profile.first_name
