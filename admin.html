@@ -960,7 +960,8 @@
       if (!confirm(`Remove ${name} from the app? This deletes their profile and cannot be undone.`)) return;
       const row = document.getElementById(`pending-row-${userId}`);
       if (row) row.style.opacity = '0.4';
-      await sb.from('profiles').delete().eq('id', userId);
+      const { error } = await sb.from('profiles').delete().eq('id', userId);
+      if (error) { console.error('Delete profile error:', JSON.stringify(error)); alert('Delete failed: ' + error.message); if (row) row.style.opacity = '1'; return; }
       await checkUnassignedMembers();
     }
 
