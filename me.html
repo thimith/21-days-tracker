@@ -195,8 +195,15 @@
       const authUser = session?.user;
       if (!authUser) { window.location.href = 'index.html'; return; }
 
-      const { data: profile } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
-      if (!profile) { window.location.href = 'index.html'; return; }
+      let { data: profile } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+      if (!profile) {
+        const fullName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '';
+        const nameParts = fullName.trim().split(' ');
+        const role = authUser.email === 'thierry.muller@gmail.com' ? 'admin' : 'member';
+        const newProfile = { id: authUser.id, name: fullName, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '', email: authUser.email || '', role, whatsapp: '' };
+        const { data: created } = await sb.from('profiles').insert(newProfile).select().single();
+        profile = created || newProfile;
+      }
 
       // 'Me' label stays as "Me"
 
