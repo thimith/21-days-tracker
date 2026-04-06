@@ -1220,7 +1220,8 @@
     function _buildDayHTML(date) {
       const goals   = db.getGoalsForUser();
       const locked     = db.areGoalsLocked();
-      const finalized  = !locked && isGoalsFinalized();
+      const isViewingOther = _c.viewingUserId && _c.viewingUserId !== _c.userId;
+      const finalized  = !locked && !isViewingOther && isGoalsFinalized();
       const pending = db.getPendingRedemptions();
       const strikes = db.getRedemptionsForUser().length;
       const html    = [];
