@@ -1313,6 +1313,31 @@
         milestone.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
       }
 
+      // ── Notes ──
+      const journalContent = _c.journal[date] || '';
+      const isFutureDate = date > localDateStr();
+      if (!isFutureDate) {
+        if (isViewingOther) {
+          if (journalContent) {
+            html.push(`
+              <div class="journal-wrap">
+                <div class="journal-header"><div class="journal-dot"></div>Notes</div>
+                <div class="journal-readonly">${journalContent.replace(/</g,'&lt;')}</div>
+              </div>`);
+          }
+        } else {
+          html.push(`
+            <div class="journal-wrap">
+              <div class="journal-header"><div class="journal-dot"></div>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem;color:#ccc;">— private</span></div>
+              <textarea class="journal-textarea" id="journal-${date}" placeholder="How did today go?"
+                onblur="saveJournal('${date}',this.value)"
+                onkeydown="if(event.key==='Enter'&&event.metaKey)this.blur()"
+              >${journalContent.replace(/</g,'&lt;')}</textarea>
+              <div class="journal-saving" id="journal-status-${date}"></div>
+            </div>`);
+        }
+      }
+
       // ── Goal setup (pre Day-2) ──
       if (!locked && finalized) {
         html.push(`
@@ -1391,31 +1416,6 @@
             <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
             ${!addFormOpen && goals.length > 0 ? `<button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
-      }
-
-      // ── Journal ──
-      const journalContent = _c.journal[date] || '';
-      const isFutureDate = date > localDateStr();
-      if (!isFutureDate) {
-        if (isViewingOther) {
-          if (journalContent) {
-            html.push(`
-              <div class="journal-wrap">
-                <div class="journal-header"><div class="journal-dot"></div>Journal</div>
-                <div class="journal-readonly">${journalContent.replace(/</g,'&lt;')}</div>
-              </div>`);
-          }
-        } else {
-          html.push(`
-            <div class="journal-wrap">
-              <div class="journal-header"><div class="journal-dot"></div>Journal <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem;color:#ccc;">— private</span></div>
-              <textarea class="journal-textarea" id="journal-${date}" placeholder="How did today go?"
-                onblur="saveJournal('${date}',this.value)"
-                onkeydown="if(event.key==='Enter'&&event.metaKey)this.blur()"
-              >${journalContent.replace(/</g,'&lt;')}</textarea>
-              <div class="journal-saving" id="journal-status-${date}"></div>
-            </div>`);
-        }
       }
 
       return html.join('');
