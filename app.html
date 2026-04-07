@@ -1329,7 +1329,7 @@
           html.push(`
             <div class="journal-wrap">
               <div class="journal-header"><div class="journal-dot"></div>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem;color:#ccc;">— private</span></div>
-              <textarea class="journal-textarea" id="journal-${date}" placeholder="How did today go?"
+              <textarea class="journal-textarea" id="journal-${date}" placeholder="What's waffling today?"
                 onblur="saveJournal('${date}',this.value)"
                 onkeydown="if(event.key==='Enter'&&event.metaKey)this.blur()"
               >${journalContent.replace(/</g,'&lt;')}</textarea>
