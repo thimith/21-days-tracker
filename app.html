@@ -1291,7 +1291,7 @@
       if (!goals.length) {
         const currentDay = db.getCohortDay(cohort.startDate);
         const msg = currentDay >= 2
-          ? 'Thierry will soon add your Goals here.'
+          ? 'Add your Goals or ask Thierry to add them for you.'
           : 'No goals yet.<br>Add your goals below before Day 2.';
         html.push(`<div class="empty-state">${msg}</div>`);
       }
