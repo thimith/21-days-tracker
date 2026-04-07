@@ -468,6 +468,8 @@
           if (!val) continue;
           if (g.type === 'daily_boolean') xp += 10;
           else if (g.type === 'daily_count') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
+          else if (g.type === 'weekly_days') xp += 10;
+          else if (g.type === 'daily_count_weekly') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
           else if (g.type === 'weekly_count') xp += 5;
           else if (['daily_time','daily_time_min','daily_time_max','weekly_time_min','weekly_time_max'].includes(g.type)) xp += 8;
           else if (['milestone','total_count','total_time_min','total_time_max'].includes(g.type)) xp += 50;
