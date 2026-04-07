@@ -518,6 +518,37 @@
     }
     .btn-im-done:hover { opacity: 0.85; }
 
+    /* ── Journal ─────────────────────────────────────────────────────────── */
+    .journal-wrap {
+      margin-top: 20px; border-radius: 14px;
+      background: var(--card); border: 1.5px solid var(--border);
+      overflow: hidden;
+    }
+    .journal-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      font-size: 0.72rem; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+    .journal-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+    .journal-textarea {
+      width: 100%; min-height: 90px; padding: 12px 14px;
+      border: none; outline: none; resize: none;
+      font-family: inherit; font-size: 0.88rem; line-height: 1.6;
+      color: var(--text); background: var(--card);
+      transition: min-height 0.2s;
+    }
+    .journal-textarea::placeholder { color: #bbb; }
+    .journal-textarea:focus { min-height: 130px; }
+    .journal-readonly {
+      padding: 12px 14px; font-size: 0.88rem; line-height: 1.6;
+      color: var(--text); white-space: pre-wrap; min-height: 48px;
+    }
+    .journal-saving {
+      font-size: 0.7rem; color: var(--muted); padding: 4px 14px 8px;
+      text-align: right; min-height: 20px;
+    }
+
     /* ── Bottom nav ──────────────────────────────────────────────────────── */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -633,6 +664,7 @@
       cohort: null,
       goals: [],
       checkins: {},
+      journal: {},       // date -> content
       stakes: null, redemptions: [],
       cohortMembers: []   // admin only
     };
@@ -1051,6 +1083,16 @@
       } else {
         _c.checkins = {};
       }
+
+      // Journal entries
+      const { data: journalRaw } = await sb.from('journal_entries')
+        .select('date, content')
+        .eq('user_id', targetUserId)
+        .eq('cohort_id', _c.cohort.id);
+      _c.journal = {};
+      for (const j of (journalRaw || [])) {
+        _c.journal[j.date] = j.content;
+      }
     }
 
     function _saveAppCache() {
@@ -1349,6 +1391,31 @@
             <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
             ${!addFormOpen && goals.length > 0 ? `<button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
+      }
+
+      // ── Journal ──
+      const journalContent = _c.journal[date] || '';
+      const isFutureDate = date > localDateStr();
+      if (!isFutureDate) {
+        if (isViewingOther) {
+          if (journalContent) {
+            html.push(`
+              <div class="journal-wrap">
+                <div class="journal-header"><div class="journal-dot"></div>Journal</div>
+                <div class="journal-readonly">${journalContent.replace(/</g,'&lt;')}</div>
+              </div>`);
+          }
+        } else {
+          html.push(`
+            <div class="journal-wrap">
+              <div class="journal-header"><div class="journal-dot"></div>Journal <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem;color:#ccc;">— private</span></div>
+              <textarea class="journal-textarea" id="journal-${date}" placeholder="How did today go?"
+                onblur="saveJournal('${date}',this.value)"
+                onkeydown="if(event.key==='Enter'&&event.metaKey)this.blur()"
+              >${journalContent.replace(/</g,'&lt;')}</textarea>
+              <div class="journal-saving" id="journal-status-${date}"></div>
+            </div>`);
+        }
       }
 
       return html.join('');
@@ -2619,6 +2686,23 @@
       addGoalTimeUnit = 'min';
       addFormOpen     = false;
       if (!cohort) renderNoCohort(); else renderContent();
+    }
+
+    async function saveJournal(date, content) {
+      const trimmed = content.trim();
+      _c.journal[date] = trimmed;
+      const statusEl = document.getElementById(`journal-status-${date}`);
+      if (statusEl) statusEl.textContent = 'Saving…';
+      if (trimmed) {
+        await sb.from('journal_entries').upsert({
+          user_id: session.userId, cohort_id: cohort.id,
+          date, content: trimmed, updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,cohort_id,date' });
+      } else {
+        await sb.from('journal_entries').delete()
+          .eq('user_id', session.userId).eq('cohort_id', cohort.id).eq('date', date);
+      }
+      if (statusEl) { statusEl.textContent = 'Saved'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 1500); }
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
