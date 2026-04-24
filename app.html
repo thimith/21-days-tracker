@@ -569,6 +569,49 @@
     }
     .nav-item.active .nav-label { color: var(--orange); }
 
+    /* ── Onboarding overlay ─────────────────────────────────────────────── */
+    .onb-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+      overflow-y: auto; padding: 32px 24px 48px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .onb-logo { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 900; color: var(--text); letter-spacing: -0.02em; margin-bottom: 32px; }
+    .onb-logo img { width: 32px; height: 32px; border-radius: 50%; }
+    .onb-title { font-size: 1.5rem; font-weight: 800; color: var(--text); letter-spacing: -0.03em; margin-bottom: 6px; text-align: center; }
+    .onb-sub   { font-size: 0.88rem; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 28px; max-width: 320px; }
+    .onb-cards { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
+    .onb-card {
+      background: var(--card); border-radius: 16px; padding: 20px 18px;
+      border: 2px solid var(--border); cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      text-align: left;
+    }
+    .onb-card:hover { border-color: var(--orange); box-shadow: 0 4px 20px rgba(255,85,0,0.1); }
+    .onb-card-label { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--orange); margin-bottom: 4px; }
+    .onb-card-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .onb-card-desc  { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .onb-back { background: none; border: none; font-family: inherit; font-size: 0.82rem; color: var(--muted); cursor: pointer; margin-bottom: 20px; align-self: flex-start; padding: 0; }
+    .onb-date-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; }
+    .onb-date-btn {
+      background: var(--card); border: 2px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; cursor: pointer; font-family: inherit; text-align: left;
+      transition: border-color 0.15s;
+    }
+    .onb-date-btn:hover { border-color: var(--orange); }
+    .onb-date-btn.selected { border-color: var(--orange); background: var(--orange-lt); }
+    .onb-date-label { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+    .onb-date-meta  { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+    .onb-submit {
+      margin-top: 20px; width: 100%; max-width: 360px;
+      background: var(--orange); color: #fff; border: none; border-radius: 12px;
+      padding: 14px; font-family: inherit; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .onb-submit:hover { background: var(--orange-dk); }
+    .onb-submit:disabled { opacity: 0.4; cursor: default; }
+    .onb-pending-icon { font-size: 3rem; margin-bottom: 16px; }
+    .onb-cohort-list { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; }
+
     /* ── Failed overlay ──────────────────────────────────────────────────── */
     .failed-overlay {
       position: fixed; inset: 0;
@@ -649,6 +692,54 @@
     </a>
   </nav>
 
+  <!-- Onboarding overlay -->
+  <div id="onbOverlay" class="onb-overlay" style="display:none;">
+    <div class="onb-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
+
+    <!-- Step 1: choose type -->
+    <div id="onbStepChoose">
+      <div class="onb-title">Welcome!</div>
+      <div class="onb-sub">How would you like to join the Focus Tribe?</div>
+      <div class="onb-cards">
+        <div class="onb-card" onclick="onbChoose('skool')">
+          <div class="onb-card-label">Rolling · $27/mo</div>
+          <div class="onb-card-title">Skool Community</div>
+          <div class="onb-card-desc">Start any Monday. Do 21-day cycles at your own pace. Free 7-day trial.</div>
+        </div>
+        <div class="onb-card" onclick="onbChoose('exclusive')">
+          <div class="onb-card-label">Fixed group · $147</div>
+          <div class="onb-card-title">Exclusive Cohort</div>
+          <div class="onb-card-desc">Closed group of 10. Shared start date, 1-on-1 onboarding with Thierry.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2a: Skool date pick -->
+    <div id="onbStepSkoolDate" style="display:none;">
+      <button class="onb-back" onclick="onbBack('choose')">← Back</button>
+      <div class="onb-title">Pick your start Monday</div>
+      <div class="onb-sub">You can start this week, next week, or the week after.</div>
+      <div class="onb-date-grid" id="onbMondayList"></div>
+      <button class="onb-submit" id="onbSkoolSubmit" onclick="onbSubmitSkool()" disabled>Request to Join</button>
+    </div>
+
+    <!-- Step 2b: Exclusive cohort pick -->
+    <div id="onbStepExclusiveDate" style="display:none;">
+      <button class="onb-back" onclick="onbBack('choose')">← Back</button>
+      <div class="onb-title">Pick a cohort</div>
+      <div class="onb-sub">Choose your start date. Thierry will confirm your spot.</div>
+      <div class="onb-cohort-list" id="onbCohortList"><div style="color:var(--muted);font-size:0.85rem;">Loading…</div></div>
+      <button class="onb-submit" id="onbExclusiveSubmit" onclick="onbSubmitExclusive()" disabled>Request to Join</button>
+    </div>
+
+    <!-- Step 3: Pending approval -->
+    <div id="onbStepPending" style="display:none; text-align:center; max-width:320px;">
+      <div class="onb-pending-icon">⏳</div>
+      <div class="onb-title">You're on the list</div>
+      <div class="onb-sub" id="onbPendingDesc">Your request has been sent. Thierry will approve you shortly — check back soon.</div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
@@ -666,7 +757,9 @@
       checkins: {},
       journal: {},       // date -> content
       stakes: null, redemptions: [],
-      cohortMembers: []   // admin only
+      cohortMembers: [],   // admin only
+      pendingRequest: null,
+      skoolMember: null
     };
 
     // ══════════════════════════════════════════════════════════════════════
@@ -991,6 +1084,143 @@
     };
 
     // ══════════════════════════════════════════════════════════════════════
+    // ONBOARDING
+    // ══════════════════════════════════════════════════════════════════════
+    let _onbType = null;
+    let _onbSelectedDate = null;
+    let _onbSelectedCohortId = null;
+
+    function _showOnbChoose() {
+      document.getElementById('onbOverlay').style.display = 'flex';
+      document.getElementById('onbStepChoose').style.display = '';
+      document.getElementById('onbStepSkoolDate').style.display = 'none';
+      document.getElementById('onbStepExclusiveDate').style.display = 'none';
+      document.getElementById('onbStepPending').style.display = 'none';
+    }
+
+    function _showOnbPending(req) {
+      document.getElementById('onbOverlay').style.display = 'flex';
+      document.getElementById('onbStepChoose').style.display = 'none';
+      document.getElementById('onbStepSkoolDate').style.display = 'none';
+      document.getElementById('onbStepExclusiveDate').style.display = 'none';
+      document.getElementById('onbStepPending').style.display = '';
+      const label = req.type === 'skool' ? 'Skool Community' : 'Exclusive Cohort';
+      document.getElementById('onbPendingDesc').textContent =
+        `Your request to join the ${label} starting ${req.requested_start_date} has been sent. Thierry will approve you shortly.`;
+    }
+
+    function onbBack(step) {
+      if (step === 'choose') _showOnbChoose();
+    }
+
+    function onbChoose(type) {
+      _onbType = type;
+      _onbSelectedDate = null;
+      _onbSelectedCohortId = null;
+      document.getElementById('onbStepChoose').style.display = 'none';
+
+      if (type === 'skool') {
+        _renderMondayPicker();
+        document.getElementById('onbStepSkoolDate').style.display = '';
+      } else {
+        _renderCohortPicker();
+        document.getElementById('onbStepExclusiveDate').style.display = '';
+      }
+    }
+
+    function _getMondays() {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const dow = today.getDay(); // 0=Sun,1=Mon...
+      const daysToLastMon = dow === 0 ? 6 : dow - 1;
+      const lastMon = new Date(today); lastMon.setDate(today.getDate() - daysToLastMon);
+      const mondays = [];
+      // Previous Monday (if today isn't Monday)
+      if (daysToLastMon > 0) mondays.push(new Date(lastMon));
+      // Next two Mondays
+      for (let i = 1; i <= 2; i++) {
+        const m = new Date(lastMon); m.setDate(lastMon.getDate() + i * 7);
+        mondays.push(m);
+      }
+      return mondays;
+    }
+
+    function _renderMondayPicker() {
+      const mondays = _getMondays();
+      const today = new Date(); today.setHours(0,0,0,0);
+      const list = document.getElementById('onbMondayList');
+      list.innerHTML = mondays.map(m => {
+        const ds = localDateStr(m);
+        const isPast = m < today;
+        const label = isPast ? 'Start retroactively' : m.getTime() === today.getTime() ? 'This Monday' : 'Coming Monday';
+        const dateLabel = m.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+        return `<button class="onb-date-btn" data-date="${ds}" onclick="onbSelectDate('${ds}',this)">
+          <div class="onb-date-label">${dateLabel}</div>
+          <div class="onb-date-meta">${label}</div>
+        </button>`;
+      }).join('');
+    }
+
+    async function _renderCohortPicker() {
+      const list = document.getElementById('onbCohortList');
+      const { data: cohorts } = await sb.from('cohorts').select('*').order('start_date');
+      const today = localDateStr();
+      const upcoming = (cohorts || []).filter(c => c.start_date >= today);
+      if (!upcoming.length) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:16px;">No upcoming cohorts. Check back soon.</div>';
+        return;
+      }
+      list.innerHTML = upcoming.map(c => {
+        const dateLabel = parseLocalDate(c.start_date).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+        return `<button class="onb-date-btn" data-date="${c.start_date}" data-cohort="${c.id}" onclick="onbSelectCohort('${c.start_date}','${c.id}',this)">
+          <div class="onb-date-label">${c.name || 'Cohort'}</div>
+          <div class="onb-date-meta">Starts ${dateLabel}</div>
+        </button>`;
+      }).join('');
+    }
+
+    function onbSelectDate(date, btn) {
+      _onbSelectedDate = date;
+      document.querySelectorAll('#onbMondayList .onb-date-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('onbSkoolSubmit').disabled = false;
+    }
+
+    function onbSelectCohort(date, cohortId, btn) {
+      _onbSelectedDate = date;
+      _onbSelectedCohortId = cohortId;
+      document.querySelectorAll('#onbCohortList .onb-date-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('onbExclusiveSubmit').disabled = false;
+    }
+
+    async function onbSubmitSkool() {
+      if (!_onbSelectedDate) return;
+      const btn = document.getElementById('onbSkoolSubmit');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      const { error } = await sb.from('pending_requests').insert({
+        user_id: _c.userId, type: 'skool',
+        requested_start_date: _onbSelectedDate
+      });
+      if (error) { btn.disabled = false; btn.textContent = 'Request to Join'; alert('Error: ' + error.message); return; }
+      _c.pendingRequest = { type: 'skool', requested_start_date: _onbSelectedDate };
+      _showOnbPending(_c.pendingRequest);
+    }
+
+    async function onbSubmitExclusive() {
+      if (!_onbSelectedDate || !_onbSelectedCohortId) return;
+      const btn = document.getElementById('onbExclusiveSubmit');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      const { error } = await sb.from('pending_requests').insert({
+        user_id: _c.userId, type: 'exclusive',
+        requested_start_date: _onbSelectedDate,
+        cohort_id: _onbSelectedCohortId
+      });
+      if (error) { btn.disabled = false; btn.textContent = 'Request to Join'; alert('Error: ' + error.message); return; }
+      _c.pendingRequest = { type: 'exclusive', requested_start_date: _onbSelectedDate };
+      _showOnbPending(_c.pendingRequest);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     // LOAD DATA
     // ══════════════════════════════════════════════════════════════════════
     async function loadData() {
@@ -1013,11 +1243,15 @@
     async function _fetchFreshApp() {
       const userId = _c.userId;
 
-      // Parallel: profile + cohort membership
-      const [{ data: profile }, { data: memberships }] = await Promise.all([
+      // Parallel: profile + cohort membership + skool + pending
+      const [{ data: profile }, { data: memberships }, { data: skoolMbr }, { data: pendingReq }] = await Promise.all([
         sb.from('profiles').select('*').eq('id', userId).single(),
-        sb.from('cohort_members').select('cohort_id, cohorts(*)').eq('user_id', userId)
+        sb.from('cohort_members').select('cohort_id, cohorts(*)').eq('user_id', userId),
+        sb.from('skool_members').select('*').eq('user_id', userId).maybeSingle(),
+        sb.from('pending_requests').select('*').eq('user_id', userId).eq('status', 'pending').maybeSingle()
       ]);
+      _c.skoolMember = skoolMbr || null;
+      _c.pendingRequest = pendingReq || null;
       _c.profile = profile;
 
       // Create profile if missing (e.g. user bypassed handleNewSignIn via existing session)
@@ -1107,7 +1341,7 @@
     // ══════════════════════════════════════════════════════════════════════
     // INIT
     // ══════════════════════════════════════════════════════════════════════
-    function _applyDataAndRender() {
+    function _applyDataAndRender({ evalRedemptionsNow = true } = {}) {
       session = { userId: _c.userId, role: _c.profile?.role };
       user    = _c.profile;
       cohort  = _c.cohort;
@@ -1139,7 +1373,19 @@
         banner.style.display = 'none';
       }
 
-      if (cohort && !isViewingOther) db.evalRedemptions(_c.userId, cohort.id);
+      // Show onboarding if no membership of any kind
+      if (!cohort && !_c.skoolMember) {
+        if (_c.pendingRequest) {
+          _showOnbPending(_c.pendingRequest);
+        } else {
+          _showOnbChoose();
+        }
+        return;
+      }
+
+      document.getElementById('onbOverlay').style.display = 'none';
+
+      if (cohort && !isViewingOther && evalRedemptionsNow) db.evalRedemptions(_c.userId, cohort.id);
 
       if (!cohort) {
         _migrateDraftGoals(); // no-op if no cohort, just in case called again later
@@ -1181,7 +1427,7 @@
       const result = await loadData();
       if (result === 'noauth') return;
 
-      _applyDataAndRender();
+      _applyDataAndRender({ evalRedemptionsNow: result !== 'cache' });
 
       // Always fetch cohort members for admin dropdown (regardless of cache)
       _fetchCohortMembers().then(() => _updateMemberDropdown()).catch(() => {});

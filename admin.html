@@ -51,6 +51,7 @@
     .tab-bar::-webkit-scrollbar { display: none; }
     .tab-btn { flex-shrink: 0; padding: 12px 20px; font-family: inherit; font-size: 0.82rem; font-weight: 700; color: var(--muted); background: none; border: none; border-bottom: 2.5px solid transparent; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
     .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+    .tab-btn.active-alert { color: var(--red); }
     .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
     .tab-panel { display: none; }
     .tab-panel.active { display: flex; flex-direction: column; gap: 12px; }
@@ -153,6 +154,7 @@
     <button type="button" class="tab-btn"        onclick="switchTab('stakes')">Stakes</button>
     <button type="button" class="tab-btn"        onclick="switchTab('override')">Override</button>
     <button type="button" class="tab-btn"        onclick="switchTab('cohorts')">Cohorts</button>
+    <button type="button" class="tab-btn"        onclick="switchTab('requests')" id="tabRequests">Requests</button>
   </div>
 
   <div class="content">
@@ -161,6 +163,7 @@
     <div class="tab-panel" id="tab-stakes"></div>
     <div class="tab-panel" id="tab-override"></div>
     <div class="tab-panel" id="tab-cohorts"></div>
+    <div class="tab-panel" id="tab-requests"></div>
   </div>
 
   <nav class="bottom-nav">
@@ -223,7 +226,7 @@
     function switchTab(tab) {
       activeTab = tab;
       document.querySelectorAll('.tab-btn').forEach((b,i) => {
-        b.classList.toggle('active', ['members','goals','stakes','override','cohorts'][i] === tab);
+        b.classList.toggle('active', ['members','goals','stakes','override','cohorts','requests'][i] === tab);
       });
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
@@ -236,6 +239,7 @@
       if (tab === 'stakes')   await renderStakes();
       if (tab === 'override') await renderOverride();
       if (tab === 'cohorts')  await renderCohorts();
+      if (tab === 'requests') await renderRequests();
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -903,6 +907,91 @@
       setTimeout(() => renderCohorts(), 1000);
     }
 
+    // ════════════════════════════════════════════════════════════════════
+    // TAB: REQUESTS
+    // ════════════════════════════════════════════════════════════════════
+    async function renderRequests() {
+      const el = document.getElementById('tab-requests');
+      el.innerHTML = '<div class="loading-state">Loading…</div>';
+
+      const { data: requests } = await sb
+        .from('pending_requests')
+        .select('*, profiles(first_name, id)')
+        .order('created_at');
+
+      const pending  = (requests || []).filter(r => r.status === 'pending');
+      const resolved = (requests || []).filter(r => r.status !== 'pending');
+
+      const pendingRows = pending.length ? pending.map(r => {
+        const name = r.profiles?.first_name || 'Unknown';
+        const typeLabel = r.type === 'skool' ? '🌀 Skool Community' : '⭐ Exclusive Cohort';
+        return `
+          <div class="member-row" id="req-row-${r.id}">
+            <div class="member-avatar">${name[0].toUpperCase()}</div>
+            <div class="member-info">
+              <div class="member-name">${name}</div>
+              <div class="member-email">${typeLabel} · starts ${r.requested_start_date}</div>
+            </div>
+            <div class="member-actions">
+              <button type="button" class="btn secondary" style="font-size:0.78rem;padding:6px 12px;" onclick="rejectRequest('${r.id}','${r.profiles?.id}')">Reject</button>
+              <button type="button" class="btn primary"    style="font-size:0.78rem;padding:6px 12px;" onclick="approveRequest('${r.id}','${r.type}','${r.profiles?.id}','${r.requested_start_date}','${r.cohort_id||''}')">Approve</button>
+            </div>
+          </div>`;
+      }).join('') : '<div class="empty-state">No pending requests.</div>';
+
+      const resolvedRows = resolved.length ? resolved.map(r => {
+        const name = r.profiles?.first_name || 'Unknown';
+        const typeLabel = r.type === 'skool' ? '🌀 Skool' : '⭐ Exclusive';
+        const statusColor = r.status === 'approved' ? 'var(--green)' : 'var(--red)';
+        return `
+          <div class="member-row">
+            <div class="member-avatar" style="opacity:0.5;">${name[0].toUpperCase()}</div>
+            <div class="member-info">
+              <div class="member-name" style="color:var(--muted);">${name}</div>
+              <div class="member-email">${typeLabel} · ${r.requested_start_date}</div>
+            </div>
+            <span style="font-size:0.72rem;font-weight:700;color:${statusColor};text-transform:uppercase;">${r.status}</span>
+          </div>`;
+      }).join('') : '';
+
+      el.innerHTML = `
+        <div class="card">
+          <div class="card-title">Pending Requests <small>${pending.length}</small></div>
+          ${pendingRows}
+        </div>
+        ${resolvedRows ? `<div class="card"><div class="card-title">Resolved</div>${resolvedRows}</div>` : ''}`;
+    }
+
+    async function approveRequest(reqId, type, userId, startDate, cohortId) {
+      const row = document.getElementById(`req-row-${reqId}`);
+      if (row) row.style.opacity = '0.4';
+
+      if (type === 'skool') {
+        // Create skool_members + skool_cycles rows
+        const memberId = Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+        const cycleId  = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
+        const [{ error: e1 }, { error: e2 }] = await Promise.all([
+          sb.from('skool_members').insert({ id: memberId, user_id: userId }),
+          sb.from('skool_cycles').insert({ id: cycleId, user_id: userId, start_date: startDate, cycle_number: 1 })
+        ]);
+        if (e1 || e2) { alert('Error: ' + (e1||e2).message); if (row) row.style.opacity = ''; return; }
+      } else {
+        // Create cohort_members row
+        if (!cohortId) { alert('No cohort ID on this request.'); if (row) row.style.opacity = ''; return; }
+        const { error } = await sb.from('cohort_members').insert({ user_id: userId, cohort_id: cohortId });
+        if (error) { alert('Error: ' + error.message); if (row) row.style.opacity = ''; return; }
+      }
+
+      await sb.from('pending_requests').update({ status: 'approved' }).eq('id', reqId);
+      renderRequests();
+    }
+
+    async function rejectRequest(reqId, userId) {
+      if (!confirm('Reject this request?')) return;
+      await sb.from('pending_requests').update({ status: 'rejected' }).eq('id', reqId);
+      renderRequests();
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────
     function flashEl(id, msg, type) {
       const el = document.getElementById(id);
@@ -913,6 +1002,13 @@
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+
+    async function checkPendingRequests() {
+      const { count } = await sb.from('pending_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+      const btn = document.getElementById('tabRequests');
+      if (btn) btn.textContent = count > 0 ? `Requests (${count})` : 'Requests';
+      if (count > 0) btn?.classList.add('active-alert');
+    }
 
     // ── Unassigned members banner ─────────────────────────────────────────
     async function checkUnassignedMembers() {
@@ -986,12 +1082,15 @@
         if (_ac.activeCohort) membersCohortId = _ac.activeCohort.id;
       }
 
-      await Promise.all([renderMembers(), checkUnassignedMembers()]);
+      await Promise.all([renderMembers(), checkUnassignedMembers(), checkPendingRequests()]);
 
-      // Live updates: banner appears instantly when someone signs up
+      // Live updates: banner appears instantly when someone signs up or requests
       sb.channel('new_member_watch')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, () => {
           checkUnassignedMembers();
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pending_requests' }, () => {
+          checkPendingRequests();
         })
         .subscribe();
     })();
