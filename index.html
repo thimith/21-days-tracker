@@ -178,7 +178,7 @@
         const nameParts = fullName.trim().split(' ');
         const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
         await sb.from('profiles').insert({
-          id: user.id, name: fullName,
+          id: user.id, name: fullName, email: user.email,
           first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '',
           role, whatsapp: ''
         });
@@ -208,7 +208,20 @@
         return;
       }
       const btn = document.getElementById('magicBtn');
-      btn.disabled = true; btn.textContent = 'Sending…';
+      btn.disabled = true; btn.textContent = 'Checking…';
+
+      // Check if this email belongs to an existing user
+      const { data: profiles } = await sb.from('profiles').select('id').eq('email', email).limit(1);
+      const isKnown = profiles && profiles.length > 0;
+
+      if (!isKnown && !hasInvite && email !== ADMIN_EMAIL) {
+        errEl.textContent = 'No account found. Ask Thierry for an invite link to sign up.';
+        errEl.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Send me a sign-in link';
+        return;
+      }
+
+      btn.textContent = 'Sending…';
       const { error } = await sb.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: window.location.origin + window.location.pathname }
