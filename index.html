@@ -26,127 +26,39 @@
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
-      background: var(--bg);
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      -webkit-font-smoothing: antialiased;
+      background: var(--bg); min-height: 100dvh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px; -webkit-font-smoothing: antialiased;
+      visibility: hidden;
     }
-    .logo {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 1.4rem; font-weight: 900;
-      color: var(--text); letter-spacing: -0.03em;
-      margin-bottom: 4px;
-    }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 1.4rem; font-weight: 900; color: var(--text); letter-spacing: -0.03em; margin-bottom: 4px; }
     .logo img { width: 36px; height: 36px; border-radius: 50%; }
-    .tagline {
-      font-size: 0.82rem; color: var(--muted);
-      margin-bottom: 36px; text-align: center;
-      letter-spacing: 0.04em; text-transform: uppercase;
-    }
-
-    .card {
-      background: var(--card); border-radius: 20px;
-      box-shadow: var(--shadow); padding: 24px 24px 28px;
-      width: 100%; max-width: 380px;
-    }
-
-    /* Tabs */
-    .tabs {
-      display: flex; background: var(--bg); border-radius: 12px;
-      padding: 4px; margin-bottom: 24px; gap: 4px;
-    }
-    .tab {
-      flex: 1; padding: 9px 0;
-      font-family: inherit; font-size: 0.88rem; font-weight: 700;
-      color: var(--muted); background: transparent;
-      border: none; border-radius: 9px; cursor: pointer;
-      transition: color 0.15s, background 0.15s, box-shadow 0.15s;
-      letter-spacing: -0.01em;
-    }
-    .tab.active {
-      background: var(--card); color: var(--text);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-    }
-
-    /* Panels */
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    /* Fields */
-    .field-row { display: flex; gap: 10px; }
-    .field-row .form-field { flex: 1; }
+    .tagline { font-size: 0.82rem; color: var(--muted); margin-bottom: 36px; text-align: center; letter-spacing: 0.04em; text-transform: uppercase; }
+    .card { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 24px 24px 28px; width: 100%; max-width: 380px; }
     .form-field { margin-bottom: 12px; }
-    .form-label {
-      display: block; font-size: 0.72rem; font-weight: 700;
-      color: var(--muted); text-transform: uppercase;
-      letter-spacing: 0.07em; margin-bottom: 5px;
-    }
-    .form-input {
-      width: 100%; padding: 13px 14px;
-      border: 1.5px solid var(--border); border-radius: 12px;
-      font-size: 0.95rem; font-family: inherit;
-      color: var(--text); background: var(--bg);
-      outline: none; transition: border-color 0.18s;
-    }
+    .form-label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+    .form-input { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 0.95rem; font-family: inherit; color: var(--text); background: var(--bg); outline: none; transition: border-color 0.18s; }
     .form-input:focus { border-color: var(--orange); }
-    .form-input.error { border-color: var(--red); }
-
-    /* Buttons */
-    .btn {
-      width: 100%; padding: 14px;
-      background: var(--orange); color: #fff;
-      font-family: inherit; font-size: 0.95rem; font-weight: 700;
-      border: none; border-radius: 12px; cursor: pointer;
-      transition: background 0.18s, transform 0.12s;
-      letter-spacing: -0.01em; margin-top: 4px;
-    }
+    .btn { width: 100%; padding: 14px; background: var(--orange); color: #fff; font-family: inherit; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: background 0.18s, transform 0.12s; letter-spacing: -0.01em; }
     .btn:hover  { background: var(--orange-dk); }
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.6; cursor: default; transform: none; }
-    .text-btn {
-      background: none; border: none; color: var(--orange);
-      font-size: 0.82rem; font-weight: 600; cursor: pointer;
-      padding: 0; font-family: inherit;
-    }
-    .divider {
-      display: flex; align-items: center; gap: 10px;
-      margin: 14px 0;
-    }
+    .divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
     .divider span { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
     .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
-
-    /* Errors */
-    .error-msg {
-      font-size: 0.8rem; color: var(--red);
-      margin-bottom: 10px; display: none;
-    }
-    .error-msg.show { display: block; }
-
-    /* Google button */
-    .btn-google {
-      width: 100%; padding: 13px 14px;
-      background: var(--card); color: var(--text);
-      font-family: inherit; font-size: 0.95rem; font-weight: 600;
-      border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      transition: background 0.15s, border-color 0.15s, transform 0.12s;
-      letter-spacing: -0.01em;
-    }
+    .btn-google { width: 100%; padding: 13px 14px; background: var(--card); color: var(--text); font-family: inherit; font-size: 0.95rem; font-weight: 600; border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.15s, border-color 0.15s, transform 0.12s; letter-spacing: -0.01em; }
     .btn-google:hover  { background: var(--bg); border-color: #bbb; }
     .btn-google:active { transform: scale(0.98); }
     .btn-google:disabled { opacity: 0.6; cursor: default; transform: none; }
     .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
-
-    /* Success */
-    .success-state { display: none; text-align: center; padding: 8px 0; }
-    .success-state.active { display: block; }
-    .success-icon { font-size: 2.6rem; margin-bottom: 14px; }
-    .success-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; }
-    .success-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+    .error-msg { font-size: 0.8rem; color: var(--red); margin-bottom: 10px; display: none; }
+    .error-msg.show { display: block; }
+    .center { text-align: center; padding: 8px 0; }
+    .big-icon { font-size: 2.6rem; margin-bottom: 14px; }
+    .state-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; }
+    .state-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+    .invite-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--orange-lt); color: var(--orange); font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 100px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -154,61 +66,92 @@
   <p class="tagline">21-Day Challenge</p>
 
   <div class="card" id="mainCard">
-    <div class="error-msg" id="authError"></div>
-    <button class="btn-google" id="googleBtn" onclick="signInWithGoogle()">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      Continue with Google
-    </button>
+
+    <!-- Sign-in form (shown when invited or returning) -->
+    <div id="stateSignin" style="display:none;">
+      <div id="inviteBadge" class="invite-badge" style="display:none;">🔑 Invite link active</div>
+      <div class="error-msg" id="authError"></div>
+      <div class="form-field">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <button class="btn" id="magicBtn" onclick="sendMagicLink()">Send me a sign-in link</button>
+      <div class="divider"><span>or</span></div>
+      <button class="btn-google" id="googleBtn" onclick="signInWithGoogle()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+    </div>
+
+    <!-- Magic link sent -->
+    <div id="stateMagicSent" style="display:none;" class="center">
+      <div class="big-icon">📬</div>
+      <div class="state-title">Check your email</div>
+      <div class="state-sub" id="magicSentDesc">We sent a sign-in link. Click it to get in — no password needed.</div>
+    </div>
+
+    <!-- Blocked (no invite) -->
+    <div id="stateBlocked" style="display:none;" class="center">
+      <div class="big-icon">🔒</div>
+      <div class="state-title">Invite only</div>
+      <div class="state-sub">This tracker is invite-only. Ask Thierry for a link to get access.</div>
+    </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
-    const ADMIN_EMAIL  = 'thierry.muller@gmail.com';
+    const ADMIN_EMAIL = 'thierry.muller@gmail.com';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
     let redirected = false;
 
-    // ── Redirect if already logged in, or auto-trigger Google if returning user ──
+    // Capture invite token from URL immediately
+    const urlToken = new URLSearchParams(location.search).get('invite');
+    if (urlToken) localStorage.setItem('ft_pending_invite', urlToken);
+    const hasInvite   = !!localStorage.getItem('ft_pending_invite');
+    const isReturning = !!localStorage.getItem('ft_has_logged_in');
+
+    function showState(state) {
+      document.getElementById('stateSignin').style.display    = state === 'signin'  ? '' : 'none';
+      document.getElementById('stateMagicSent').style.display = state === 'magic'   ? '' : 'none';
+      document.getElementById('stateBlocked').style.display   = state === 'blocked' ? '' : 'none';
+      if (state === 'signin' && hasInvite) document.getElementById('inviteBadge').style.display = '';
+      document.body.style.visibility = 'visible';
+    }
+
+    // Check session, then gate
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
-        window.location.href = 'app.html';
-      } else if (localStorage.getItem('ft_has_logged_in')) {
-        // Returning user — auto-trigger Google sign-in silently
-        redirected = true;
-        sb.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin + '/21-days-tracker/index.html', queryParams: { prompt: 'select_account' } }
-        }).catch(() => {
-          redirected = false;
-          document.body.style.visibility = 'visible';
-        });
-      } else {
-        document.body.style.visibility = 'visible';
+        handleNewSignIn(session).then(() => { window.location.href = 'app.html'; });
+        return;
       }
-    }).catch(() => { document.body.style.visibility = 'visible'; });
+      showState(hasInvite || isReturning ? 'signin' : 'blocked');
+    }).catch(() => showState(hasInvite || isReturning ? 'signin' : 'blocked'));
 
-    // ── Auth state listener ──────────────────────────────────────────────
+    // Handles magic link redirect back
     sb.auth.onAuthStateChange(async (event, session) => {
       if (redirected) return;
-      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session) {
+      if (event === 'SIGNED_IN' && session) {
         redirected = true;
         await handleNewSignIn(session);
+        window.location.href = 'app.html';
       }
     });
 
     async function handleNewSignIn(sessionData) {
       const user = sessionData.user;
-      if (!user) { window.location.href = 'index.html'; return; }
+      if (!user) return;
 
       const { data: profile } = await Promise.race([
         sb.from('profiles').select('id').eq('id', user.id).single(),
@@ -216,18 +159,19 @@
       ]);
 
       if (!profile) {
-        const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
+        const fullName  = user.user_metadata?.full_name || user.email.split('@')[0];
         const nameParts = fullName.trim().split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
         const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
-        await sb.from('profiles').insert({ id: user.id, first_name: firstName, last_name: lastName, email: user.email || '', role, whatsapp: '' });
+        await sb.from('profiles').insert({
+          id: user.id, name: fullName,
+          first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '',
+          role, whatsapp: ''
+        });
       }
 
-      // Consume invite if any
       const token = localStorage.getItem('ft_pending_invite');
       if (token) {
-        const { data: invite } = await sb.from('invites').select('*').eq('token', token).single();
+        const { data: invite } = await sb.from('invites').select('*').eq('token', token).maybeSingle();
         if (invite && !invite.used) {
           const writes = [sb.from('invites').update({ used: true }).eq('id', invite.id)];
           if (invite.cohort_id) writes.push(sb.from('cohort_members').insert({ cohort_id: invite.cohort_id, user_id: user.id }));
@@ -237,31 +181,48 @@
       }
 
       localStorage.setItem('ft_has_logged_in', '1');
-      window.location.href = 'app.html';
     }
 
-    // ── Google sign-in ───────────────────────────────────────────────────
-    async function signInWithGoogle() {
-      const btn = document.getElementById('googleBtn');
+    async function sendMagicLink() {
+      const email = document.getElementById('emailInput').value.trim().toLowerCase();
       const errEl = document.getElementById('authError');
-      btn.disabled = true; btn.textContent = 'Redirecting…';
       errEl.classList.remove('show');
-      const { error } = await sb.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin + '/21-days-tracker/index.html', queryParams: { prompt: 'select_account' } }
+      if (!email || !email.includes('@')) {
+        errEl.textContent = 'Enter a valid email address.';
+        errEl.classList.add('show');
+        return;
+      }
+      const btn = document.getElementById('magicBtn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + window.location.pathname }
       });
       if (error) {
         errEl.textContent = error.message; errEl.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Send me a sign-in link';
+        return;
+      }
+      document.getElementById('magicSentDesc').textContent =
+        `We sent a link to ${email}. Click it to get in — no password needed.`;
+      showState('magic');
+    }
+
+    async function signInWithGoogle() {
+      const btn = document.getElementById('googleBtn');
+      btn.disabled = true; btn.textContent = 'Redirecting…';
+      document.getElementById('authError').classList.remove('show');
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) {
+        document.getElementById('authError').textContent = error.message;
+        document.getElementById('authError').classList.add('show');
         btn.disabled = false;
         btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;flex-shrink:0"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google`;
       }
     }
-
-    // ── Invite token in URL ──────────────────────────────────────────────
-    (function() {
-      const token = new URLSearchParams(location.search).get('invite');
-      if (token) localStorage.setItem('ft_pending_invite', token);
-    })();
   </script>
 </body>
 </html>
