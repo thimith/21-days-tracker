@@ -518,6 +518,16 @@
     }
     .btn-im-done:hover { opacity: 0.85; }
 
+    /* ── Stakes prompt ───────────────────────────────────────────────────── */
+    .stakes-prompt { margin-top: 16px; background: var(--card); border-radius: 14px; border: 1.5px solid var(--orange-lt); padding: 16px; }
+    .stakes-prompt-title { font-size: 0.82rem; font-weight: 800; color: var(--orange); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+    .stakes-prompt-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+    .stakes-field { margin-bottom: 10px; }
+    .stakes-field label { display: block; font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .stakes-field textarea { width: 100%; padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.85rem; color: var(--text); background: var(--bg); outline: none; resize: vertical; min-height: 52px; transition: border-color 0.2s; }
+    .stakes-field textarea:focus { border-color: var(--orange); }
+    .stakes-saved-msg { font-size: 0.78rem; color: var(--green, #34C759); font-weight: 700; margin-top: 8px; display: none; }
+
     /* ── Journal ─────────────────────────────────────────────────────────── */
     .journal-wrap {
       margin-top: 20px; border-radius: 14px;
@@ -1674,7 +1684,31 @@
               </div>
             </div>
             <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
-            ${!addFormOpen && goals.length > 0 ? `<button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
+            ${!addFormOpen && goals.length > 0 ? `
+              ${!_c.stakes ? `
+              <div class="stakes-prompt" id="stakesPrompt">
+                <div class="stakes-prompt-title">⚡ Set your stakes</div>
+                <div class="stakes-prompt-sub">What happens if you slip? What do you get if you crush it? Real stakes make real accountability.</div>
+                <div class="stakes-field">
+                  <label>🏆 Reward if I complete</label>
+                  <textarea id="spComplete" placeholder="e.g. I'll book that trip I've been putting off…"></textarea>
+                </div>
+                <div class="stakes-field">
+                  <label>⚡ Slip #1 task</label>
+                  <textarea id="spR1" placeholder="e.g. 50 burpees on a video call with the group…"></textarea>
+                </div>
+                <div class="stakes-field">
+                  <label>⚡ Slip #2 task</label>
+                  <textarea id="spR2" placeholder="e.g. Cold shower + public post in the group…"></textarea>
+                </div>
+                <div class="stakes-field">
+                  <label>💀 Fail (3 strikes)</label>
+                  <textarea id="spFail" placeholder="e.g. Donate $50 to a cause I hate…"></textarea>
+                </div>
+                <button type="button" class="btn-xs pri" style="width:100%;margin-top:4px;" onclick="saveOwnStakes()">Save Stakes</button>
+                <div class="stakes-saved-msg" id="stakesSavedMsg">Stakes saved ✓</div>
+              </div>` : ''}
+              <button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
       }
 
@@ -2946,6 +2980,22 @@
       addGoalTimeUnit = 'min';
       addFormOpen     = false;
       if (!cohort) renderNoCohort(); else renderContent();
+    }
+
+    async function saveOwnStakes() {
+      if (!cohort) return;
+      const complete = document.getElementById('spComplete')?.value.trim() || '';
+      const r1       = document.getElementById('spR1')?.value.trim() || '';
+      const r2       = document.getElementById('spR2')?.value.trim() || '';
+      const fail     = document.getElementById('spFail')?.value.trim() || '';
+      const { error } = await sb.from('stakes').upsert(
+        { user_id: session.userId, cohort_id: cohort.id, complete, r1, r2, fail },
+        { onConflict: 'user_id,cohort_id' }
+      );
+      if (error) { alert('Could not save stakes: ' + error.message); return; }
+      _c.stakes = { complete, r1, r2, fail };
+      const msg = document.getElementById('stakesSavedMsg');
+      if (msg) { msg.style.display = 'block'; setTimeout(() => _rerender(), 1200); }
     }
 
     async function saveJournal(date, content) {
