@@ -314,14 +314,19 @@
           <div>${rows || '<div class="empty-state">No members yet.</div>'}</div>
         </div>
         <div class="card">
-          <div class="card-title">Invite Member</div>
+          <div class="card-title">Generate Invite Link</div>
           <div class="form-field">
-            <label class="form-label">Full name</label>
-            <input class="form-input" id="inviteName" placeholder="First name" />
+            <label class="form-label">Invite to</label>
+            <select class="form-select" id="inviteType" onchange="onInviteTypeChange()">
+              <option value="skool">Skool Community</option>
+              <option value="exclusive">Exclusive Cohort</option>
+            </select>
           </div>
-          <div class="form-field">
-            <label class="form-label">Email address</label>
-            <input class="form-input" id="inviteEmail" type="email" placeholder="member@email.com" />
+          <div class="form-field" id="inviteCohortField" style="display:none;">
+            <label class="form-label">Cohort</label>
+            <select class="form-select" id="inviteCohortSelect">
+              ${cohorts.map(c => `<option value="${c.id}">${c.name || c.start_date}</option>`).join('')}
+            </select>
           </div>
           <div id="inviteLinkBox" style="display:none;" class="invite-link-box"></div>
           <div id="inviteFlash" class="flash"></div>
@@ -334,35 +339,42 @@
 
     let _pendingInviteLink = '';
 
+    function onInviteTypeChange() {
+      const type = document.getElementById('inviteType')?.value;
+      document.getElementById('inviteCohortField').style.display = type === 'exclusive' ? '' : 'none';
+    }
+
     async function inviteMember() {
-      const name  = document.getElementById('inviteName')?.value?.trim();
-      const email = document.getElementById('inviteEmail')?.value?.trim().toLowerCase();
-      const flash = document.getElementById('inviteFlash');
+      const flash   = document.getElementById('inviteFlash');
       const linkBox = document.getElementById('inviteLinkBox');
       flash.className = 'flash';
       linkBox.style.display = 'none';
       document.getElementById('copyInviteBtn').style.display = 'none';
 
-      if (!name || !email) { flash.textContent = 'Fill in both fields.'; flash.className = 'flash error'; return; }
-      if (!membersCohortId) { flash.textContent = 'No cohort selected.'; flash.className = 'flash error'; return; }
+      const type     = document.getElementById('inviteType')?.value;
+      const cohortId = type === 'exclusive' ? document.getElementById('inviteCohortSelect')?.value : null;
 
-      // Create invite record
+      if (type === 'exclusive' && !cohortId) {
+        flash.textContent = 'Select a cohort.'; flash.className = 'flash error'; return;
+      }
+
       const { data: invite, error } = await sb.from('invites')
-        .insert({ name, email, cohort_id: membersCohortId })
+        .insert({ name: type, email: '', cohort_id: cohortId || null })
         .select().single();
 
-      if (error || !invite) { flash.textContent = error?.message || 'Failed to create invite.'; flash.className = 'flash error'; return; }
+      if (error || !invite) { flash.textContent = error?.message || 'Failed.'; flash.className = 'flash error'; return; }
 
       const base = window.location.origin + window.location.pathname.replace('admin.html', '');
-      _pendingInviteLink = `${base}index.html?invite=${invite.token}`;
+      let url = `${base}index.html?invite=${invite.token}&path=${type}`;
+      if (cohortId) url += `&cohort=${cohortId}`;
+      _pendingInviteLink = url;
 
       linkBox.textContent = _pendingInviteLink;
       linkBox.style.display = 'block';
       document.getElementById('copyInviteBtn').style.display = 'flex';
-      flash.textContent = `Invite created for ${name}. Share the link above.`;
+      const label = type === 'skool' ? 'Skool Community' : 'Exclusive Cohort';
+      flash.textContent = `${label} invite link ready. Share it!`;
       flash.className = 'flash success';
-      document.getElementById('inviteName').value = '';
-      document.getElementById('inviteEmail').value = '';
     }
 
     function copyInviteLink() {

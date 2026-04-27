@@ -1092,6 +1092,18 @@
 
     function _showOnbChoose() {
       document.getElementById('onbOverlay').style.display = 'flex';
+
+      // If invite link has a specific path, skip the choose screen
+      try {
+        const ctx = JSON.parse(localStorage.getItem('ft_invite_path') || 'null');
+        if (ctx?.type === 'skool') { onbChoose('skool'); return; }
+        if (ctx?.type === 'exclusive') {
+          if (ctx.cohortId) _onbSelectedCohortId = ctx.cohortId;
+          onbChoose('exclusive');
+          return;
+        }
+      } catch(e) {}
+
       document.getElementById('onbStepChoose').style.display = '';
       document.getElementById('onbStepSkoolDate').style.display = 'none';
       document.getElementById('onbStepExclusiveDate').style.display = 'none';
@@ -1203,6 +1215,7 @@
       });
       if (error) { btn.disabled = false; btn.textContent = 'Request to Join'; alert('Error: ' + error.message); return; }
       _c.pendingRequest = { type: 'skool', requested_start_date: _onbSelectedDate };
+      localStorage.removeItem('ft_invite_path');
       _showOnbPending(_c.pendingRequest);
     }
 
@@ -1217,6 +1230,7 @@
       });
       if (error) { btn.disabled = false; btn.textContent = 'Request to Join'; alert('Error: ' + error.message); return; }
       _c.pendingRequest = { type: 'exclusive', requested_start_date: _onbSelectedDate };
+      localStorage.removeItem('ft_invite_path');
       _showOnbPending(_c.pendingRequest);
     }
 

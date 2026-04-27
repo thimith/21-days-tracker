@@ -115,11 +115,16 @@
 
     let redirected = false;
 
-    // Capture invite token from URL immediately
-    const urlToken = new URLSearchParams(location.search).get('invite');
-    if (urlToken) localStorage.setItem('ft_pending_invite', urlToken);
-    const hasInvite   = !!localStorage.getItem('ft_pending_invite');
-    const isReturning = !!localStorage.getItem('ft_has_logged_in');
+    // Capture invite token + path from URL
+    const _params = new URLSearchParams(location.search);
+    const urlToken = _params.get('invite');
+    const urlPath  = _params.get('path');   // 'skool' | 'exclusive'
+    const urlCohort = _params.get('cohort');
+    if (urlToken) {
+      localStorage.setItem('ft_pending_invite', urlToken);
+      if (urlPath) localStorage.setItem('ft_invite_path', JSON.stringify({ type: urlPath, cohortId: urlCohort || null }));
+    }
+    const hasInvite = !!localStorage.getItem('ft_pending_invite');
 
     function showState(state) {
       document.getElementById('stateSignin').style.display    = state === 'signin'  ? '' : 'none';
@@ -129,15 +134,15 @@
       document.body.style.visibility = 'visible';
     }
 
-    // Check session, then gate
+    // Always show sign-in form — gate happens after auth
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
         handleNewSignIn(session).then(() => { window.location.href = 'app.html'; });
         return;
       }
-      showState(hasInvite || isReturning ? 'signin' : 'blocked');
-    }).catch(() => showState(hasInvite || isReturning ? 'signin' : 'blocked'));
+      showState('signin');
+    }).catch(() => showState('signin'));
 
     // Handles magic link redirect back
     sb.auth.onAuthStateChange(async (event, session) => {
@@ -159,6 +164,16 @@
       ]);
 
       if (!profile) {
+        // New user — must have a valid invite token
+        const token = localStorage.getItem('ft_pending_invite');
+        if (!token && user.email !== ADMIN_EMAIL) {
+          await sb.auth.signOut();
+          redirected = false;
+          document.getElementById('authError').textContent = 'You need an invite link to sign up. Ask Thierry.';
+          document.getElementById('authError').classList.add('show');
+          showState('signin');
+          return;
+        }
         const fullName  = user.user_metadata?.full_name || user.email.split('@')[0];
         const nameParts = fullName.trim().split(' ');
         const role = user.email === ADMIN_EMAIL ? 'admin' : 'member';
