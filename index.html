@@ -65,13 +65,17 @@
 </head>
 <body>
   <div class="logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-  <p class="tagline">Members only · Sign in to your account</p>
+  <p class="tagline">21-Day Challenge</p>
 
   <div class="card" id="mainCard">
 
     <!-- Sign-in form (shown when invited or returning) -->
     <div id="stateSignin" style="display:none;">
       <div id="inviteBadge" class="invite-badge" style="display:none;">🔑 Invite link active</div>
+      <div style="margin-bottom:18px;">
+        <div style="font-size:1rem;font-weight:800;color:var(--text);letter-spacing:-0.02em;margin-bottom:4px;">Members only</div>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Sign in to your account. No account yet? You need an invite from Thierry.</div>
+      </div>
       <div class="error-msg" id="authError"></div>
       <div class="form-field">
         <label class="form-label">Email</label>
