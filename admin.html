@@ -1028,13 +1028,17 @@
 
     // ── Unassigned members banner ─────────────────────────────────────────
     async function checkUnassignedMembers() {
-      const [{ data: allProfiles }, { data: assigned }, { data: cohortsRaw }] = await Promise.all([
+      const [{ data: allProfiles }, { data: assigned }, { data: skoolAssigned }, { data: cohortsRaw }] = await Promise.all([
         sb.from('profiles').select('id, first_name, email').eq('role', 'member'),
         sb.from('cohort_members').select('user_id'),
+        sb.from('skool_members').select('user_id'),
         sb.from('cohorts').select('*').order('start_date', { ascending: false })
       ]);
 
-      const assignedIds = new Set((assigned || []).map(r => r.user_id));
+      const assignedIds = new Set([
+        ...(assigned || []).map(r => r.user_id),
+        ...(skoolAssigned || []).map(r => r.user_id)
+      ]);
       const unassigned = (allProfiles || []).filter(p => !assignedIds.has(p.id));
       const cohorts = cohortsRaw || [];
       const banner = document.getElementById('pendingBanner');
