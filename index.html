@@ -272,8 +272,11 @@
         options: { emailRedirectTo: window.location.origin + window.location.pathname }
       });
       if (error) {
-        errEl.textContent = error.message; errEl.classList.add('show');
-        btn.disabled = false; btn.textContent = 'Send me a sign-in link';
+        errEl.textContent = /rate.limit|too many/i.test(error.message)
+          ? 'Too many sign-in attempts. Please wait a few minutes and try again.'
+          : error.message;
+        errEl.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Sign in';
         return;
       }
       document.getElementById('magicSentDesc').textContent =
