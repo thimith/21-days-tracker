@@ -1398,11 +1398,7 @@
 
       // Show onboarding if no membership of any kind
       if (!cohort && !_c.skoolMember) {
-        if (_c.pendingRequest) {
-          _showOnbPending(_c.pendingRequest);
-        } else {
-          _showOnbChoose();
-        }
+        _showOnbChoose();
         return;
       }
 
