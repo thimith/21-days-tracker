@@ -59,6 +59,8 @@
     .state-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; }
     .state-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
     .invite-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--orange-lt); color: var(--orange); font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 100px; margin-bottom: 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 16px; }
   </style>
 </head>
 <body>
@@ -102,6 +104,14 @@
       <div class="state-sub">This tracker is invite-only. Ask Thierry for a link to get access.</div>
     </div>
 
+    <!-- Loading / redirecting -->
+    <div id="stateLoading" style="display:none;" class="center">
+      <div class="spinner"></div>
+      <div class="state-title">Signing you in…</div>
+      <div class="state-sub">Hang tight, this only takes a second.</div>
+      <button class="btn" style="margin-top:20px;background:transparent;color:var(--muted);font-weight:500;font-size:0.82rem;" onclick="forceSignOut()">Sign out and try again</button>
+    </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -127,30 +137,49 @@
     const hasInvite = !!localStorage.getItem('ft_pending_invite');
 
     function showState(state) {
-      document.getElementById('stateSignin').style.display    = state === 'signin'  ? '' : 'none';
-      document.getElementById('stateMagicSent').style.display = state === 'magic'   ? '' : 'none';
-      document.getElementById('stateBlocked').style.display   = state === 'blocked' ? '' : 'none';
+      document.getElementById('stateSignin').style.display    = state === 'signin'   ? '' : 'none';
+      document.getElementById('stateMagicSent').style.display = state === 'magic'    ? '' : 'none';
+      document.getElementById('stateBlocked').style.display   = state === 'blocked'  ? '' : 'none';
+      document.getElementById('stateLoading').style.display   = state === 'loading'  ? '' : 'none';
       if (state === 'signin' && hasInvite) document.getElementById('inviteBadge').style.display = '';
       document.body.style.visibility = 'visible';
+    }
+
+    async function forceSignOut() {
+      await sb.auth.signOut();
+      redirected = false;
+      showState('signin');
+    }
+
+    function handleSignInAndRedirect(session) {
+      showState('loading');
+      handleNewSignIn(session)
+        .then(() => { window.location.href = 'app.html'; })
+        .catch(async () => {
+          redirected = false;
+          await sb.auth.signOut().catch(() => {});
+          document.getElementById('authError').textContent = 'Something went wrong signing you in. Please try again.';
+          document.getElementById('authError').classList.add('show');
+          showState('signin');
+        });
     }
 
     // Always show sign-in form — gate happens after auth
     sb.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         redirected = true;
-        handleNewSignIn(session).then(() => { window.location.href = 'app.html'; });
+        handleSignInAndRedirect(session);
         return;
       }
       showState('signin');
     }).catch(() => showState('signin'));
 
     // Handles magic link redirect back
-    sb.auth.onAuthStateChange(async (event, session) => {
+    sb.auth.onAuthStateChange((event, session) => {
       if (redirected) return;
       if (event === 'SIGNED_IN' && session) {
         redirected = true;
-        await handleNewSignIn(session);
-        window.location.href = 'app.html';
+        handleSignInAndRedirect(session);
       }
     });
 
