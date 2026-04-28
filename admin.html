@@ -1000,7 +1000,8 @@
 
     async function rejectRequest(reqId, userId) {
       if (!confirm('Reject this request?')) return;
-      await sb.from('pending_requests').update({ status: 'rejected' }).eq('id', reqId);
+      const { error } = await sb.from('pending_requests').update({ status: 'rejected' }).eq('id', reqId);
+      if (error) { alert('Error rejecting: ' + error.message); return; }
       renderRequests();
     }
 
