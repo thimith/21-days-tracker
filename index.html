@@ -139,11 +139,17 @@
     const urlToken = _params.get('invite');
     const urlPath  = _params.get('path');   // 'skool' | 'exclusive'
     const urlCohort = _params.get('cohort');
-    if (urlToken) {
-      localStorage.setItem('ft_pending_invite', urlToken);
-      if (urlPath) localStorage.setItem('ft_invite_path', JSON.stringify({ type: urlPath, cohortId: urlCohort || null }));
-    }
+    if (urlToken) localStorage.setItem('ft_pending_invite', urlToken);
+    // Store path independently — also restored from redirect URLs (Google/magic link)
+    if (urlPath) localStorage.setItem('ft_invite_path', JSON.stringify({ type: urlPath, cohortId: urlCohort || null }));
     const hasInvite = !!localStorage.getItem('ft_pending_invite');
+
+    function _inviteRedirectUrl() {
+      const ctx = (() => { try { return JSON.parse(localStorage.getItem('ft_invite_path')); } catch(e) { return null; } })();
+      const base = window.location.origin + window.location.pathname;
+      if (!ctx?.type) return base;
+      return base + `?path=${ctx.type}${ctx.cohortId ? '&cohort=' + ctx.cohortId : ''}`;
+    }
 
     function showState(state) {
       document.getElementById('stateSignin').style.display    = state === 'signin'   ? '' : 'none';
@@ -269,7 +275,7 @@
       btn.textContent = 'Sending…';
       const { error } = await sb.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: window.location.origin + window.location.pathname }
+        options: { emailRedirectTo: _inviteRedirectUrl() }
       });
       if (error) {
         errEl.textContent = /rate.limit|too many/i.test(error.message)
@@ -290,7 +296,7 @@
       document.getElementById('authError').classList.remove('show');
       const { error } = await sb.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + window.location.pathname }
+        options: { redirectTo: _inviteRedirectUrl() }
       });
       if (error) {
         document.getElementById('authError').textContent = error.message;
