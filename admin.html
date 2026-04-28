@@ -1022,8 +1022,10 @@
     async function checkPendingRequests() {
       const { count } = await sb.from('pending_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending');
       const btn = document.getElementById('tabRequests');
-      if (btn) btn.textContent = count > 0 ? `Requests (${count})` : 'Requests';
-      if (count > 0) btn?.classList.add('active-alert');
+      if (btn) {
+        btn.textContent = count > 0 ? `Requests (${count})` : 'Requests';
+        btn.classList.toggle('active-alert', count > 0);
+      }
     }
 
     // ── Unassigned members banner ─────────────────────────────────────────
