@@ -2840,7 +2840,7 @@
     }
 
     // ── Draft goals (no cohort yet) ──────────────────────────────────────
-    function _draftKey() { return `ft_draft_goals_${session?.userId}`; }
+    function _draftKey() { return `ft_draft_goals_${_c.userId}`; }
     function getDraftGoals() { try { return JSON.parse(localStorage.getItem(_draftKey()) || '[]'); } catch(e) { return []; } }
     function saveDraftGoals(goals) { localStorage.setItem(_draftKey(), JSON.stringify(goals)); }
 
@@ -2919,7 +2919,7 @@
         </div>`;
 
       document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
-        <div class="empty-state" style="margin-bottom:20px;">You're not in a cohort yet.<br>Ask Thierry to add you.<br><span style="font-size:0.78rem;color:var(--muted);margin-top:6px;display:block;">In the meantime, start planning your goals.</span></div>
+        <div class="empty-state" style="margin-bottom:20px;">${_c.skoolMember ? 'You will be added to the Skool Cohort soon.' : 'You\'re not in a cohort yet.'}<br><span style="font-size:0.78rem;color:var(--muted);margin-top:6px;display:block;">In the meantime, start planning your goals.</span></div>
         ${listHTML}
         ${formHTML}
       </div>`;
