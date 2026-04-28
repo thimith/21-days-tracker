@@ -82,12 +82,14 @@
         <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Sign in to your account. No account yet? You need an invite from Thierry.</div>
       </div>
       <div class="error-msg" id="authError"></div>
-      <div class="form-field">
-        <label class="form-label">Email</label>
-        <input class="form-input" type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" />
+      <div id="emailSection">
+        <div class="form-field">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <button class="btn" id="magicBtn" onclick="sendMagicLink()">Sign in</button>
+        <div class="divider"><span>or</span></div>
       </div>
-      <button class="btn" id="magicBtn" onclick="sendMagicLink()">Sign in</button>
-      <div class="divider"><span>or</span></div>
       <button class="btn-google" id="googleBtn" onclick="signInWithGoogle()">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -157,7 +159,7 @@
         document.getElementById('headerInvite').style.display  = invite ? '' : 'none';
         document.getElementById('headerMembers').style.display = invite ? 'none' : '';
         document.getElementById('headerInvite').querySelector('div').textContent = `🔑 ${label} Invite Active`;
-        document.getElementById('magicBtn').textContent = invite ? 'Sign up with email' : 'Sign in';
+        document.getElementById('emailSection').style.display  = invite ? 'none' : '';
       }
       document.body.style.visibility = 'visible';
     }
