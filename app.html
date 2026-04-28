@@ -1226,7 +1226,7 @@
       const memberId = Date.now().toString(36) + Math.random().toString(36).substr(2,5);
       const cycleId  = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
       const [{ error: e1 }, { error: e2 }] = await Promise.all([
-        sb.from('skool_members').insert({ id: memberId, user_id: _c.userId }),
+        sb.from('skool_members').upsert({ id: memberId, user_id: _c.userId }, { onConflict: 'user_id' }),
         sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _onbSelectedDate, cycle_number: 1 })
       ]);
       if (e1 || e2) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + (e1||e2).message); return; }
