@@ -2848,9 +2848,13 @@
       if (!_c.userId) return [];
       try {
         const seededKey = _draftKey() + '_seeded';
-        const saved = localStorage.getItem(_draftKey());
-        if (saved !== null) return JSON.parse(saved);
-        if (localStorage.getItem(seededKey)) return [];
+        const raw = localStorage.getItem(_draftKey());
+        const goals = raw !== null ? JSON.parse(raw) : null;
+        // Return existing goals if any
+        if (goals && goals.length > 0) return goals;
+        // Respect intentional empty state (user deleted all goals)
+        if (localStorage.getItem(seededKey)) return goals || [];
+        // First time for this user — seed defaults
         const defaults = [
           { id:`g_${_uid()}`, type:'daily_boolean',   title:'Mindful Meditation (10min)', config:{}, locked:false },
           { id:`g_${_uid()}`, type:'weekly_days',     title:'Exercise 30min', config:{ daysTarget:3 }, locked:false },
@@ -2971,7 +2975,7 @@
       const stakesHTML = `
         <div class="stakes-prompt" style="margin-top:24px;position:relative;">
           <div class="stakes-prompt-title">⚡ Your Stakes</div>
-          <div id="stakesSavedTick" style="position:absolute;top:2px;right:0;font-size:0.72rem;font-weight:700;color:#34C759;opacity:0;transition:opacity 0.3s ease;pointer-events:none;">✓ Saved</div>
+          <div id="stakesSavedTick" style="position:absolute;top:0;right:4px;font-size:0.72rem;font-weight:700;color:#34C759;opacity:0;transition:opacity 0.3s ease;pointer-events:none;white-space:nowrap;">✓ Saved</div>
           <div class="stakes-field"><label style="color:#34C759;">🏆 Reward (complete all 21 days)</label><textarea id="dspComplete" placeholder="e.g. I'll book that trip I've been putting off…" oninput="_saveDraftStakesWithTick()">${ds.complete}</textarea></div>
           <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 1 (miss a day)</label><textarea id="dspR1" placeholder="e.g. 50 burpees on a video call with the group…" oninput="_saveDraftStakesWithTick()">${ds.r1}</textarea></div>
           <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 2 (miss two days)</label><textarea id="dspR2" placeholder="e.g. Cold shower + public post in the group…" oninput="_saveDraftStakesWithTick()">${ds.r2}</textarea></div>
