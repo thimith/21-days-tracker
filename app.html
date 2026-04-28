@@ -1399,7 +1399,12 @@
 
       // Show onboarding if no membership of any kind — only on fresh data
       if (!cohort && !_c.skoolMember) {
-        if (!showOnboarding) return;
+        if (!showOnboarding) {
+          // Hide everything while waiting for fresh data
+          document.getElementById('onbOverlay').style.display = 'none';
+          document.getElementById('pagerTrack').innerHTML = '<div class="day-page"><div class="empty-state">Loading…</div></div>';
+          return;
+        }
         _showOnbChoose();
         return;
       }
