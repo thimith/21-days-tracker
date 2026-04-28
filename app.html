@@ -1142,15 +1142,12 @@
       _onbSelectedCohortId = null;
       document.getElementById('onbStepChoose').style.display = 'none';
 
-      const hasInvite = !!localStorage.getItem('ft_pending_invite') || !!localStorage.getItem('ft_invite_path');
-      const btnLabel = hasInvite ? 'Join Now' : 'Request to Join';
-
       if (type === 'skool') {
-        document.getElementById('onbSkoolSubmit').textContent = btnLabel;
+        document.getElementById('onbSkoolSubmit').textContent = 'Join Now';
         _renderMondayPicker();
         document.getElementById('onbStepSkoolDate').style.display = '';
       } else {
-        document.getElementById('onbExclusiveSubmit').textContent = btnLabel;
+        document.getElementById('onbExclusiveSubmit').textContent = 'Join Now';
         _renderCohortPicker();
         document.getElementById('onbStepExclusiveDate').style.display = '';
       }
@@ -1224,53 +1221,26 @@
     async function onbSubmitSkool() {
       if (!_onbSelectedDate) return;
       const btn = document.getElementById('onbSkoolSubmit');
-      const hasInvite = !!localStorage.getItem('ft_pending_invite') || !!localStorage.getItem('ft_invite_path');
-      btn.disabled = true; btn.textContent = hasInvite ? 'Joining…' : 'Sending…';
-
-      if (hasInvite) {
-        const memberId = Date.now().toString(36) + Math.random().toString(36).substr(2,5);
-        const cycleId  = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
-        const [{ error: e1 }, { error: e2 }] = await Promise.all([
-          sb.from('skool_members').insert({ id: memberId, user_id: _c.userId }),
-          sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _onbSelectedDate, cycle_number: 1 })
-        ]);
-        if (e1 || e2) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + (e1||e2).message); return; }
-        localStorage.removeItem('ft_invite_path');
-        window.location.reload();
-        return;
-      }
-
-      const { error } = await sb.from('pending_requests').insert({
-        user_id: _c.userId, type: 'skool',
-        requested_start_date: _onbSelectedDate
-      });
-      if (error) { btn.disabled = false; btn.textContent = 'Request to Join'; alert('Error: ' + error.message); return; }
-      _c.pendingRequest = { type: 'skool', requested_start_date: _onbSelectedDate };
-      _showOnbPending(_c.pendingRequest);
+      btn.disabled = true; btn.textContent = 'Joining…';
+      const memberId = Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+      const cycleId  = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
+      const [{ error: e1 }, { error: e2 }] = await Promise.all([
+        sb.from('skool_members').insert({ id: memberId, user_id: _c.userId }),
+        sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _onbSelectedDate, cycle_number: 1 })
+      ]);
+      if (e1 || e2) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + (e1||e2).message); return; }
+      localStorage.removeItem('ft_invite_path');
+      window.location.reload();
     }
 
     async function onbSubmitExclusive() {
       if (!_onbSelectedDate || !_onbSelectedCohortId) return;
       const btn = document.getElementById('onbExclusiveSubmit');
-      const hasInvite = !!localStorage.getItem('ft_pending_invite') || !!localStorage.getItem('ft_invite_path');
-      btn.disabled = true; btn.textContent = hasInvite ? 'Joining…' : 'Sending…';
-
-      if (hasInvite) {
-        const { error } = await sb.from('cohort_members').insert({ user_id: _c.userId, cohort_id: _onbSelectedCohortId });
-        if (error) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + error.message); return; }
-        localStorage.removeItem('ft_invite_path');
-        window.location.reload();
-        return;
-      }
-
-      const { error } = await sb.from('pending_requests').insert({
-        user_id: _c.userId, type: 'exclusive',
-        requested_start_date: _onbSelectedDate,
-        cohort_id: _onbSelectedCohortId
-      });
-      if (error) { btn.disabled = false; btn.textContent = 'Request to Join'; alert('Error: ' + error.message); return; }
-      _c.pendingRequest = { type: 'exclusive', requested_start_date: _onbSelectedDate };
-      _showOnbPending(_c.pendingRequest);
+      btn.disabled = true; btn.textContent = 'Joining…';
+      const { error } = await sb.from('cohort_members').insert({ user_id: _c.userId, cohort_id: _onbSelectedCohortId });
+      if (error) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + error.message); return; }
+      localStorage.removeItem('ft_invite_path');
+      window.location.reload();
     }
 
     // ══════════════════════════════════════════════════════════════════════
