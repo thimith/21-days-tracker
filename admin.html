@@ -155,6 +155,7 @@
     <button type="button" class="tab-btn"        onclick="switchTab('override')">Override</button>
     <button type="button" class="tab-btn"        onclick="switchTab('cohorts')">Cohorts</button>
     <button type="button" class="tab-btn"        onclick="switchTab('requests')" id="tabRequests">Requests</button>
+    <button type="button" class="tab-btn"        onclick="switchTab('skool')"   id="tabSkool">Skool</button>
   </div>
 
   <div class="content">
@@ -164,6 +165,7 @@
     <div class="tab-panel" id="tab-override"></div>
     <div class="tab-panel" id="tab-cohorts"></div>
     <div class="tab-panel" id="tab-requests"></div>
+    <div class="tab-panel" id="tab-skool"></div>
   </div>
 
   <nav class="bottom-nav">
@@ -226,7 +228,7 @@
     function switchTab(tab) {
       activeTab = tab;
       document.querySelectorAll('.tab-btn').forEach((b,i) => {
-        b.classList.toggle('active', ['members','goals','stakes','override','cohorts','requests'][i] === tab);
+        b.classList.toggle('active', ['members','goals','stakes','override','cohorts','requests','skool'][i] === tab);
       });
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
@@ -240,6 +242,7 @@
       if (tab === 'override') await renderOverride();
       if (tab === 'cohorts')  await renderCohorts();
       if (tab === 'requests') await renderRequests();
+      if (tab === 'skool')    await renderSkool();
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -1074,6 +1077,81 @@
       const { error } = await sb.from('profiles').delete().eq('id', userId);
       if (error) { console.error('Delete profile error:', JSON.stringify(error)); alert('Delete failed: ' + error.message); if (row) row.style.opacity = '1'; return; }
       await checkUnassignedMembers();
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // TAB: SKOOL
+    // ════════════════════════════════════════════════════════════════════
+    async function renderSkool() {
+      const el = document.getElementById('tab-skool');
+      el.innerHTML = '<div class="loading-state">Loading…</div>';
+
+      const { data: members } = await sb
+        .from('skool_members')
+        .select('user_id, profiles(first_name, last_name, email)');
+
+      const { data: cycles } = await sb
+        .from('skool_cycles')
+        .select('user_id, start_date, cycle_number')
+        .order('start_date', { ascending: false });
+
+      if (!members?.length) {
+        el.innerHTML = '<div class="card"><div class="empty-state">No Skool members yet.</div></div>';
+        return;
+      }
+
+      const cyclesByUser = {};
+      for (const c of (cycles || [])) {
+        if (!cyclesByUser[c.user_id]) cyclesByUser[c.user_id] = [];
+        cyclesByUser[c.user_id].push(c);
+      }
+
+      const today = new Date(); today.setHours(0,0,0,0);
+      function getCycleDay(startDate) {
+        const start = new Date(startDate + 'T00:00:00');
+        return Math.floor((today - start) / 86400000) + 1;
+      }
+
+      const rows = members.map(m => {
+        const name = [m.profiles?.first_name, m.profiles?.last_name].filter(Boolean).join(' ') || 'Unknown';
+        const email = m.profiles?.email || '';
+        const userCycles = cyclesByUser[m.user_id] || [];
+        const latest = userCycles[0];
+        let cycleInfo = '—';
+        if (latest) {
+          const day = getCycleDay(latest.start_date);
+          cycleInfo = day >= 1 && day <= 21
+            ? `Cycle ${latest.cycle_number} · Day ${day}/21`
+            : day > 21
+            ? `Cycle ${latest.cycle_number} · Done (started ${latest.start_date})`
+            : `Cycle ${latest.cycle_number} · Starts ${latest.start_date}`;
+        }
+        return `
+          <div class="member-row">
+            <div class="member-avatar">${name[0].toUpperCase()}</div>
+            <div class="member-info">
+              <div class="member-name">${name}</div>
+              <div class="member-email">${cycleInfo}${email ? ' · ' + email : ''}</div>
+            </div>
+            <button type="button" class="icon-btn remove" onclick="removeSkoolMember('${m.user_id}','${name}')" title="Remove">✕</button>
+          </div>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="card">
+          <div class="card-title">Skool Community <small>${members.length}</small></div>
+          <div class="form-sub" style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;">Rolling membership — each person runs their own 21-day cycles.</div>
+          ${rows}
+        </div>`;
+    }
+
+    async function removeSkoolMember(userId, name) {
+      if (!confirm(`Remove ${name} from Skool? This deletes their membership and cycles.`)) return;
+      await Promise.all([
+        sb.from('skool_cycles').delete().eq('user_id', userId),
+        sb.from('skool_members').delete().eq('user_id', userId)
+      ]);
+      renderSkool();
     }
 
     // ── Init ─────────────────────────────────────────────────────────────
