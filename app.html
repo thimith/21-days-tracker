@@ -787,6 +787,8 @@
     let addGoalColor    = '';
     let addGoalTimeUnit = 'min';
     let addFormOpen     = false;
+    let editingDraftIdx = -1;
+    let stakesOpen      = false;
 
     function _rerender() { if (cohort) renderContent(); else renderNoCohort(); }
     function _finalizeKey() { return `goals_done_${cohort?.id}`; }
@@ -2783,7 +2785,7 @@
       document.getElementById('addGoalBtn').style.display = 'none';
     }
     function closeAddForm() {
-      addFormOpen = false; addGoalTitle = ''; addGoalColor = ''; addGoalTimeUnit = 'min';
+      addFormOpen = false; addGoalTitle = ''; addGoalColor = ''; addGoalTimeUnit = 'min'; editingDraftIdx = -1;
       if (!cohort) { renderNoCohort(); return; }
       document.getElementById('addForm').classList.remove('open');
       document.getElementById('addGoalBtn').style.display = '';
@@ -2912,7 +2914,10 @@
       const listHTML = drafts.length ? drafts.map((g, i) => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border-radius:10px;border:1.5px solid var(--border);margin-bottom:6px;position:relative;">
           <span style="font-size:0.88rem;font-weight:600;color:var(--text);">${g.title}</span>
-          <button onclick="deleteDraftGoal(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:2px 4px;">✕</button>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <button onclick="editDraftGoal(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:3px 6px;border-radius:6px;" title="Edit">✏️</button>
+            <button onclick="deleteDraftGoal(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:3px 5px;border-radius:6px;">✕</button>
+          </div>
         </div>`).join('') : '';
 
       const formHTML = `
@@ -2965,21 +2970,26 @@
             </div>
             <div class="form-row">
               <button type="button" class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
-              <button type="button" class="btn-xs pri" onclick="saveGoal()">Add Goal</button>
+              <button type="button" class="btn-xs pri" onclick="saveGoal()">${editingDraftIdx >= 0 ? 'Save Changes' : 'Add Goal'}</button>
             </div>
           </div>
           <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
         </div>`;
 
       const ds = getDraftStakes() || { complete:'', r1:'', r2:'', fail:'' };
-      const stakesHTML = `
-        <div class="stakes-prompt" style="margin-top:24px;position:relative;">
+      const hasStakesData = !!(ds.complete || ds.r1 || ds.r2 || ds.fail);
+      if (hasStakesData && !stakesOpen) stakesOpen = true;
+      const stakesHTML = stakesOpen ? `
+        <div class="stakes-prompt" style="margin-top:16px;position:relative;">
           <div class="stakes-prompt-title">⚡ Your Stakes</div>
           <div id="stakesSavedTick" style="position:absolute;top:0;right:4px;font-size:0.72rem;font-weight:700;color:#34C759;opacity:0;transition:opacity 0.3s ease;pointer-events:none;white-space:nowrap;">✓ Saved</div>
           <div class="stakes-field"><label style="color:#34C759;">🏆 Reward (complete all 21 days)</label><textarea id="dspComplete" placeholder="e.g. I'll book that trip I've been putting off…" oninput="_saveDraftStakesWithTick()">${ds.complete}</textarea></div>
           <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 1 (miss a day)</label><textarea id="dspR1" placeholder="e.g. 50 burpees on a video call with the group…" oninput="_saveDraftStakesWithTick()">${ds.r1}</textarea></div>
           <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 2 (miss two days)</label><textarea id="dspR2" placeholder="e.g. Cold shower + public post in the group…" oninput="_saveDraftStakesWithTick()">${ds.r2}</textarea></div>
           <div class="stakes-field"><label style="color:#FF3B30;">💀 Failure consequence</label><textarea id="dspFail" placeholder="e.g. Donate $50 to a cause I hate…" oninput="_saveDraftStakesWithTick()">${ds.fail}</textarea></div>
+        </div>` : `
+        <div style="margin-top:16px;">
+          <button type="button" onclick="toggleStakes()" style="width:100%;padding:12px;background:var(--bg);color:#007AFF;font-family:inherit;font-size:0.88rem;font-weight:700;border:2px dashed rgba(0,122,255,0.3);border-radius:12px;cursor:pointer;transition:border-color 0.2s,background 0.2s;" onmouseover="this.style.borderColor='#007AFF';this.style.background='rgba(0,122,255,0.06)'" onmouseout="this.style.borderColor='rgba(0,122,255,0.3)';this.style.background='var(--bg)'">+ Add your stakes</button>
         </div>`;
 
       document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
@@ -2995,6 +3005,53 @@
       drafts.splice(index, 1);
       saveDraftGoals(drafts);
       renderNoCohort();
+    }
+
+    function toggleStakes() {
+      stakesOpen = !stakesOpen;
+      renderNoCohort();
+    }
+
+    function editDraftGoal(i) {
+      const g = getDraftGoals()[i];
+      if (!g) return;
+      editingDraftIdx = i;
+      addGoalTitle = g.title;
+      const typeMap = {
+        'daily_boolean':      { frame:'daily',     metric:'boolean' },
+        'daily_count':        { frame:'daily',     metric:'count' },
+        'daily_time_min':     { frame:'daily',     metric:'min_time' },
+        'daily_time_max':     { frame:'daily',     metric:'max_time' },
+        'weekly_days':        { frame:'weekly',    metric:'days' },
+        'weekly_count':       { frame:'weekly',    metric:'count' },
+        'daily_count_weekly': { frame:'weekly',    metric:'count_days' },
+        'weekly_time_min':    { frame:'weekly',    metric:'min_time' },
+        'weekly_time_max':    { frame:'weekly',    metric:'max_time' },
+        'milestone':          { frame:'milestone', metric:'boolean' },
+        'total_count':        { frame:'milestone', metric:'count' },
+        'total_time_min':     { frame:'milestone', metric:'min_time' },
+        'total_time_max':     { frame:'milestone', metric:'max_time' },
+      };
+      const m = typeMap[g.type] || { frame:'daily', metric:'boolean' };
+      addGoalFrame  = m.frame;
+      addGoalMetric = m.metric;
+      addGoalTimeUnit = g.config.timeUnit || 'min';
+      addFormOpen = true;
+      renderNoCohort();
+      setTimeout(() => {
+        const titleEl = document.getElementById('newTitle');
+        if (titleEl) titleEl.value = g.title;
+        const countEl = document.getElementById('cfgCountVal');
+        if (countEl) countEl.value = g.config.totalTarget || g.config.weeklyTarget || g.config.dailyTarget || '';
+        const daysEl = document.getElementById('cfgDaysVal');
+        if (daysEl) daysEl.value = g.config.daysTarget || '';
+        const timeEl = document.getElementById('cfgTimeVal');
+        if (timeEl) {
+          const mins = g.config.totalTargetMinutes || g.config.totalMaxMinutes ||
+                       g.config.weeklyTargetMinutes || g.config.weeklyMaxMinutes || 0;
+          timeEl.value = addGoalTimeUnit === 'hr' ? Math.round(mins / 60) : mins || '';
+        }
+      }, 0);
     }
 
     function saveGoal() {
@@ -3027,9 +3084,12 @@
       if (['min_time','max_time'].includes(addGoalMetric)) config.timeUnit = addGoalTimeUnit;
 
       if (!cohort) {
-        // No cohort yet — save as draft in localStorage
         const drafts = getDraftGoals();
-        drafts.push({ id:`g_${db.uid()}`, type, title, config, locked:false, createdAt:new Date().toISOString() });
+        if (editingDraftIdx >= 0) {
+          drafts[editingDraftIdx] = { ...drafts[editingDraftIdx], type, title, config };
+        } else {
+          drafts.push({ id:`g_${_uid()}`, type, title, config, locked:false, createdAt:new Date().toISOString() });
+        }
         saveDraftGoals(drafts);
       } else {
         db.upsertGoal({
@@ -3045,6 +3105,7 @@
       addGoalColor    = '';
       addGoalTimeUnit = 'min';
       addFormOpen     = false;
+      editingDraftIdx = -1;
       if (!cohort) renderNoCohort(); else renderContent();
     }
 
