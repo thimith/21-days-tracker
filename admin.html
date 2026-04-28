@@ -983,7 +983,7 @@
         const memberId = Date.now().toString(36) + Math.random().toString(36).substr(2,5);
         const cycleId  = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
         const [{ error: e1 }, { error: e2 }] = await Promise.all([
-          sb.from('skool_members').insert({ id: memberId, user_id: userId }),
+          sb.from('skool_members').upsert({ id: memberId, user_id: userId }, { onConflict: 'user_id' }),
           sb.from('skool_cycles').insert({ id: cycleId, user_id: userId, start_date: startDate, cycle_number: 1 })
         ]);
         if (e1 || e2) { alert('Error: ' + (e1||e2).message); if (row) row.style.opacity = ''; return; }
