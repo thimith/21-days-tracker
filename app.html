@@ -2841,7 +2841,20 @@
 
     // ── Draft goals (no cohort yet) ──────────────────────────────────────
     function _draftKey() { return `ft_draft_goals_${_c.userId}`; }
-    function getDraftGoals() { try { return JSON.parse(localStorage.getItem(_draftKey()) || '[]'); } catch(e) { return []; } }
+    function getDraftGoals() {
+      try {
+        const saved = localStorage.getItem(_draftKey());
+        if (saved !== null) return JSON.parse(saved);
+        // Seed defaults for new users
+        const defaults = [
+          { id:`g_${db.uid()}`, type:'daily_boolean',  title:'Mindful Meditation (10min)', config:{}, locked:false },
+          { id:`g_${db.uid()}`, type:'weekly_days',    title:'Exercise 30min', config:{ daysTarget:3 }, locked:false },
+          { id:`g_${db.uid()}`, type:'weekly_time_max',title:'Max 1h on Socials', config:{ weeklyMaxMinutes:60, timeUnit:'hr' }, locked:false }
+        ];
+        saveDraftGoals(defaults);
+        return defaults;
+      } catch(e) { return []; }
+    }
     function saveDraftGoals(goals) { localStorage.setItem(_draftKey(), JSON.stringify(goals)); }
 
     function _migrateDraftGoals() {
