@@ -2845,9 +2845,12 @@
     function _draftStakesKey() { return `ft_draft_stakes_${_c.userId}`; }
 
     function getDraftGoals() {
+      if (!_c.userId) return [];
       try {
+        const seededKey = _draftKey() + '_seeded';
         const saved = localStorage.getItem(_draftKey());
         if (saved !== null) return JSON.parse(saved);
+        if (localStorage.getItem(seededKey)) return [];
         const defaults = [
           { id:`g_${_uid()}`, type:'daily_boolean',   title:'Mindful Meditation (10min)', config:{}, locked:false },
           { id:`g_${_uid()}`, type:'weekly_days',     title:'Exercise 30min', config:{ daysTarget:3 }, locked:false },
@@ -2857,12 +2860,30 @@
         return defaults;
       } catch(e) { return []; }
     }
-    function saveDraftGoals(goals) { localStorage.setItem(_draftKey(), JSON.stringify(goals)); }
+    function saveDraftGoals(goals) {
+      localStorage.setItem(_draftKey(), JSON.stringify(goals));
+      localStorage.setItem(_draftKey() + '_seeded', '1');
+    }
 
     function getDraftStakes() {
       try { return JSON.parse(localStorage.getItem(_draftStakesKey()) || 'null'); } catch(e) { return null; }
     }
     function saveDraftStakes(s) { localStorage.setItem(_draftStakesKey(), JSON.stringify(s)); }
+
+    let _stakesTick;
+    function _saveDraftStakesWithTick() {
+      const c = document.getElementById('dspComplete');
+      const r1 = document.getElementById('dspR1');
+      const r2 = document.getElementById('dspR2');
+      const f = document.getElementById('dspFail');
+      saveDraftStakes({ complete: c?.value||'', r1: r1?.value||'', r2: r2?.value||'', fail: f?.value||'' });
+      const tick = document.getElementById('stakesSavedTick');
+      if (tick) {
+        tick.style.opacity = '1';
+        clearTimeout(_stakesTick);
+        _stakesTick = setTimeout(() => { tick.style.opacity = '0'; }, 1500);
+      }
+    }
 
     function _migrateDraftGoals() {
       if (!cohort) return;
@@ -2948,13 +2969,13 @@
 
       const ds = getDraftStakes() || { complete:'', r1:'', r2:'', fail:'' };
       const stakesHTML = `
-        <div class="stakes-prompt" style="margin-top:24px;">
+        <div class="stakes-prompt" style="margin-top:24px;position:relative;">
           <div class="stakes-prompt-title">⚡ Your Stakes</div>
-          <div class="stakes-prompt-sub">Set your accountability — two redemptions, one failure consequence, and your reward for finishing strong.</div>
-          <div class="stakes-field"><label>🏆 Reward (complete all 21 days)</label><textarea id="dspComplete" placeholder="e.g. I'll book that trip I've been putting off…" oninput="saveDraftStakes({complete:this.value,r1:document.getElementById('dspR1').value,r2:document.getElementById('dspR2').value,fail:document.getElementById('dspFail').value})">${ds.complete}</textarea></div>
-          <div class="stakes-field"><label>⚡ Redemption 1 (miss a day)</label><textarea id="dspR1" placeholder="e.g. 50 burpees on a video call with the group…" oninput="saveDraftStakes({complete:document.getElementById('dspComplete').value,r1:this.value,r2:document.getElementById('dspR2').value,fail:document.getElementById('dspFail').value})">${ds.r1}</textarea></div>
-          <div class="stakes-field"><label>⚡ Redemption 2 (miss two days)</label><textarea id="dspR2" placeholder="e.g. Cold shower + public post in the group…" oninput="saveDraftStakes({complete:document.getElementById('dspComplete').value,r1:document.getElementById('dspR1').value,r2:this.value,fail:document.getElementById('dspFail').value})">${ds.r2}</textarea></div>
-          <div class="stakes-field"><label>💀 Failure consequence</label><textarea id="dspFail" placeholder="e.g. Donate $50 to a cause I hate…" oninput="saveDraftStakes({complete:document.getElementById('dspComplete').value,r1:document.getElementById('dspR1').value,r2:document.getElementById('dspR2').value,fail:this.value})">${ds.fail}</textarea></div>
+          <div id="stakesSavedTick" style="position:absolute;top:2px;right:0;font-size:0.72rem;font-weight:700;color:#34C759;opacity:0;transition:opacity 0.3s ease;pointer-events:none;">✓ Saved</div>
+          <div class="stakes-field"><label style="color:#34C759;">🏆 Reward (complete all 21 days)</label><textarea id="dspComplete" placeholder="e.g. I'll book that trip I've been putting off…" oninput="_saveDraftStakesWithTick()">${ds.complete}</textarea></div>
+          <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 1 (miss a day)</label><textarea id="dspR1" placeholder="e.g. 50 burpees on a video call with the group…" oninput="_saveDraftStakesWithTick()">${ds.r1}</textarea></div>
+          <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 2 (miss two days)</label><textarea id="dspR2" placeholder="e.g. Cold shower + public post in the group…" oninput="_saveDraftStakesWithTick()">${ds.r2}</textarea></div>
+          <div class="stakes-field"><label style="color:#FF3B30;">💀 Failure consequence</label><textarea id="dspFail" placeholder="e.g. Donate $50 to a cause I hate…" oninput="_saveDraftStakesWithTick()">${ds.fail}</textarea></div>
         </div>`;
 
       document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
