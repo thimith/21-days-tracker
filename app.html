@@ -1365,7 +1365,7 @@
     // ══════════════════════════════════════════════════════════════════════
     // INIT
     // ══════════════════════════════════════════════════════════════════════
-    function _applyDataAndRender({ evalRedemptionsNow = true } = {}) {
+    function _applyDataAndRender({ evalRedemptionsNow = true, showOnboarding = true } = {}) {
       session = { userId: _c.userId, role: _c.profile?.role };
       user    = _c.profile;
       cohort  = _c.cohort;
@@ -1397,8 +1397,9 @@
         banner.style.display = 'none';
       }
 
-      // Show onboarding if no membership of any kind
+      // Show onboarding if no membership of any kind — only on fresh data
       if (!cohort && !_c.skoolMember) {
+        if (!showOnboarding) return;
         _showOnbChoose();
         return;
       }
@@ -1447,7 +1448,7 @@
       const result = await loadData();
       if (result === 'noauth') return;
 
-      _applyDataAndRender({ evalRedemptionsNow: result !== 'cache' });
+      _applyDataAndRender({ evalRedemptionsNow: result !== 'cache', showOnboarding: result !== 'cache' });
 
       // Always fetch cohort members for admin dropdown (regardless of cache)
       _fetchCohortMembers().then(() => _updateMemberDropdown()).catch(() => {});
