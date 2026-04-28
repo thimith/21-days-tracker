@@ -2977,12 +2977,13 @@
         </div>`;
 
       const ds = getDraftStakes() || { complete:'', r1:'', r2:'', fail:'' };
-      const hasStakesData = !!(ds.complete || ds.r1 || ds.r2 || ds.fail);
-      if (hasStakesData && !stakesOpen) stakesOpen = true;
       const stakesHTML = stakesOpen ? `
         <div class="stakes-prompt" style="margin-top:16px;position:relative;">
-          <div class="stakes-prompt-title">⚡ Your Stakes</div>
-          <div id="stakesSavedTick" style="position:absolute;top:0;right:4px;font-size:0.72rem;font-weight:700;color:#34C759;opacity:0;transition:opacity 0.3s ease;pointer-events:none;white-space:nowrap;">✓ Saved</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <div class="stakes-prompt-title" style="margin-bottom:0;">⚡ Your Stakes</div>
+            <button onclick="toggleStakes()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;padding:2px 6px;border-radius:6px;" title="Collapse">▲ hide</button>
+          </div>
+          <div id="stakesSavedTick" style="position:absolute;top:0;right:60px;font-size:0.72rem;font-weight:700;color:#34C759;opacity:0;transition:opacity 0.3s ease;pointer-events:none;white-space:nowrap;">✓ Saved</div>
           <div class="stakes-field"><label style="color:#34C759;">🏆 Reward (complete all 21 days)</label><textarea id="dspComplete" placeholder="e.g. I'll book that trip I've been putting off…" oninput="_saveDraftStakesWithTick()">${ds.complete}</textarea></div>
           <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 1 (miss a day)</label><textarea id="dspR1" placeholder="e.g. 50 burpees on a video call with the group…" oninput="_saveDraftStakesWithTick()">${ds.r1}</textarea></div>
           <div class="stakes-field"><label style="color:#FF9500;">⚡ Redemption 2 (miss two days)</label><textarea id="dspR2" placeholder="e.g. Cold shower + public post in the group…" oninput="_saveDraftStakesWithTick()">${ds.r2}</textarea></div>
