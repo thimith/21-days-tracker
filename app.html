@@ -886,6 +886,19 @@
         }).then(() => {});
       },
       reorderGoals(fromId, insertBeforeId) {
+        if (!cohort) {
+          const drafts = getDraftGoals();
+          const fromIdx = drafts.findIndex(g => g.id === fromId);
+          if (fromIdx < 0) return;
+          const [moved] = drafts.splice(fromIdx, 1);
+          if (!insertBeforeId) { drafts.push(moved); }
+          else {
+            const toIdx = drafts.findIndex(g => g.id === insertBeforeId);
+            if (toIdx < 0) { drafts.push(moved); } else { drafts.splice(toIdx, 0, moved); }
+          }
+          saveDraftGoals(drafts);
+          return;
+        }
         // insertBeforeId: null = move to end of array
         const fromIdx = _c.goals.findIndex(g => g.id === fromId);
         if (fromIdx < 0) return;
@@ -2314,7 +2327,7 @@
         card.style.display = '';
         _dnd = null;
         db.reorderGoals(goalId, insertBeforeId);
-        renderContent();
+        _rerender();
       }, 220);
     }
 
@@ -2323,7 +2336,7 @@
       const { card, clone, placeholder } = _dnd;
       clone.remove(); placeholder.remove(); card.style.display = '';
       _dnd = null;
-      renderContent();
+      _rerender();
     }
 
     // ── Edit mode (overlay: rename + drag handle + color picker) ──────────
@@ -2341,8 +2354,10 @@
     function _enterEditMode(card) {
       if (_editCardId === card.dataset.goalId) return;
       _exitEditMode();
-      const goalId = card.dataset.goalId;
-      const goal   = _c.goals.find(g => g.id === goalId);
+      const goalId       = card.dataset.goalId;
+      const _draftGoals  = !cohort ? getDraftGoals() : null;
+      const isDraftGoal  = !!_draftGoals?.find(g => g.id === goalId);
+      const goal         = _c.goals.find(g => g.id === goalId) || _draftGoals?.find(g => g.id === goalId) || null;
       const currentTitle = goal?.title || card.querySelector('.goal-title')?.textContent || '';
       let selectedColor  = goal?.config?.color || '';
 
@@ -2417,23 +2432,30 @@
         const newTitle     = input.value.trim();
         const titleChanged = newTitle && newTitle !== currentTitle;
         const colorChanged = selectedColor !== (goal?.config?.color || '');
-        if (goal) {
-          if (titleChanged) goal.title = newTitle;
-          if (colorChanged) { goal.config = goal.config || {}; goal.config.color = selectedColor; }
-          if (titleChanged || colorChanged) {
+        if (titleChanged || colorChanged) {
+          if (isDraftGoal) {
+            const drafts = getDraftGoals();
+            const idx = drafts.findIndex(g => g.id === goalId);
+            if (idx >= 0) {
+              if (titleChanged) drafts[idx].title = newTitle;
+              if (colorChanged) { drafts[idx].config = drafts[idx].config || {}; drafts[idx].config.color = selectedColor; }
+              saveDraftGoals(drafts);
+            }
+          } else if (goal) {
+            if (titleChanged) goal.title = newTitle;
+            if (colorChanged) { goal.config = goal.config || {}; goal.config.color = selectedColor; }
             const upd = {};
             if (titleChanged) upd.title = newTitle;
             if (colorChanged) upd.config = goal.config;
             sb.from('goals').update(upd).eq('id', goalId).then(() => {});
           }
         }
-        // Propagate accent immediately to all day pages in the pager
         if (colorChanged) {
           document.querySelectorAll(`[data-goal-id="${goalId}"]`).forEach(el => {
             el.style.borderLeft = selectedColor ? `4px solid ${selectedColor}` : '';
           });
         }
-        renderContent();
+        if (isDraftGoal) renderNoCohort(); else renderContent();
       }
     }
 
@@ -2909,16 +2931,54 @@
       }
     }
 
+    function _renderDraftGoalCard(g) {
+      const color = g.config?.color || '';
+      const accentStyle = color ? `border-left:4px solid ${color};` : '';
+      const cfg = g.config || {};
+      let cfgLabel = '';
+      switch (g.type) {
+        case 'daily_boolean':      cfgLabel = 'Yes / No · Daily'; break;
+        case 'daily_count':        cfgLabel = `${cfg.dailyTarget||1}× · Daily`; break;
+        case 'daily_time_min':     { const t = _timeDisp(cfg.weeklyTargetMinutes||60, cfg);  cfgLabel = `Min ${t.val}${t.unit} · Daily`; break; }
+        case 'daily_time_max':     { const t = _timeDisp(cfg.weeklyMaxMinutes||120, cfg);    cfgLabel = `Max ${t.val}${t.unit} · Daily`; break; }
+        case 'weekly_days':        cfgLabel = `${cfg.daysTarget||5} days/week`; break;
+        case 'weekly_count':       cfgLabel = `${cfg.weeklyTarget||3}× per week`; break;
+        case 'daily_count_weekly': cfgLabel = `${cfg.dailyTarget||1}× · ${cfg.daysTarget||5} days/week`; break;
+        case 'weekly_time_min':    { const t = _timeDisp(cfg.weeklyTargetMinutes||60, cfg);  cfgLabel = `Min ${t.val}${t.unit}/week`; break; }
+        case 'weekly_time_max':    { const t = _timeDisp(cfg.weeklyMaxMinutes||120, cfg);    cfgLabel = `Max ${t.val}${t.unit}/week`; break; }
+        case 'milestone':          cfgLabel = '21-day goal'; break;
+        case 'total_count':        cfgLabel = `${cfg.totalTarget||10}× total`; break;
+        case 'total_time_min':     { const t = _timeDisp(cfg.totalTargetMinutes||120, cfg);  cfgLabel = `Min ${t.val}${t.unit} total`; break; }
+        case 'total_time_max':     { const t = _timeDisp(cfg.totalMaxMinutes||300, cfg);     cfgLabel = `Max ${t.val}${t.unit} total`; break; }
+        default: cfgLabel = g.type;
+      }
+      return `
+        <div data-goal-id="${g.id}" data-goal-type="${g.type}" class="goal-card" style="${accentStyle}">
+          <div class="bool-row">
+            <div style="flex:1;min-width:0;">
+              <div class="goal-title">${g.title}</div>
+              <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${cfgLabel}</div>
+            </div>
+            <div class="check-circle" style="opacity:0.18;pointer-events:none;flex-shrink:0;">
+              <svg width="13" height="10" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>`;
+    }
+
     function renderNoCohort() {
       const drafts = getDraftGoals();
-      const listHTML = drafts.length ? drafts.map((g, i) => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border-radius:10px;border:1.5px solid var(--border);margin-bottom:6px;position:relative;">
-          <span style="font-size:0.88rem;font-weight:600;color:var(--text);">${g.title}</span>
-          <div style="display:flex;gap:2px;align-items:center;">
-            <button onclick="editDraftGoal(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:3px 6px;border-radius:6px;" title="Edit">✏️</button>
-            <button onclick="deleteDraftGoal(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:3px 5px;border-radius:6px;">✕</button>
-          </div>
-        </div>`).join('') : '';
+      const _dailyT     = ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'];
+      const _weeklyT    = ['weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'];
+      const _milestoneT = ['milestone','total_count','total_time_min','total_time_max'];
+      const draftDaily     = drafts.filter(g => _dailyT.includes(g.type));
+      const draftWeekly    = drafts.filter(g => _weeklyT.includes(g.type));
+      const draftMilestone = drafts.filter(g => _milestoneT.includes(g.type));
+      const listHTML = drafts.length ? [
+        ...(draftDaily.length     ? [`<div class="goal-group-label">Daily</div>`,   ...draftDaily.map(_renderDraftGoalCard)]     : []),
+        ...(draftWeekly.length    ? [`<div class="goal-group-label">Weekly</div>`,  ...draftWeekly.map(_renderDraftGoalCard)]    : []),
+        ...(draftMilestone.length ? [`<div class="goal-group-label">21-Day</div>`,  ...draftMilestone.map(_renderDraftGoalCard)] : []),
+      ].join('') : '';
 
       const formHTML = `
         <div style="margin-top:16px;">
@@ -2968,6 +3028,15 @@
                 </div>
               </div>
             </div>
+            <div class="form-field">
+              <label class="form-label">Card color</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                ${_GOAL_COLORS.map(({hex,label}) => hex
+                  ? `<button type="button" onclick="addGoalColor='${hex}';renderNoCohort()" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
+                  : `<button type="button" onclick="addGoalColor='';renderNoCohort()" title="None" style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
+                ).join('')}
+              </div>
+            </div>
             <div class="form-row">
               <button type="button" class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
               <button type="button" class="btn-xs pri" onclick="saveGoal()">${editingDraftIdx >= 0 ? 'Save Changes' : 'Add Goal'}</button>
@@ -2999,6 +3068,7 @@
         ${formHTML}
         ${stakesHTML}
       </div>`;
+      initGoalDragDrop();
     }
 
     function deleteDraftGoal(index) {
