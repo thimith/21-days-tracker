@@ -1219,6 +1219,24 @@
       }).join('');
     }
 
+    let _skoolPickedDate = null;
+    function skoolPickDate(date, btn) {
+      _skoolPickedDate = date;
+      document.querySelectorAll('#skoolMondayList .onb-date-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const confirmBtn = document.getElementById('skoolConfirmBtn');
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.style.opacity = '1'; }
+    }
+    async function skoolConfirmCycle() {
+      if (!_skoolPickedDate) return;
+      const btn = document.getElementById('skoolConfirmBtn');
+      btn.disabled = true; btn.textContent = 'Joining…';
+      const cycleId = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
+      const { error } = await sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _skoolPickedDate, cycle_number: 1 });
+      if (error) { btn.disabled = false; btn.textContent = 'Confirm — I\'m in'; btn.style.opacity='1'; alert('Error: ' + error.message); return; }
+      window.location.reload();
+    }
+
     function onbSelectDate(date, btn) {
       _onbSelectedDate = date;
       document.querySelectorAll('#onbMondayList .onb-date-btn').forEach(b => b.classList.remove('selected'));
@@ -1313,6 +1331,17 @@
         const active = actives.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
         const picked = active || cohorts.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0];
         if (picked) _c.cohort = { ...picked, startDate: picked.start_date };
+      }
+
+      // For Skool members without an exclusive cohort, use their skool cycle
+      if (!_c.cohort && skoolMbr) {
+        const { data: cycles } = await sb.from('skool_cycles')
+          .select('*').eq('user_id', userId).order('start_date', { ascending: false });
+        if (cycles?.length) {
+          const active = cycles.find(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+          const picked = active || cycles[0];
+          _c.cohort = { id: picked.id, startDate: picked.start_date, start_date: picked.start_date, name: 'Skool Community' };
+        }
       }
 
       if (!_c.cohort) { _saveAppCache(); return; }
@@ -1702,28 +1731,10 @@
             <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
             ${!addFormOpen && goals.length > 0 ? `
               ${!_c.stakes ? `
-              <div class="stakes-prompt" id="stakesPrompt">
+              <a href="me.html" class="stakes-prompt" id="stakesPrompt" style="display:block;text-decoration:none;">
                 <div class="stakes-prompt-title">⚡ Set your stakes</div>
-                <div class="stakes-prompt-sub">What happens if you slip? What do you get if you crush it? Real stakes make real accountability.</div>
-                <div class="stakes-field">
-                  <label>🏆 Reward if I complete</label>
-                  <textarea id="spComplete" placeholder="e.g. I'll book that trip I've been putting off…"></textarea>
-                </div>
-                <div class="stakes-field">
-                  <label>⚡ Slip #1 task</label>
-                  <textarea id="spR1" placeholder="e.g. 50 burpees on a video call with the group…"></textarea>
-                </div>
-                <div class="stakes-field">
-                  <label>⚡ Slip #2 task</label>
-                  <textarea id="spR2" placeholder="e.g. Cold shower + public post in the group…"></textarea>
-                </div>
-                <div class="stakes-field">
-                  <label>💀 Fail (3 strikes)</label>
-                  <textarea id="spFail" placeholder="e.g. Donate $50 to a cause I hate…"></textarea>
-                </div>
-                <button type="button" class="btn-xs pri" style="width:100%;margin-top:4px;" onclick="saveOwnStakes()">Save Stakes</button>
-                <div class="stakes-saved-msg" id="stakesSavedMsg">Stakes saved ✓</div>
-              </div>` : ''}
+                <div class="stakes-prompt-sub">What happens if you slip? What do you get if you crush it? Real stakes make real accountability. <strong style="color:var(--orange);">Set them on your profile →</strong></div>
+              </a>` : ''}
               <button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
       }
@@ -2981,7 +2992,7 @@
       ].join('') : '';
 
       const formHTML = `
-        <div style="margin-top:16px;">
+        <div style="margin-top:8px;">
           <div class="add-form${addFormOpen?' open':''}" id="addForm">
             <div class="form-field">
               <label class="form-label">Goal name</label>
@@ -3059,11 +3070,36 @@
           <div class="stakes-field"><label style="color:#FF3B30;">💀 Failure consequence</label><textarea id="dspFail" placeholder="e.g. Donate $50 to a cause I hate…" oninput="_saveDraftStakesWithTick()">${ds.fail}</textarea></div>
         </div>` : `
         <div style="margin-top:16px;">
-          <button type="button" onclick="toggleStakes()" style="width:100%;padding:12px;background:var(--bg);color:#007AFF;font-family:inherit;font-size:0.88rem;font-weight:700;border:2px dashed rgba(0,122,255,0.3);border-radius:12px;cursor:pointer;transition:border-color 0.2s,background 0.2s;" onmouseover="this.style.borderColor='#007AFF';this.style.background='rgba(0,122,255,0.06)'" onmouseout="this.style.borderColor='rgba(0,122,255,0.3)';this.style.background='var(--bg)'">+ Add your stakes</button>
+          <a href="me.html" style="display:block;width:100%;padding:12px;background:var(--bg);color:#007AFF;font-family:inherit;font-size:0.88rem;font-weight:700;border:2px dashed rgba(0,122,255,0.3);border-radius:12px;cursor:pointer;text-align:center;text-decoration:none;box-sizing:border-box;">+ Add your stakes →</a>
         </div>`;
 
+      // Skool members without a cycle: show date picker, no goal form
+      if (_c.skoolMember) {
+        const mondays = _getMondays();
+        const mondayBtns = mondays.map(m => {
+          const ds = localDateStr(m);
+          const today = new Date(); today.setHours(0,0,0,0);
+          const isPast = m < today;
+          const label = isPast ? 'Start retroactively' : m.getTime() === today.getTime() ? 'This Monday' : 'Next Monday';
+          const dateLabel = m.toLocaleDateString('en-US', { month:'long', day:'numeric' });
+          return `<button class="onb-date-btn" data-date="${ds}" onclick="skoolPickDate('${ds}',this)" style="text-align:left;">
+            <div class="onb-date-label">${dateLabel}</div>
+            <div class="onb-date-meta">${label}</div>
+          </button>`;
+        }).join('');
+        document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
+          <div style="background:var(--card);border-radius:16px;padding:20px 18px;box-shadow:var(--shadow);border-left:4px solid var(--orange);">
+            <div style="font-size:0.72rem;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">🗓 Pick your start date</div>
+            <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;">Choose which Monday to begin your 21-day cycle.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="skoolMondayList">${mondayBtns}</div>
+            <button id="skoolConfirmBtn" onclick="skoolConfirmCycle()" disabled style="margin-top:14px;width:100%;padding:12px;background:var(--orange);color:#fff;font-family:inherit;font-size:0.9rem;font-weight:800;border:none;border-radius:10px;cursor:pointer;opacity:0.4;transition:opacity 0.2s;">Confirm — I'm in</button>
+          </div>
+        </div>`;
+        return;
+      }
+
       document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
-        <div class="empty-state" style="margin-bottom:20px;">${_c.skoolMember ? 'You will be added to the Skool Cohort soon.' : 'You\'re not in a cohort yet.'}<br><span style="font-size:0.78rem;color:var(--muted);margin-top:6px;display:block;">In the meantime, start planning your goals.</span></div>
+        <div class="empty-state" style="margin-bottom:20px;">You're not in a cohort yet.<br><span style="font-size:0.78rem;color:var(--muted);margin-top:6px;display:block;">In the meantime, start planning your goals.</span></div>
         ${listHTML}
         ${formHTML}
         ${stakesHTML}
