@@ -461,7 +461,7 @@
     @media (hover: hover) {
       .type-pill[data-tip]:hover::after {
         content: attr(data-tip);
-        position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+        position: absolute; bottom: calc(100% + 8px); left: 0; transform: none;
         background: #1a1a1a; color: #fff;
         font-size: 0.7rem; font-weight: 400; line-height: 1.4;
         padding: 6px 10px; border-radius: 8px;
@@ -471,7 +471,7 @@
       }
       .type-pill[data-tip]:hover::before {
         content: '';
-        position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%);
+        position: absolute; bottom: calc(100% + 2px); left: 12px; transform: none;
         border: 5px solid transparent; border-top-color: #1a1a1a;
         pointer-events: none; z-index: 100;
       }
@@ -1824,8 +1824,8 @@
                 <div style="display:flex;gap:8px;align-items:center;">
                   <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" style="flex:1;" />
                   <div style="display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
-                    <button type="button" onclick="addGoalTimeUnit='min';_rerender()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
-                    <button type="button" onclick="addGoalTimeUnit='hr';_rerender()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
+                    <button type="button" id="tunit-min" onclick="setAddTimeUnit('min')" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
+                    <button type="button" id="tunit-hr"  onclick="setAddTimeUnit('hr')"  style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
                   </div>
                 </div>
               </div>
@@ -1833,8 +1833,8 @@
                 <label class="form-label">Card color</label>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                   ${_GOAL_COLORS.map(({hex,label}) => hex
-                    ? `<button type="button" onclick="addGoalColor='${hex}';_rerender()" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
-                    : `<button type="button" onclick="addGoalColor='';_rerender()" title="None" style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
+                    ? `<button type="button" class="goal-color-btn" data-color="${hex}" onclick="setAddColor('${hex}')" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
+                    : `<button type="button" class="goal-color-btn" data-color=""       onclick="setAddColor('')"       title="None"  style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
                   ).join('')}
                 </div>
               </div>
@@ -2971,6 +2971,29 @@
     }
 
 
+    function setAddColor(hex) {
+      addGoalColor = hex;
+      document.querySelectorAll('.goal-color-btn').forEach(btn => {
+        const c = btn.dataset.color;
+        if (c === '') {
+          btn.style.border        = hex === '' ? '2px solid #333' : '2px dashed #ccc';
+          btn.style.borderStyle   = hex === '' ? 'solid' : 'dashed';
+        } else {
+          btn.style.border = `3px solid ${c === hex ? '#333' : 'transparent'}`;
+        }
+      });
+    }
+
+    function setAddTimeUnit(unit) {
+      addGoalTimeUnit = unit;
+      ['min','hr'].forEach(u => {
+        const btn = document.getElementById(`tunit-${u}`);
+        if (!btn) return;
+        btn.style.background = u === unit ? 'var(--orange)' : 'var(--bg)';
+        btn.style.color      = u === unit ? '#fff' : 'var(--muted)';
+      });
+    }
+
     function openAddForm() {
       addFormOpen = true;
       document.getElementById('addForm').classList.add('open');
@@ -3182,8 +3205,8 @@
               <div style="display:flex;gap:8px;align-items:center;">
                 <input class="form-input" id="cfgTimeVal" type="number" inputmode="numeric" min="1" onwheel="this.blur()" style="flex:1;" />
                 <div style="display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
-                  <button type="button" onclick="addGoalTimeUnit='min';renderNoCohort()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
-                  <button type="button" onclick="addGoalTimeUnit='hr';renderNoCohort()" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
+                  <button type="button" id="tunit-min" onclick="setAddTimeUnit('min')" style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='min'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='min'?'#fff':'var(--muted)'};">min</button>
+                  <button type="button" id="tunit-hr"  onclick="setAddTimeUnit('hr')"  style="padding:6px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;background:${addGoalTimeUnit==='hr'?'var(--orange)':'var(--bg)'};color:${addGoalTimeUnit==='hr'?'#fff':'var(--muted)'};">hr</button>
                 </div>
               </div>
             </div>
@@ -3191,8 +3214,8 @@
               <label class="form-label">Card color</label>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                 ${_GOAL_COLORS.map(({hex,label}) => hex
-                  ? `<button type="button" onclick="addGoalColor='${hex}';renderNoCohort()" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
-                  : `<button type="button" onclick="addGoalColor='';renderNoCohort()" title="None" style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
+                  ? `<button type="button" class="goal-color-btn" data-color="${hex}" onclick="setAddColor('${hex}')" title="${label}" style="width:26px;height:26px;border-radius:50%;border:3px solid ${addGoalColor===hex?'#333':'transparent'};background:${hex};cursor:pointer;padding:0;outline:none;"></button>`
+                  : `<button type="button" class="goal-color-btn" data-color=""       onclick="setAddColor('')"       title="None"  style="width:26px;height:26px;border-radius:50%;border:2px dashed #ccc;background:#fff;cursor:pointer;padding:0;font-size:0.65rem;color:#aaa;outline:none;${addGoalColor===''?'border-color:#333;border-style:solid;':''}">&times;</button>`
                 ).join('')}
               </div>
             </div>
