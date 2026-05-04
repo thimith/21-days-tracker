@@ -343,7 +343,7 @@
       const dayLabel = day === null ? 'No cycle' : day < 1 ? `Day ${day}` : day <= 21 ? `Day ${day}/21` : 'Complete';
       const key = `${member.id}_${cohortId}`;
       return `<div>
-        <div onclick="toggleMemberExpand('${member.id}','${cohortId||''}','${type}')" style="display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);">
+        <div onclick="toggleMemberExpand('${member.id}','${cohortId||''}','${type}','${(member.first_name||'').replace(/'/g,"\\'")}' )" style="display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);">
           <div class="member-avatar">${(member.first_name||'?')[0].toUpperCase()}</div>
           <div class="member-info" style="flex:1;">
             <div class="member-name" id="mname-${key}">${member.first_name}</div>
@@ -360,7 +360,7 @@
       </div>`;
     }
 
-    async function toggleMemberExpand(userId, cohortId, type) {
+    async function toggleMemberExpand(userId, cohortId, type, firstName) {
       const key = `${userId}_${cohortId}`;
       const expEl = document.getElementById(`mexp-${key}`);
       const chev  = document.getElementById(`mchev-${key}`);
@@ -368,12 +368,14 @@
       const isOpen = expEl.style.display !== 'none';
       expEl.style.display = isOpen ? 'none' : '';
       if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
-      if (!isOpen) await loadMemberExpand(userId, cohortId, type, key);
+      if (!isOpen) await loadMemberExpand(userId, cohortId, type, key, firstName);
     }
 
-    async function loadMemberExpand(userId, cohortId, type, key) {
+    async function loadMemberExpand(userId, cohortId, type, key, firstName) {
       const expEl = document.getElementById(`mexp-${key}`);
       if (!expEl) return;
+      // Fallback: read name from rendered DOM if not passed
+      if (!firstName) firstName = document.getElementById(`mname-${key}`)?.textContent?.trim() || 'this member';
 
       const [goalsRes, stakesRes] = await Promise.all([
         cohortId ? sb.from('goals').select('*').eq('user_id', userId).eq('cohort_id', cohortId).order('sort_order') : { data: [] },
@@ -443,7 +445,45 @@
               <textarea class="stakes-input" rows="1" oninput="adminSaveStakeDebounce('${userId}','${cohortId}','fail',this.value)">${s?.fail||''}</textarea></div>
             <div id="stakes-saved-${key}" style="font-size:0.72rem;font-weight:700;color:var(--green);display:none;">✓ Saved</div>
           </div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+          <div id="del-confirm-${key}" style="display:none;background:var(--red-lt);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+            <div style="font-size:0.82rem;color:var(--red);font-weight:600;margin-bottom:6px;">⚠ This will permanently delete ${firstName||'this member'} from the entire database — profile, goals, check-ins, stakes, cycles, and all memberships. Cannot be undone.</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn secondary" style="font-size:0.8rem;" onclick="document.getElementById('del-confirm-${key}').style.display='none'">Cancel</button>
+              <button class="btn" style="background:var(--red);color:#fff;font-size:0.8rem;" onclick="deleteMemberEntirely('${userId}','${key}')">Yes, delete permanently</button>
+            </div>
+          </div>
+          <button type="button" class="btn danger" style="font-size:0.8rem;padding:8px 14px;" onclick="document.getElementById('del-confirm-${key}').style.display='block'">🗑 Delete from database</button>
         </div>`;
+    }
+
+    async function deleteMemberEntirely(userId, key) {
+      const expEl = document.getElementById(`mexp-${key}`);
+      if (expEl) expEl.innerHTML = '<div class="loading-state" style="padding:8px 0;">Deleting…</div>';
+
+      // 1. Fetch all goal IDs so we can delete their checkins
+      const { data: goals } = await sb.from('goals').select('id').eq('user_id', userId);
+      const goalIds = (goals || []).map(g => g.id);
+
+      // 2. Delete checkins first (FK on goal_id)
+      if (goalIds.length) await sb.from('checkins').delete().in('goal_id', goalIds);
+
+      // 3. Delete all other user data in parallel
+      await Promise.all([
+        sb.from('goals').delete().eq('user_id', userId),
+        sb.from('stakes').delete().eq('user_id', userId),
+        sb.from('redemptions').delete().eq('user_id', userId),
+        sb.from('skool_cycles').delete().eq('user_id', userId),
+        sb.from('skool_members').delete().eq('user_id', userId),
+        sb.from('cohort_members').delete().eq('user_id', userId),
+        sb.from('pending_requests').delete().eq('user_id', userId),
+      ]);
+
+      // 4. Delete profile last
+      await sb.from('profiles').delete().eq('id', userId);
+
+      renderMembers();
     }
 
     const _adminStakeTimers = {};
