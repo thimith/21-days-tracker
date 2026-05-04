@@ -463,7 +463,12 @@
       let detailHTML = '';
       if (isOpen) {
         const goalRows = goals.length
-          ? goals.map(g => `<div class="detail-goal-row"><div class="detail-goal-name">${g.title}</div><div class="detail-goal-status na">${g.type.replace(/_/g,' ')}</div></div>`).join('')
+          ? goals.map(g => {
+              const frame = ['milestone','total_count','total_time_min','total_time_max'].includes(g.type) ? '21 Days'
+                          : ['weekly_boolean','weekly_days','weekly_count','weekly_time_min','weekly_time_max','daily_count_weekly'].includes(g.type) ? 'Weekly'
+                          : 'Daily';
+              return `<div class="detail-goal-row"><div class="detail-goal-name">${g.title}</div><div class="detail-goal-status na">${frame}</div></div>`;
+            }).join('')
           : '<div style="font-size:0.8rem;color:var(--muted);">No goals set.</div>';
         const redRows = redemptions.length
           ? redemptions.map(r => `<div class="redemption-row"><span class="r-badge ${r.status}">${r.status==='pending'?'Pending':'Done'}</span><span class="r-reason">${r.reason||''}</span></div>`).join('')
