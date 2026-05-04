@@ -1206,15 +1206,9 @@
       const dow = today.getDay(); // 0=Sun,1=Mon...
       const daysToLastMon = dow === 0 ? 6 : dow - 1;
       const lastMon = new Date(today); lastMon.setDate(today.getDate() - daysToLastMon);
-      const mondays = [];
-      // Previous Monday (if today isn't Monday)
-      if (daysToLastMon > 0) mondays.push(new Date(lastMon));
-      // Next two Mondays
-      for (let i = 1; i <= 2; i++) {
-        const m = new Date(lastMon); m.setDate(lastMon.getDate() + i * 7);
-        mondays.push(m);
-      }
-      return mondays;
+      const nextMon = new Date(lastMon); nextMon.setDate(lastMon.getDate() + 7);
+      // Always 2 options: this/last Monday + next Monday
+      return [lastMon, nextMon];
     }
 
     function _renderMondayPicker() {
