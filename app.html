@@ -1865,7 +1865,7 @@
     function renderContent() {
       _editCardId = null; // exit edit mode on any re-render
       const pageEl = document.querySelector(`.day-page[data-date="${selectedDate}"]`);
-      if (!pageEl) return;
+      if (!pageEl) { render(); return; } // today not in cycle yet — rebuild everything
       pageEl.innerHTML = _buildDayHTML(selectedDate);
       initGoalDragDrop();
     }
@@ -2724,7 +2724,9 @@
         `<div class="day-page" data-date="${d}">${_buildDayHTML(d)}</div>`
       ).join('');
 
-      // Snap to current date (no animation)
+      // Snap to current date; if today not in cycle, use day 1
+      const inCycle = _pgDates.indexOf(selectedDate) >= 0;
+      if (!inCycle) selectedDate = _pgDates[0];
       const idx = Math.max(0, _pgDates.indexOf(selectedDate));
       _pageIdx = idx;
       goToPage(idx, false);
