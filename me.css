@@ -1,0 +1,134 @@
+html { font-size: 120%; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --orange:    #FF5500;
+      --orange-dk: #CC4400;
+      --orange-lt: rgba(255,85,0,0.1);
+      --green:     #34C759;
+      --red:       #FF3B30;
+      --bg:        #F5F5F7;
+      --card:      #FFFFFF;
+      --text:      #1C1C1E;
+      --muted:     #8E8E93;
+      --border:    #E5E5EA;
+      --shadow:    0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100dvh;
+      padding-bottom: calc(94px + env(safe-area-inset-bottom));
+    }
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 10px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-logo { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; }
+    .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
+    /* Bottom nav */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex;
+      padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 2px; padding: 10px 0;
+      cursor: pointer; text-decoration: none; transition: opacity 0.15s;
+    }
+    .nav-icon { display: none; }
+    .nav-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .nav-item.active .nav-label { color: var(--orange); }
+    /* Page content */
+    .page { padding: 20px 16px; margin: 0 auto; }
+    /* Profile card */
+    .profile-card {
+      background: var(--card); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .profile-avatar {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--orange); display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name { font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+    .profile-email { font-size: 0.82rem; color: var(--muted); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .role-badge {
+      display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+    }
+    .role-badge.admin { background: var(--orange-lt); color: var(--orange); }
+    .role-badge.member { background: rgba(52,199,89,0.12); color: var(--green); }
+    /* Section */
+    .section-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+    /* Info table */
+    .info-card {
+      background: var(--card); border-radius: 14px; box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 20px;
+    }
+    .info-row {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 12px 16px; gap: 12px; border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 0.82rem; color: var(--muted); font-weight: 500; flex-shrink: 0; }
+    .info-value { font-size: 0.85rem; color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
+    /* Goals list */
+    .goals-card {
+      background: var(--card); border-radius: 14px; box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 20px;
+    }
+    .goal-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 16px; gap: 10px; border-bottom: 1px solid var(--border);
+    }
+    .goal-row:last-child { border-bottom: none; }
+    .goal-row-title { font-size: 0.85rem; color: var(--text); font-weight: 600; flex: 1; min-width: 0; }
+    .goal-type-pill {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;
+      padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
+    }
+    .pill-boolean { background: rgba(52,199,89,0.12); color: #1a8f3a; }
+    .pill-weekly  { background: rgba(0,122,255,0.1);  color: #0057cc; }
+    .pill-time    { background: rgba(255,85,0,0.1);   color: var(--orange-dk); }
+    .pill-milestone { background: rgba(175,82,222,0.12); color: #8e44ad; }
+    .goal-config  { font-size: 0.74rem; color: var(--muted); flex-shrink: 0; }
+    /* Logout */
+    .logout-btn {
+      width: 100%; padding: 14px; border-radius: 14px; border: none;
+      background: var(--red); color: #fff; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; letter-spacing: -0.01em; margin-bottom: 20px;
+      transition: opacity 0.15s;
+    }
+    .logout-btn:active { opacity: 0.8; }
+    @media (min-width: 768px) {
+      html { background: #DDDDE0; }
+      body { max-width: min(62.5vw, 720px); margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
+      .bottom-nav { left: 50%; right: auto; transform: translateX(-50%); width: min(62.5vw, 720px); }
+    }
+.stake-field {
+      padding: 12px 16px; border-bottom: 1px solid var(--border); position: relative;
+    }
+    .stake-field:last-child { border-bottom: none; }
+    .stake-label {
+      font-size: 0.75rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+    }
+    .stake-textarea {
+      width: 100%; border: none; outline: none; resize: none;
+      font-family: inherit; font-size: 0.88rem; color: var(--text);
+      background: transparent; line-height: 1.5; min-height: 48px;
+    }
+    .stake-saved {
+      position: absolute; top: 10px; right: 14px;
+      font-size: 0.68rem; font-weight: 700; color: var(--green);
+      opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+    }
+    .stake-saved.show { opacity: 1; }
