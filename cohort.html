@@ -288,12 +288,14 @@
     }
 
     async function loadSkoolData() {
-      // All skool members + profiles
-      const { data: memberRows } = await sb.from('skool_members').select('user_id, profiles(*)');
-      _c.skoolMembers = (memberRows || []).map(r => r.profiles).filter(Boolean);
-      if (!_c.skoolMembers.length) return;
+      // Fetch skool member user_ids, then profiles separately (no FK join needed)
+      const { data: memberRows } = await sb.from('skool_members').select('user_id');
+      if (!memberRows?.length) return;
 
-      const memberIds = _c.skoolMembers.map(m => m.id);
+      const memberIds = memberRows.map(r => r.user_id);
+      const { data: profiles } = await sb.from('profiles').select('*').in('id', memberIds);
+      _c.skoolMembers = profiles || [];
+      if (!_c.skoolMembers.length) return;
 
       // Most recent cycle per member
       const { data: cycles } = await sb.from('skool_cycles')
