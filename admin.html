@@ -474,6 +474,7 @@
         sb.from('goals').delete().eq('user_id', userId),
         sb.from('stakes').delete().eq('user_id', userId),
         sb.from('redemptions').delete().eq('user_id', userId),
+        sb.from('journal_entries').delete().eq('user_id', userId),
         sb.from('skool_cycles').delete().eq('user_id', userId),
         sb.from('skool_members').delete().eq('user_id', userId),
         sb.from('cohort_members').delete().eq('user_id', userId),
