@@ -725,13 +725,12 @@
       <button onclick="logout()" style="margin-top:24px;background:none;border:none;color:var(--muted);font-size:0.82rem;cursor:pointer;text-decoration:underline;font-family:inherit;">Sign out</button>
     </div>
 
-    <!-- Step 2a: Skool date pick -->
-    <div id="onbStepSkoolDate" style="display:none;">
+    <!-- Step 2a: Skool join -->
+    <div id="onbStepSkoolDate" style="display:none; text-align:center; max-width:320px;">
       <button class="onb-back" onclick="onbBack('choose')">← Back</button>
-      <div class="onb-title">Pick your start Monday</div>
-      <div class="onb-sub">You can start this week, next week, or the week after.</div>
-      <div class="onb-date-grid" id="onbMondayList"></div>
-      <button class="onb-submit" id="onbSkoolSubmit" onclick="onbSubmitSkool()" disabled>Request to Join</button>
+      <div class="onb-title">Skool Community</div>
+      <div class="onb-sub" style="margin-bottom:28px;">Start any Monday. Do 21-day cycles at your own pace. Once you join, you'll pick your start date inside the app.</div>
+      <button class="onb-submit" id="onbSkoolSubmit" onclick="onbSubmitSkool()">Join Now →</button>
     </div>
 
     <!-- Step 2b: Exclusive cohort pick -->
@@ -1194,8 +1193,6 @@
       document.getElementById('onbStepChoose').style.display = 'none';
 
       if (type === 'skool') {
-        document.getElementById('onbSkoolSubmit').textContent = 'Join Now';
-        _renderMondayPicker();
         document.getElementById('onbStepSkoolDate').style.display = '';
       } else {
         document.getElementById('onbExclusiveSubmit').textContent = 'Join Now';
@@ -1299,16 +1296,11 @@
     }
 
     async function onbSubmitSkool() {
-      if (!_onbSelectedDate) return;
       const btn = document.getElementById('onbSkoolSubmit');
       btn.disabled = true; btn.textContent = 'Joining…';
       const memberId = Date.now().toString(36) + Math.random().toString(36).substr(2,5);
-      const cycleId  = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
-      const [{ error: e1 }, { error: e2 }] = await Promise.all([
-        sb.from('skool_members').upsert({ id: memberId, user_id: _c.userId }, { onConflict: 'user_id' }),
-        sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _onbSelectedDate, cycle_number: 1 })
-      ]);
-      if (e1 || e2) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + (e1||e2).message); return; }
+      const { error } = await sb.from('skool_members').upsert({ id: memberId, user_id: _c.userId }, { onConflict: 'user_id' });
+      if (error) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + error.message); return; }
       localStorage.removeItem('ft_invite_path');
       window.location.reload();
     }
