@@ -1464,7 +1464,7 @@
       // Parallel: goals + stakes + redemptions
       const [goalsRes, stakesRes, redemptionsRes] = await Promise.all([
         sb.from('goals').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).order('sort_order'),
-        sb.from('stakes').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).single(),
+        sb.from('stakes').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).maybeSingle(),
         sb.from('redemptions').select('*').eq('user_id', targetUserId).eq('cohort_id', _c.cohort.id).order('strike_number')
       ]);
 
