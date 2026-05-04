@@ -752,6 +752,41 @@
     </div>
   </div>
 
+  <!-- Cycle-end overlay -->
+  <div id="cycleEndOverlay" class="onb-overlay" style="display:none;">
+    <div class="onb-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
+
+    <!-- Intro screen -->
+    <div id="cycleEndIntro" style="text-align:center; max-width:320px;">
+      <div style="font-size:2.8rem; margin-bottom:12px;">🎉</div>
+      <div class="onb-title">Challenge Complete!</div>
+      <div class="onb-sub" style="margin-bottom:28px;">You finished your 21-day cycle. Ready to go again?</div>
+      <button onclick="showCycleEndDatePicker()" style="width:100%; padding:16px; background:var(--orange); color:#fff; font-family:inherit; font-size:1rem; font-weight:800; border:none; border-radius:12px; cursor:pointer; margin-bottom:12px;">Start a new 21-day challenge</button>
+      <button onclick="dismissCycleEnd()" style="width:100%; padding:12px; background:none; color:var(--muted); font-family:inherit; font-size:0.88rem; font-weight:600; border:none; cursor:pointer; text-decoration:underline;">View my last cycle →</button>
+    </div>
+
+    <!-- Date picker screen -->
+    <div id="cycleEndDatePick" style="display:none; width:100%; max-width:360px;">
+      <button class="onb-back" onclick="showCycleEndIntro()">← Back</button>
+      <div class="onb-title">Pick your start Monday</div>
+      <div class="onb-sub">Choose this past Monday or the upcoming one.</div>
+      <div class="onb-date-grid" id="cycleEndMondayList"></div>
+      <div id="cycleEndCopyWrap" style="display:none; margin-top:14px; background:rgba(255,255,255,0.15); border-radius:10px; padding:12px 14px;">
+        <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; color:var(--text); cursor:pointer; font-weight:600;">
+          <input type="checkbox" id="cycleEndCopyGoals" style="width:18px; height:18px; accent-color:var(--orange);" />
+          Copy my previous goals
+        </label>
+      </div>
+      <button id="cycleEndConfirmBtn" onclick="confirmNewCycle()" disabled style="margin-top:16px; width:100%; padding:14px; background:var(--orange); color:#fff; font-family:inherit; font-size:0.95rem; font-weight:800; border:none; border-radius:12px; cursor:pointer; opacity:0.4; transition:opacity 0.2s;">Confirm — I'm in</button>
+    </div>
+  </div>
+
+  <!-- Between-cycles banner (shown when viewing completed cycle) -->
+  <div id="newCycleBanner" style="display:none; background:var(--orange); color:#fff; padding:10px 16px; display:none; align-items:center; justify-content:space-between; gap:12px; font-size:0.82rem; font-weight:700;">
+    <span>Challenge complete 🎉</span>
+    <button onclick="showCycleEndOverlay()" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:0.8rem; font-weight:800; cursor:pointer; white-space:nowrap;">Start new 21 days →</button>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
@@ -849,7 +884,7 @@
         }, 0);
       },
       areGoalsLocked() {
-        return _c.cohort ? this.getCohortDay(_c.cohort.startDate) >= 3 : false;
+        return _c.cohort ? this.getCohortDay(_c.cohort.startDate) >= 2 : false;
       },
       getPendingRedemptions() {
         return _c.redemptions.filter(r => r.status === 'pending');
@@ -1234,6 +1269,17 @@
       const cycleId = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
       const { error } = await sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _skoolPickedDate, cycle_number: 1 });
       if (error) { btn.disabled = false; btn.textContent = 'Confirm — I\'m in'; btn.style.opacity='1'; alert('Error: ' + error.message); return; }
+      // Copy previous goals if checkbox checked
+      const copyChecked = document.getElementById('skoolCopyGoals')?.checked;
+      if (copyChecked && (_c.goals||[]).length) {
+        const newGoals = _c.goals.map(g => ({
+          id: 'g_' + Date.now().toString(36) + Math.random().toString(36).substr(2,5),
+          user_id: _c.userId, cohort_id: cycleId,
+          type: g.type, title: g.title, config: g.config || {},
+          locked: false, sort_order: g.order ?? 0
+        }));
+        await sb.from('goals').insert(newGoals);
+      }
       window.location.reload();
     }
 
@@ -1274,6 +1320,76 @@
       const { error } = await sb.from('cohort_members').insert({ user_id: _c.userId, cohort_id: _onbSelectedCohortId });
       if (error) { btn.disabled = false; btn.textContent = 'Join Now'; alert('Error: ' + error.message); return; }
       localStorage.removeItem('ft_invite_path');
+      window.location.reload();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // CYCLE END — overlay, new cycle, copy goals
+    // ══════════════════════════════════════════════════════════════════════
+    let _newCyclePickedDate = null;
+
+    function showCycleEndOverlay() {
+      document.getElementById('cycleEndOverlay').style.display = 'flex';
+      showCycleEndIntro();
+    }
+    function showCycleEndIntro() {
+      document.getElementById('cycleEndIntro').style.display = '';
+      document.getElementById('cycleEndDatePick').style.display = 'none';
+      _newCyclePickedDate = null;
+    }
+    function dismissCycleEnd() {
+      sessionStorage.setItem('cycleEndDismissed', '1');
+      document.getElementById('cycleEndOverlay').style.display = 'none';
+    }
+    function showCycleEndDatePicker() {
+      document.getElementById('cycleEndIntro').style.display = 'none';
+      document.getElementById('cycleEndDatePick').style.display = '';
+      // Render monday options
+      const mondays = _getMondays();
+      const today = new Date(); today.setHours(0,0,0,0);
+      document.getElementById('cycleEndMondayList').innerHTML = mondays.map(m => {
+        const ds = localDateStr(m);
+        const isPast = m < today;
+        const label = isPast ? 'Start retroactively' : m.getTime() === today.getTime() ? 'This Monday' : 'Next Monday';
+        const dateLabel = m.toLocaleDateString('en-US', { month:'long', day:'numeric' });
+        return `<button class="onb-date-btn" data-date="${ds}" onclick="cycleEndPickDate('${ds}',this)">
+          <div class="onb-date-label">${dateLabel}</div>
+          <div class="onb-date-meta">${label}</div>
+        </button>`;
+      }).join('');
+      // Show copy option if previous cycle had goals
+      const prevGoals = _c.goals || [];
+      const copyWrap = document.getElementById('cycleEndCopyWrap');
+      copyWrap.style.display = prevGoals.length ? '' : 'none';
+      document.getElementById('cycleEndConfirmBtn').disabled = true;
+      document.getElementById('cycleEndConfirmBtn').style.opacity = '0.4';
+    }
+    function cycleEndPickDate(date, btn) {
+      _newCyclePickedDate = date;
+      document.querySelectorAll('#cycleEndMondayList .onb-date-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const confirmBtn = document.getElementById('cycleEndConfirmBtn');
+      confirmBtn.disabled = false; confirmBtn.style.opacity = '1';
+    }
+    async function confirmNewCycle() {
+      if (!_newCyclePickedDate) return;
+      const btn = document.getElementById('cycleEndConfirmBtn');
+      btn.disabled = true; btn.textContent = 'Creating…';
+      const cycleId = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
+      const { error } = await sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _newCyclePickedDate, cycle_number: 1 });
+      if (error) { btn.disabled = false; btn.textContent = 'Confirm — I\'m in'; btn.style.opacity='1'; alert('Error: ' + error.message); return; }
+      // Copy previous goals if checked
+      const copyChecked = document.getElementById('cycleEndCopyGoals')?.checked;
+      if (copyChecked && (_c.goals||[]).length) {
+        const newGoals = _c.goals.map(g => ({
+          id: 'g_' + Date.now().toString(36) + Math.random().toString(36).substr(2,5),
+          user_id: _c.userId, cohort_id: cycleId,
+          type: g.type, title: g.title, config: g.config || {},
+          locked: false, sort_order: g.order ?? 0
+        }));
+        await sb.from('goals').insert(newGoals);
+      }
+      sessionStorage.removeItem('cycleEndDismissed');
       window.location.reload();
     }
 
@@ -1525,8 +1641,19 @@
       const day      = db.getCohortDay(cohort.startDate);
       const pct      = Math.max(0, Math.min(100, Math.round(((Math.min(day,21)-1)/21)*100)));
 
-      const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? 'Upcoming' : 'Complete';
+      const isBetweenCycles = _c.skoolMember && day > 21;
+      const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? 'Upcoming' : isBetweenCycles ? 'Challenge Completed' : 'Complete';
       document.getElementById('cohortLabel').textContent = dayLabel;
+
+      // Show/hide the between-cycles banner and trigger overlay
+      const banner = document.getElementById('newCycleBanner');
+      if (isBetweenCycles) {
+        banner.style.display = 'flex';
+        // Show overlay once per session unless dismissed
+        if (!sessionStorage.getItem('cycleEndDismissed')) showCycleEndOverlay();
+      } else {
+        banner.style.display = 'none';
+      }
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
       document.getElementById('dotsStrip').innerHTML = dates.map((d,i) => {
@@ -3087,11 +3214,20 @@
             <div class="onb-date-meta">${label}</div>
           </button>`;
         }).join('');
+        const prevGoals = _c.goals || [];
+        const copyHTML = prevGoals.length ? `
+          <div style="margin-top:12px;background:var(--bg);border-radius:10px;padding:12px 14px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:0.88rem;color:var(--text);cursor:pointer;font-weight:600;">
+              <input type="checkbox" id="skoolCopyGoals" style="width:18px;height:18px;accent-color:var(--orange);" />
+              Copy my previous goals
+            </label>
+          </div>` : '';
         document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
           <div style="background:var(--card);border-radius:16px;padding:20px 18px;box-shadow:var(--shadow);border-left:4px solid var(--orange);">
             <div style="font-size:0.72rem;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">🗓 Pick your start date</div>
             <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;">Choose which Monday to begin your 21-day cycle.</div>
             <div style="display:flex;flex-direction:column;gap:8px;" id="skoolMondayList">${mondayBtns}</div>
+            ${copyHTML}
             <button id="skoolConfirmBtn" onclick="skoolConfirmCycle()" disabled style="margin-top:14px;width:100%;padding:12px;background:var(--orange);color:#fff;font-family:inherit;font-size:0.9rem;font-weight:800;border:none;border-radius:10px;cursor:pointer;opacity:0.4;transition:opacity 0.2s;">Confirm — I'm in</button>
           </div>
         </div>`;

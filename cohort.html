@@ -49,32 +49,32 @@
     }
     .header-logo { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 900; color: var(--text); letter-spacing: -0.02em; text-decoration: none; }
     .header-logo img { width: 28px; height: 28px; border-radius: 50%; }
-    .header-right { display: flex; align-items: center; gap: 10px; }
-    .day-badge {
-      background: var(--orange); color: #fff;
-      font-size: 0.7rem; font-weight: 800;
-      padding: 4px 10px; border-radius: 100px;
-      letter-spacing: 0.05em; text-transform: uppercase;
-    }
 
-    /* ── Cohort summary bar ── */
+    /* ── Tabs ── */
+    .tabs {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      padding: 0 16px;
+    }
+    .tab-btn {
+      flex: 1; padding: 12px 8px; font-size: 0.78rem; font-weight: 700;
+      color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; font-family: inherit; text-transform: uppercase; letter-spacing: 0.06em;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+    /* ── Summary bar ── */
     .summary-bar {
       background: var(--card);
       border-bottom: 1px solid var(--border);
       padding: 14px 20px;
       display: flex; gap: 0;
     }
-    .stat-item {
-      flex: 1; text-align: center;
-      padding: 0 8px;
-      border-right: 1px solid var(--border);
-    }
+    .stat-item { flex: 1; text-align: center; padding: 0 8px; border-right: 1px solid var(--border); }
     .stat-item:last-child { border-right: none; }
-    .stat-value {
-      font-size: 1.4rem; font-weight: 900; color: var(--text);
-      letter-spacing: -0.03em; line-height: 1;
-      margin-bottom: 3px;
-    }
+    .stat-value { font-size: 1.4rem; font-weight: 900; color: var(--text); letter-spacing: -0.03em; line-height: 1; margin-bottom: 3px; }
     .stat-value.warn { color: var(--red); }
     .stat-value.good { color: var(--green); }
     .stat-label { font-size: 0.65rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
@@ -84,62 +84,36 @@
 
     /* ── Member card ── */
     .member-card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 14px 14px;
-      box-shadow: var(--shadow);
-      cursor: pointer;
-      transition: transform 0.12s;
+      background: var(--card); border-radius: 14px; padding: 14px;
+      box-shadow: var(--shadow); cursor: pointer; transition: transform 0.12s;
     }
     .member-card:active { transform: scale(0.985); }
     .member-card.at-risk  { border-left: 4px solid var(--red);   background: var(--red-lt); }
     .member-card.complete { border-left: 4px solid var(--green); }
-
-    /* Single-row layout */
-    .member-top {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; row-gap: 6px;
-    }
-    .member-name {
-      font-size: 0.86rem; font-weight: 700; color: var(--text);
-      letter-spacing: -0.01em; flex: 1; min-width: 120px;
-    }
-    .member-meta-inline { font-size: 0.72rem; font-weight: 400; color: var(--muted); margin-left: 5px; }
+    .member-card.inactive { border-left: 4px solid var(--border); opacity: 0.65; }
+    .member-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; row-gap: 6px; }
+    .member-name { font-size: 0.86rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; flex: 1; min-width: 100px; }
+    .member-meta-inline { font-size: 0.72rem; font-weight: 400; color: var(--muted); margin-left: 4px; }
     .member-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .member-strikes { display: flex; gap: 3px; align-items: center; }
     .strike-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
     .strike-pip.active { background: var(--red); }
-
-    /* Status badge */
-    .status-badge {
-      display: inline-flex; align-items: center;
-      padding: 3px 8px; border-radius: 100px;
-      font-size: 0.66rem; font-weight: 700; white-space: nowrap;
+    .day-pill {
+      font-size: 0.68rem; font-weight: 800; padding: 3px 9px; border-radius: 100px;
+      background: var(--orange-lt); color: var(--orange); white-space: nowrap;
     }
+    .day-pill.inactive { background: var(--bg); color: var(--muted); }
+    .status-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 100px; font-size: 0.66rem; font-weight: 700; white-space: nowrap; }
     .status-badge.on-track { background: var(--green-lt); color: var(--green); }
     .status-badge.at-risk  { background: var(--red-lt);   color: var(--red); }
-    /* Chevron */
-    .member-chevron {
-      font-size: 0.68rem; color: var(--muted);
-      transition: transform 0.2s;
-    }
+    .member-chevron { font-size: 0.68rem; color: var(--muted); transition: transform 0.2s; }
     .member-card.open .member-chevron { transform: rotate(180deg); }
 
-    /* ── Expanded member detail ── */
-    .member-detail {
-      display: none;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
-    }
+    /* ── Expanded detail ── */
+    .member-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
     .member-detail.open { display: block; }
-    .detail-section-title {
-      font-size: 0.68rem; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;
-    }
-    .detail-goal-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 7px 0; border-bottom: 1px solid var(--border); gap: 8px;
-    }
+    .detail-section-title { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .detail-goal-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); gap: 8px; }
     .detail-goal-row:last-child { border-bottom: none; }
     .detail-goal-name { font-size: 0.84rem; color: var(--text); font-weight: 500; flex: 1; }
     .detail-goal-status { font-size: 0.75rem; font-weight: 700; }
@@ -147,21 +121,21 @@
     .detail-goal-status.off { color: var(--red); }
     .detail-goal-status.na  { color: var(--muted); }
     .redemption-list { margin-top: 10px; }
-    .redemption-row {
-      display: flex; align-items: center; gap: 8px;
-      padding: 7px 0; border-bottom: 1px solid var(--border);
-      font-size: 0.8rem;
-    }
+    .redemption-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
     .redemption-row:last-child { border-bottom: none; }
-    .r-badge {
-      flex-shrink: 0;
-      padding: 2px 7px; border-radius: 6px;
-      font-size: 0.68rem; font-weight: 800;
-      text-transform: uppercase; letter-spacing: 0.06em;
-    }
+    .r-badge { flex-shrink: 0; padding: 2px 7px; border-radius: 6px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
     .r-badge.pending { background: var(--red-lt);   color: var(--red); }
     .r-badge.done    { background: var(--green-lt); color: var(--green); }
     .r-reason { flex: 1; color: var(--muted); }
+
+    /* ── Inactive section ── */
+    .inactive-section-header {
+      font-size: 0.68rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 8px 4px 4px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .inactive-section-header .chev { transition: transform 0.2s; }
+    .inactive-section-header.open .chev { transform: rotate(180deg); }
 
     /* ── Bottom nav ── */
     .bottom-nav {
@@ -171,45 +145,10 @@
       padding: 10px 0 max(10px, env(safe-area-inset-bottom));
       z-index: 100;
     }
-    .nav-item {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; gap: 2px; padding: 10px 0;
-      cursor: pointer; text-decoration: none; transition: opacity 0.15s;
-    }
-    .nav-icon { display: none; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0; cursor: pointer; text-decoration: none; transition: opacity 0.15s; }
     .nav-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
     .nav-item.active .nav-label { color: var(--orange); }
-
     .empty-state { text-align: center; padding: 48px 20px; font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
-
-    /* ── Leaderboard ── */
-    .leaderboard {
-      padding: 14px 16px 6px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .leaderboard-title {
-      font-size: 0.68rem; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.08em;
-      margin-bottom: 4px;
-    }
-    .lb-row {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 9px 12px;
-      display: flex; align-items: center; gap: 10px;
-      box-shadow: var(--shadow);
-    }
-    .lb-rank {
-      font-size: 0.72rem; font-weight: 800; color: var(--muted);
-      width: 18px; text-align: center; flex-shrink: 0;
-    }
-    .lb-rank.top { color: var(--orange); }
-    .lb-icon { font-size: 0.9rem; flex-shrink: 0; }
-    .lb-name { flex: 1; font-size: 0.84rem; font-weight: 600; color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lb-name.is-self { color: var(--orange); }
-    .lb-bar-wrap { width: 56px; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; flex-shrink: 0; }
-    .lb-bar-fill { height: 100%; background: var(--orange); border-radius: 99px; }
-    .lb-xp { font-size: 0.78rem; font-weight: 800; color: var(--text); flex-shrink: 0; min-width: 48px; text-align: right; }
     @media (min-width: 768px) {
       html { background: #DDDDE0; }
       body { max-width: min(62.5vw, 720px); margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
@@ -220,31 +159,22 @@
 <body>
   <div class="header">
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
-    <div class="header-right">
-      <div class="day-badge" id="dayBadge">—</div>
-    </div>
   </div>
 
-  <div class="summary-bar" id="summaryBar">
-    <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">Members</div></div>
-    <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">On Track</div></div>
-    <div class="stat-item"><div class="stat-value">—</div><div class="stat-label">Owe Redemp.</div></div>
+  <!-- Tabs (hidden until we know which to show) -->
+  <div class="tabs" id="tabBar" style="display:none;">
+    <button class="tab-btn active" id="tabSkool" onclick="switchTab('skool')">Skool Community</button>
+    <button class="tab-btn" id="tabExclusive" onclick="switchTab('exclusive')">Exclusive Cohort</button>
   </div>
-  <div class="content" id="content"></div>
+
+  <div class="summary-bar" id="summaryBar" style="display:none;"></div>
+  <div class="content" id="content"><div class="empty-state">Loading…</div></div>
 
   <nav class="bottom-nav">
-    <a class="nav-item" href="app.html">
-      <span class="nav-label">Today</span>
-    </a>
-    <a class="nav-item active" href="cohort.html">
-      <span class="nav-label">Cohort</span>
-    </a>
-    <a class="nav-item" id="adminNav" href="admin.html">
-      <span class="nav-label">Admin</span>
-    </a>
-    <a class="nav-item" href="me.html">
-      <span class="nav-label" id="userNavLabel">Me</span>
-    </a>
+    <a class="nav-item" href="app.html"><span class="nav-label">Today</span></a>
+    <a class="nav-item active" href="cohort.html"><span class="nav-label">Cohort</span></a>
+    <a class="nav-item" id="adminNav" href="admin.html"><span class="nav-label">Admin</span></a>
+    <a class="nav-item" href="me.html"><span class="nav-label" id="userNavLabel">Me</span></a>
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -252,411 +182,373 @@
     const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3bGZybWRqZ3Z5Ym9jbnBjaGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjE4MDYsImV4cCI6MjA4OTQzNzgwNn0.3kG4SxxXHSeu3J6_EmPPsO4Q40Yk0ZRabxlms0zS76U';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-    const DUMMY_ADMIN_EMAIL = 'thierry.muller@gmail.com'; // kept for reference only
-
-    // ── Cache ────────────────────────────────────────────────────────────
-    const _c = {
-      userId: null, profile: null, cohort: null,
-      members: [], goals: {}, checkins: {}, redemptions: {},
-      checkinsLoaded: new Set()   // track which member IDs have checkins loaded
-    };
 
     const localDateStr   = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const parseLocalDate = s => { const [y,m,dd] = s.split('-').map(Number); return new Date(y, m-1, dd); };
 
-    // ── Data layer ───────────────────────────────────────────────────────
-    const db = {
-      // no-op — data comes from Supabase now
-      seedIfEmpty() {},
-
-      getCohortDay(startDate, targetDate) {
-        const s = parseLocalDate(startDate);
-        const t = targetDate ? parseLocalDate(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
-        return Math.floor((t-s)/86400000)+1;
-      },
-      getCohortWeekNum(startDate, date) {
-        return Math.min(3, Math.max(1, Math.ceil(this.getCohortDay(startDate,date)/7)));
-      },
-      getWeekDates(startDate, weekNum) {
-        const s = parseLocalDate(startDate);
-        return Array.from({length:7},(_,i)=>{ const d=new Date(s); d.setDate(d.getDate()+(weekNum-1)*7+i); return localDateStr(d); });
-      },
-      getCohortDates(startDate) {
-        return Array.from({length:21},(_,i)=>{ const d=parseLocalDate(startDate); d.setDate(d.getDate()+i); return localDateStr(d); });
-      },
-      // Cache-backed reads
-      getGoalsForUser(userId) { return _c.goals[userId] || []; },
-      getCheckin(goalId, date) {
-        const v = _c.checkins[`${goalId}_${date}`];
-        return v !== undefined ? { value: v } : null;
-      },
-      getWeeklyTotal(goalId, weekDates) {
-        return weekDates.reduce((s,d)=>{ const v=_c.checkins[`${goalId}_${d}`]; return s+(v!==undefined?Number(v)||0:0); },0);
-      },
-      getRedemptionsForUser(userId) { return (_c.redemptions[userId]||[]).slice().sort((a,b)=>a.strikeNumber-b.strikeNumber); },
-      getPendingRedemptions(userId) { return this.getRedemptionsForUser(userId).filter(r=>r.status==='pending'); },
-
-      getGoalStatus(goal, cohort) {
-        const today = localDateStr();
-        const cDay  = this.getCohortDay(cohort.start_date);
-        if (goal.type === 'daily_boolean') {
-          const c = this.getCheckin(goal.id, today);
-          if (!c || !c.value) return { status: cDay > 1 ? 'pending' : 'no-data', label: '—' };
-          return { status: 'on-track', label: '✓' };
-        }
-        if (goal.type === 'daily_count') {
-          const c = this.getCheckin(goal.id, today);
-          const val = c ? Number(c.value)||0 : 0;
-          const target = (goal.config && goal.config.dailyTarget) || 1;
-          if (val < target) return { status: cDay > 1 ? 'pending' : 'no-data', label: `${val}/${target}` };
-          return { status: 'on-track', label: `${val}/${target}` };
-        }
-        if (goal.type === 'weekly_count') {
-          const wk = this.getCohortWeekNum(cohort.start_date);
-          const wkDates = this.getWeekDates(cohort.start_date, wk);
-          const total = this.getWeeklyTotal(goal.id, wkDates);
-          const target = (goal.config && goal.config.weeklyTarget) || 1;
-          const weekEnded = wkDates[wkDates.length - 1] < today;
-          if (weekEnded && total < target) return { status: 'off-track', label: `${total}/${target}` };
-          return { status: 'on-track', label: `${total}/${target}` };
-        }
-        if (goal.type === 'daily_time' || goal.type === 'daily_time_max' || goal.type === 'weekly_time_max') {
-          const wk = this.getCohortWeekNum(cohort.start_date);
-          const wkDates = this.getWeekDates(cohort.start_date, wk);
-          const total = this.getWeeklyTotal(goal.id, wkDates);
-          const max = (goal.config && goal.config.weeklyMaxMinutes) || 120;
-          return { status: total <= max ? 'on-track' : 'off-track', label: `${Math.round(total/60*10)/10}h` };
-        }
-        if (goal.type === 'daily_time_min' || goal.type === 'weekly_time_min') {
-          const wk = this.getCohortWeekNum(cohort.start_date);
-          const wkDates = this.getWeekDates(cohort.start_date, wk);
-          const total = this.getWeeklyTotal(goal.id, wkDates);
-          const target = (goal.config && goal.config.weeklyTargetMinutes) || 60;
-          const weekEnded = wkDates[wkDates.length - 1] < today;
-          if (weekEnded && total < target) return { status: 'off-track', label: `${Math.round(total/60*10)/10}h` };
-          return { status: 'on-track', label: `${Math.round(total/60*10)/10}h` };
-        }
-        if (goal.type === 'milestone') {
-          const dates = this.getCohortDates(cohort.start_date);
-          const done  = dates.some(d => { const c=this.getCheckin(goal.id,d); return c&&c.value; });
-          return done ? { status:'on-track', label:'✓' } : { status:'no-data', label:'—' };
-        }
-        return { status:'no-data', label:'—' };
-      },
-
-      getMissedDays(userId, cohort) {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const dates = this.getCohortDates(cohort.start_date);
-        const boolGs = this.getGoalsForUser(userId).filter(g=>g.type==='daily_boolean');
-        if (!boolGs.length) return 0;
-        let missed = 0;
-        for (const d of dates) {
-          const dd = new Date(d); dd.setHours(0,0,0,0);
-          if (dd >= today) break;
-          const allDone = boolGs.every(g => { const c=this.getCheckin(g.id,d); return c&&c.value; });
-          if (!allDone) missed++;
-        }
-        return missed;
-      },
+    const _c = {
+      userId: null, profile: null, isAdmin: false, isSkool: false, isExclusive: false,
+      activeTab: null,
+      // Skool data
+      skoolMembers: [], skoolCycles: {}, skoolGoals: {}, skoolRedemptions: {}, skoolCheckins: {},
+      skoolCheckinsLoaded: new Set(),
+      // Exclusive data
+      excCohort: null, excMembers: [], excGoals: {}, excRedemptions: {}, excCheckins: {},
+      excCheckinsLoaded: new Set(),
     };
 
-    // ── Load data ─────────────────────────────────────────────────────────
-    async function loadData() {
+    function getCohortDay(startDate, targetDate) {
+      const s = parseLocalDate(startDate);
+      const t = targetDate ? parseLocalDate(targetDate) : (() => { const n=new Date(); n.setHours(0,0,0,0); return n; })();
+      return Math.floor((t-s)/86400000)+1;
+    }
+    function getCohortDates(startDate) {
+      return Array.from({length:21},(_,i)=>{ const d=parseLocalDate(startDate); d.setDate(d.getDate()+i); return localDateStr(d); });
+    }
+    function getCohortWeekNum(startDate, date) {
+      return Math.min(3, Math.max(1, Math.ceil(getCohortDay(startDate,date)/7)));
+    }
+    function getWeekDates(startDate, weekNum) {
+      const s = parseLocalDate(startDate);
+      return Array.from({length:7},(_,i)=>{ const d=new Date(s); d.setDate(d.getDate()+(weekNum-1)*7+i); return localDateStr(d); });
+    }
+
+    // ── Auth + membership detection ──────────────────────────────────────
+    async function init() {
       const { data: { session } } = await sb.auth.getSession();
-      const authUser = session?.user;
-      if (!authUser) { window.location.href = 'index.html'; return false; }
-      _c.userId = authUser.id;
+      if (!session?.user) { window.location.href = 'index.html'; return; }
+      _c.userId = session.user.id;
 
-      // Parallel: profile + cohort membership
-      const [{ data: profile }, { data: memberships }] = await Promise.all([
-        sb.from('profiles').select('*').eq('id', authUser.id).single(),
-        sb.from('cohort_members').select('cohort_id, cohorts(*)').eq('user_id', authUser.id)
+      const [{ data: profile }, { data: skoolMbr }, { data: memberships }] = await Promise.all([
+        sb.from('profiles').select('*').eq('id', _c.userId).single(),
+        sb.from('skool_members').select('*').eq('user_id', _c.userId).maybeSingle(),
+        sb.from('cohort_members').select('cohort_id, cohorts(*)').eq('user_id', _c.userId)
       ]);
-      if (!profile) { window.location.href = 'index.html'; return false; }
+      if (!profile) { window.location.href = 'index.html'; return; }
       _c.profile = profile;
+      _c.isAdmin     = profile.role === 'admin';
+      _c.isSkool     = !!skoolMbr;
+      _c.isExclusive = !!(memberships?.length);
 
-      if (!memberships?.length) return true;
+      // Admin nav
+      const adminEl = document.getElementById('adminNav');
+      if (adminEl) adminEl.style.display = _c.isAdmin ? '' : 'none';
+
+      // Decide which tabs to show
+      const showSkool     = _c.isAdmin || _c.isSkool;
+      const showExclusive = _c.isAdmin || _c.isExclusive;
+      const tabBar = document.getElementById('tabBar');
+
+      if (showSkool && showExclusive) {
+        tabBar.style.display = 'flex';
+        _c.activeTab = 'skool';
+      } else if (showSkool) {
+        tabBar.style.display = 'none';
+        _c.activeTab = 'skool';
+      } else if (showExclusive) {
+        tabBar.style.display = 'none';
+        _c.activeTab = 'exclusive';
+      } else {
+        document.getElementById('content').innerHTML = '<div class="empty-state">No cohort access found.</div>';
+        return;
+      }
+
+      // Update tab button visibility for admin
+      document.getElementById('tabSkool').style.display = showSkool ? '' : 'none';
+      document.getElementById('tabExclusive').style.display = showExclusive ? '' : 'none';
+
+      await loadTabData(_c.activeTab);
+      renderTab(_c.activeTab);
+    }
+
+    async function switchTab(tab) {
+      if (_c.activeTab === tab) return;
+      _c.activeTab = tab;
+      document.getElementById('tabSkool').classList.toggle('active', tab === 'skool');
+      document.getElementById('tabExclusive').classList.toggle('active', tab === 'exclusive');
+      document.getElementById('content').innerHTML = '<div class="empty-state">Loading…</div>';
+      document.getElementById('summaryBar').style.display = 'none';
+      await loadTabData(tab);
+      renderTab(tab);
+    }
+
+    // ── SKOOL DATA ───────────────────────────────────────────────────────
+    async function loadTabData(tab) {
+      if (tab === 'skool') return loadSkoolData();
+      return loadExclusiveData();
+    }
+
+    async function loadSkoolData() {
+      // All skool members + profiles
+      const { data: memberRows } = await sb.from('skool_members').select('user_id, profiles(*)');
+      _c.skoolMembers = (memberRows || []).map(r => r.profiles).filter(Boolean);
+      if (!_c.skoolMembers.length) return;
+
+      const memberIds = _c.skoolMembers.map(m => m.id);
+
+      // Most recent cycle per member
+      const { data: cycles } = await sb.from('skool_cycles')
+        .select('*').in('user_id', memberIds).order('start_date', { ascending: false });
+      _c.skoolCycles = {};
+      for (const c of (cycles || [])) {
+        if (!_c.skoolCycles[c.user_id]) _c.skoolCycles[c.user_id] = c;
+      }
+
+      // Goals for all current cycles
+      const cycleIds = Object.values(_c.skoolCycles).map(c => c.id);
+      if (cycleIds.length) {
+        const { data: goals } = await sb.from('goals').select('*').in('cohort_id', cycleIds).order('sort_order');
+        _c.skoolGoals = {};
+        for (const g of (goals || [])) {
+          if (!_c.skoolGoals[g.user_id]) _c.skoolGoals[g.user_id] = [];
+          _c.skoolGoals[g.user_id].push(g);
+        }
+        // Redemptions
+        const { data: redemptions } = await sb.from('redemptions').select('*').in('cohort_id', cycleIds).order('strike_number');
+        _c.skoolRedemptions = {};
+        for (const r of (redemptions || [])) {
+          if (!_c.skoolRedemptions[r.user_id]) _c.skoolRedemptions[r.user_id] = [];
+          _c.skoolRedemptions[r.user_id].push(r);
+        }
+        // Checkins for all active cycles
+        const allGoalIds = (goals || []).map(g => g.id);
+        if (allGoalIds.length) {
+          const { data: checkins } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', allGoalIds);
+          for (const r of (checkins || [])) _c.skoolCheckins[`${r.goal_id}_${r.date}`] = r.value;
+        }
+        for (const m of _c.skoolMembers) _c.skoolCheckinsLoaded.add(m.id);
+      }
+    }
+
+    // ── EXCLUSIVE DATA ───────────────────────────────────────────────────
+    async function loadExclusiveData() {
+      const { data: memberships } = await sb.from('cohort_members').select('cohort_id, cohorts(*)').eq('user_id', _c.userId);
+      if (!memberships?.length) return;
       const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
-      const actives = cohorts.filter(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
-      const active = actives.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
-      _c.cohort = active || cohorts.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
-      if (!_c.cohort) return true;
+      const actives = cohorts.filter(c => { const d = getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+      _c.excCohort = actives.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0]
+                    || cohorts.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0];
+      if (!_c.excCohort) return;
 
-      // Get all members of cohort
-      const { data: memberRows } = await sb.from('cohort_members')
-        .select('user_id, profiles(*)').eq('cohort_id', _c.cohort.id);
-      _c.members = (memberRows || []).map(r => r.profiles).filter(Boolean);
+      const { data: memberRows } = await sb.from('cohort_members').select('user_id, profiles(*)').eq('cohort_id', _c.excCohort.id);
+      _c.excMembers = (memberRows || []).map(r => r.profiles).filter(Boolean);
+      const memberIds = _c.excMembers.map(m => m.id);
 
-      // Parallel: goals + redemptions for all members
-      const memberIds = _c.members.map(m => m.id);
       const [goalsRes, redemptionsRes] = await Promise.all([
-        sb.from('goals').select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('sort_order'),
-        sb.from('redemptions').select('*').eq('cohort_id', _c.cohort.id).in('user_id', memberIds).order('strike_number')
+        sb.from('goals').select('*').eq('cohort_id', _c.excCohort.id).in('user_id', memberIds).order('sort_order'),
+        sb.from('redemptions').select('*').eq('cohort_id', _c.excCohort.id).in('user_id', memberIds).order('strike_number')
       ]);
-
-      _c.goals = {};
+      _c.excGoals = {};
       for (const g of (goalsRes.data || [])) {
-        if (!_c.goals[g.user_id]) _c.goals[g.user_id] = [];
-        _c.goals[g.user_id].push({ id: g.id, userId: g.user_id, cohortId: g.cohort_id, type: g.type, title: g.title, config: g.config || {}, locked: g.locked, order: g.sort_order });
+        if (!_c.excGoals[g.user_id]) _c.excGoals[g.user_id] = [];
+        _c.excGoals[g.user_id].push(g);
       }
-
-      _c.redemptions = {};
+      _c.excRedemptions = {};
       for (const r of (redemptionsRes.data || [])) {
-        if (!_c.redemptions[r.user_id]) _c.redemptions[r.user_id] = [];
-        _c.redemptions[r.user_id].push({ id: r.id, userId: r.user_id, cohortId: r.cohort_id, weekNumber: r.week_number, strikeNumber: r.strike_number, status: r.status, reason: r.reason });
+        if (!_c.excRedemptions[r.user_id]) _c.excRedemptions[r.user_id] = [];
+        _c.excRedemptions[r.user_id].push(r);
       }
-
-      // Bulk-load all checkins upfront for XP leaderboard
       const allGoalIds = (goalsRes.data || []).map(g => g.id);
       if (allGoalIds.length) {
-        const { data: allCheckins } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', allGoalIds);
-        for (const r of (allCheckins || [])) _c.checkins[`${r.goal_id}_${r.date}`] = r.value;
+        const { data: checkins } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', allGoalIds);
+        for (const r of (checkins || [])) _c.excCheckins[`${r.goal_id}_${r.date}`] = r.value;
       }
-      // Mark all members as having checkins loaded (since we fetched all above)
-      for (const m of _c.members) _c.checkinsLoaded.add(m.id);
-
-      return true;
+      for (const m of _c.excMembers) _c.excCheckinsLoaded.add(m.id);
     }
 
-    // ── Render ───────────────────────────────────────────────────────────
-    let expanded = null;
+    // ── RENDER ───────────────────────────────────────────────────────────
+    let expandedId = null;
 
-    // ── Init ─────────────────────────────────────────────────────────────
-    document.getElementById('content').innerHTML = '<div class="empty-state">Loading…</div>';
+    function renderTab(tab) {
+      expandedId = null;
+      if (tab === 'skool') renderSkool();
+      else renderExclusive();
+    }
 
-    (async () => {
-      const ok = await loadData();
-      if (!ok) return;
-
-      const cohort = _c.cohort;
-      const session = { userId: _c.userId, role: _c.profile?.role };
-      const adminNavEl = document.getElementById('adminNav');
-      if (adminNavEl) adminNavEl.style.display = _c.profile?.role === 'admin' ? '' : 'none';
-
-
-
-
-      if (!cohort) {
-        document.getElementById('content').innerHTML = '<div class="empty-state">No active cohort found.</div>';
+    // ── SKOOL RENDER ─────────────────────────────────────────────────────
+    function renderSkool() {
+      const members = _c.skoolMembers;
+      if (!members.length) {
+        document.getElementById('content').innerHTML = '<div class="empty-state">No Skool members yet.</div>';
+        document.getElementById('summaryBar').style.display = 'none';
         return;
       }
-
-      const day = db.getCohortDay(cohort.start_date);
-      document.getElementById('dayBadge').textContent = day>=1&&day<=21 ? `Day ${day}` : day<1 ? 'Upcoming' : 'Complete';
-      render();
-    })();
-
-    const XP_LEVELS = [
-      { min:0,   label:'Beginner',    icon:'🌱' },
-      { min:75,  label:'Focused',     icon:'⚡' },
-      { min:200, label:'Consistent',  icon:'🔥' },
-      { min:400, label:'Disciplined', icon:'💪' },
-      { min:700, label:'Elite',       icon:'🏆' },
-    ];
-
-    function calcMemberXP(userId) {
-      const cohort = _c.cohort;
-      if (!cohort) return 0;
-      const dates = db.getCohortDates(cohort.start_date);
       const today = localDateStr();
-      const goals = _c.goals[userId] || [];
-      let xp = 0;
-      for (const g of goals) {
-        for (const d of dates) {
-          if (d > today) continue;
-          const val = Number(_c.checkins[`${g.id}_${d}`] || 0);
-          if (!val) continue;
-          if (g.type === 'daily_boolean') xp += 10;
-          else if (g.type === 'daily_count') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
-          else if (g.type === 'weekly_days') xp += 10;
-          else if (g.type === 'daily_count_weekly') xp += val >= (g.config?.dailyTarget||1) ? 10 : 4 * val;
-          else if (g.type === 'weekly_count') xp += 5;
-          else if (['daily_time','daily_time_min','daily_time_max','weekly_time_min','weekly_time_max'].includes(g.type)) xp += 8;
-          else if (['milestone','total_count','total_time_min','total_time_max'].includes(g.type)) xp += 50;
+
+      // Split active vs inactive
+      const active = [], inactive = [];
+      for (const m of members) {
+        const cycle = _c.skoolCycles[m.id];
+        if (cycle) {
+          const day = getCohortDay(cycle.start_date);
+          if (day >= 1 && day <= 21) active.push(m);
+          else inactive.push(m);
+        } else {
+          inactive.push(m);
         }
       }
-      return xp;
-    }
 
-    function getXPLevel(xp) {
-      let lv = XP_LEVELS[0];
-      for (const l of XP_LEVELS) { if (xp >= l.min) lv = l; }
-      return lv;
-    }
+      // Sort active by day descending (furthest along first)
+      active.sort((a,b) => {
+        const da = getCohortDay(_c.skoolCycles[a.id].start_date);
+        const db2 = getCohortDay(_c.skoolCycles[b.id].start_date);
+        return db2 - da;
+      });
 
-    function render() {
-      renderSummary();
-      renderMembers();
-    }
-
-    function renderSummary() {
-      const members   = _c.members;
-      const atRisk    = members.filter(m => isAtRisk(m.id));
-      const onTrack   = members.filter(m => !isAtRisk(m.id));
-      const pending   = members.filter(m => db.getPendingRedemptions(m.id).length > 0);
-      const totalXP   = members.reduce((s, m) => s + calcMemberXP(m.id), 0);
-
+      // Summary bar
+      const pending = members.filter(m => (_c.skoolRedemptions[m.id]||[]).some(r=>r.status==='pending'));
+      document.getElementById('summaryBar').style.display = '';
       document.getElementById('summaryBar').innerHTML = `
-        <div class="stat-item">
-          <div class="stat-value">${members.length}</div>
-          <div class="stat-label">Members</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value good">${onTrack.length}</div>
-          <div class="stat-label">On Track</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value${pending.length>0?' warn':''}">${pending.length}</div>
-          <div class="stat-label">Owe Redemp.</div>
+        <div class="stat-item"><div class="stat-value">${active.length}</div><div class="stat-label">Active</div></div>
+        <div class="stat-item"><div class="stat-value">${members.length}</div><div class="stat-label">Total Members</div></div>
+        <div class="stat-item"><div class="stat-value${pending.length>0?' warn':''}">${pending.length}</div><div class="stat-label">Owe Redemp.</div></div>`;
+
+      // Render cards
+      let html = active.map(m => renderSkoolMemberCard(m)).join('');
+
+      // Inactive section
+      if (inactive.length) {
+        const inactiveOpen = sessionStorage.getItem('inactiveOpen') === '1';
+        html += `<div class="inactive-section-header${inactiveOpen?' open':''}" onclick="toggleInactive(this)" id="inactiveHeader">
+          <span>Between cycles (${inactive.length})</span>
+          <span class="chev">▼</span>
         </div>`;
-    }
-
-    function renderLeaderboard() {
-      const el = document.getElementById('leaderboard');
-      const members = _c.members;
-      if (!members.length) { el.style.display = 'none'; return; }
-
-      const ranked = members.map(m => ({ m, xp: calcMemberXP(m.id) }))
-        .sort((a, b) => b.xp - a.xp);
-      const maxXP = ranked[0]?.xp || 1;
-
-      el.style.display = '';
-      el.innerHTML = `<div class="leaderboard-title">Leaderboard</div>` +
-        ranked.map(({ m, xp }, i) => {
-          const lv   = getXPLevel(xp);
-          const idx  = XP_LEVELS.indexOf(lv);
-          const next = XP_LEVELS[idx + 1];
-          const pct  = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
-          const isSelf = m.id === _c.userId;
-          const rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
-          const isTop = i < 3;
-          return `<div class="lb-row">
-            <span class="lb-rank${isTop?' top':''}">${rankLabel}</span>
-            <span class="lb-icon">${lv.icon}</span>
-            <span class="lb-name${isSelf?' is-self':''}">${m.first_name || m.name}</span>
-            <span class="lb-xp">${xp} XP</span>
-          </div>`;
-        }).join('');
-    }
-
-    function isAtRisk(userId) {
-      const pending = db.getPendingRedemptions(userId).length;
-      const strikes = db.getRedemptionsForUser(userId).length;
-      return pending > 0 || strikes >= 2;
-    }
-
-    function renderMembers() {
-      const members = _c.members.slice();
-      if (!members.length) {
-        document.getElementById('content').innerHTML = '<div class="empty-state">No members yet.</div>';
-        return;
+        if (inactiveOpen) {
+          html += `<div id="inactiveList">${inactive.map(m => renderSkoolMemberCard(m, true)).join('')}</div>`;
+        } else {
+          html += `<div id="inactiveList" style="display:none;">${inactive.map(m => renderSkoolMemberCard(m, true)).join('')}</div>`;
+        }
       }
 
-      // Sort by XP descending
-      members.sort((a, b) => calcMemberXP(b.id) - calcMemberXP(a.id));
-
-      document.getElementById('content').innerHTML = members.map((m, i) => {
-        try { return renderMemberCard(m, i); }
-        catch(e) { return `<div style="padding:10px 14px;background:#FF3B30;color:#fff;border-radius:10px;font-size:0.8rem;font-weight:600;">${m.first_name}: ${e.message}</div>`; }
-      }).join('');
+      document.getElementById('content').innerHTML = html;
     }
 
-    function renderMemberCard(member, rank) {
-      const goals       = db.getGoalsForUser(member.id);
-      const strikes     = db.getRedemptionsForUser(member.id);
-      const atRisk      = isAtRisk(member.id);
-      const isSelf      = member.id === _c.userId;
-      const strikeCount = strikes.length;
-      const isOpen      = expanded === member.id;
-      const hasCheckins = _c.checkinsLoaded.has(member.id);
+    function toggleInactive(el) {
+      const list = document.getElementById('inactiveList');
+      const isOpen = el.classList.toggle('open');
+      list.style.display = isOpen ? '' : 'none';
+      sessionStorage.setItem('inactiveOpen', isOpen ? '1' : '0');
+    }
 
-      const xp   = calcMemberXP(member.id);
-      const lv   = getXPLevel(xp);
-      const idx  = XP_LEVELS.indexOf(lv);
-      const next = XP_LEVELS[idx + 1];
-      const pct  = next ? Math.round(((xp - lv.min) / (next.min - lv.min)) * 100) : 100;
-      const rankLabel = rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `#${rank+1}`;
+    function renderSkoolMemberCard(member, isInactive = false) {
+      const cycle = _c.skoolCycles[member.id];
+      const goals = _c.skoolGoals[member.id] || [];
+      const redemptions = _c.skoolRedemptions[member.id] || [];
+      const pendingR = redemptions.filter(r => r.status === 'pending');
+      const isSelf = member.id === _c.userId;
+      const isOpen = expandedId === member.id;
 
-      const cardClass = (atRisk ? 'at-risk' : strikeCount===0 ? 'complete' : '') + (isOpen ? ' open' : '');
+      let dayLabel = 'Between cycles';
+      let dayPillClass = 'day-pill inactive';
+      let atRisk = false;
 
-      const badge = atRisk
+      if (cycle && !isInactive) {
+        const day = getCohortDay(cycle.start_date);
+        dayLabel = `Day ${day}`;
+        dayPillClass = 'day-pill';
+        atRisk = pendingR.length > 0 || redemptions.length >= 2;
+      }
+
+      const cardClass = ['member-card', isInactive ? 'inactive' : atRisk ? 'at-risk' : 'complete', isOpen ? 'open' : ''].filter(Boolean).join(' ');
+      const badge = !isInactive && atRisk
         ? `<span class="status-badge at-risk">⚠ At Risk</span>`
-        : `<span class="status-badge on-track">✓ On Track</span>`;
+        : !isInactive
+          ? `<span class="status-badge on-track">✓ On Track</span>`
+          : '';
 
-      // Detail section — only built when checkins are loaded
       let detailHTML = '';
       if (isOpen) {
-        if (!hasCheckins) {
-          detailHTML = '<div style="font-size:0.8rem;color:var(--muted);padding:8px 0;">Loading…</div>';
-        } else {
-          const detailGoals = goals.map(g => {
-            const s = db.getGoalStatus(g, _c.cohort);
-            const statusClass = s.status==='on-track' ? 'on' : s.status==='off-track' ? 'off' : 'na';
-            const statusText  = s.status==='on-track' ? '✓ On track' : s.status==='off-track' ? '✗ Off track' : s.status==='pending' ? '· Not yet' : '—';
-            return `<div class="detail-goal-row">
-              <div class="detail-goal-name">${g.title}</div>
-              <div class="detail-goal-status ${statusClass}">${statusText}</div>
-            </div>`;
-          }).join('');
-
-          const detailRedemptions = strikes.length ? strikes.map(r => `
-            <div class="redemption-row">
-              <span class="r-badge ${r.status}">${r.status==='pending'?'Pending':'Done'}</span>
-              <span class="r-reason">${r.reason}</span>
-            </div>`).join('') : '<div style="font-size:0.8rem;color:var(--muted);padding:4px 0;">No strikes yet.</div>';
-
-          detailHTML = `
-            <div style="margin-bottom:14px;">
-              <div class="detail-section-title">Goals</div>
-              ${detailGoals || '<div style="font-size:0.8rem;color:var(--muted);">No goals yet.</div>'}
-            </div>
-            <div>
-              <div class="detail-section-title">Redemptions</div>
-              <div class="redemption-list">${detailRedemptions}</div>
-            </div>`;
-        }
+        const goalRows = goals.length
+          ? goals.map(g => `<div class="detail-goal-row"><div class="detail-goal-name">${g.title}</div><div class="detail-goal-status na">${g.type.replace(/_/g,' ')}</div></div>`).join('')
+          : '<div style="font-size:0.8rem;color:var(--muted);">No goals set.</div>';
+        const redRows = redemptions.length
+          ? redemptions.map(r => `<div class="redemption-row"><span class="r-badge ${r.status}">${r.status==='pending'?'Pending':'Done'}</span><span class="r-reason">${r.reason||''}</span></div>`).join('')
+          : '<div style="font-size:0.8rem;color:var(--muted);padding:4px 0;">No strikes.</div>';
+        detailHTML = `<div style="margin-bottom:14px;"><div class="detail-section-title">Goals</div>${goalRows}</div><div><div class="detail-section-title">Redemptions</div><div class="redemption-list">${redRows}</div></div>`;
       }
 
-      return `
-        <div class="member-card ${cardClass}" onclick="toggleExpand('${member.id}')">
-          <div class="member-top">
-            <span style="font-size:0.82rem;min-width:26px;flex-shrink:0;">${rankLabel}</span>
-            <div class="member-name">${member.first_name || member.name}${isSelf?' <span class="member-meta-inline">(you)</span>':''}</div>
-            <div class="member-right">
-              <span style="font-size:0.9rem;">${lv.icon}</span>
-              <span style="font-size:0.72rem;font-weight:800;color:var(--text);min-width:42px;text-align:right;">${xp} XP</span>
-              <div class="member-strikes">${[1,2,3].map(n=>`<div class="strike-pip${n<=strikeCount?' active':''}"></div>`).join('')}</div>
-              ${badge}
-              <span class="member-chevron">▼</span>
-            </div>
+      return `<div class="${cardClass}" onclick="toggleExpand('${member.id}','skool')">
+        <div class="member-top">
+          <div class="member-name">${member.first_name || ''}${isSelf?' <span class="member-meta-inline">(you)</span>':''}</div>
+          <div class="member-right">
+            <span class="${dayPillClass}">${dayLabel}</span>
+            ${badge}
+            ${!isInactive ? `<div class="member-strikes">${[1,2,3].map(n=>`<div class="strike-pip${n<=redemptions.length?' active':''}"></div>`).join('')}</div>` : ''}
+            <span class="member-chevron">▼</span>
           </div>
-          <div class="member-detail${isOpen?' open':''}">
-            ${detailHTML}
-          </div>
-        </div>`;
+        </div>
+        <div class="member-detail${isOpen?' open':''}">
+          ${isOpen ? detailHTML : ''}
+        </div>
+      </div>`;
     }
 
-    async function toggleExpand(memberId) {
-      if (expanded === memberId) {
-        expanded = null;
-        renderMembers();
+    // ── EXCLUSIVE RENDER ─────────────────────────────────────────────────
+    function renderExclusive() {
+      const cohort = _c.excCohort;
+      const members = _c.excMembers;
+      if (!cohort || !members.length) {
+        document.getElementById('content').innerHTML = '<div class="empty-state">No active exclusive cohort.</div>';
+        document.getElementById('summaryBar').style.display = 'none';
         return;
       }
-      expanded = memberId;
-      renderMembers(); // show card open with "Loading…" immediately
+      const day = getCohortDay(cohort.start_date);
 
-      if (!_c.checkinsLoaded.has(memberId)) {
-        const goalIds = db.getGoalsForUser(memberId).map(g => g.id);
-        if (goalIds.length) {
-          const { data: rows } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', goalIds);
-          for (const r of (rows || [])) _c.checkins[`${r.goal_id}_${r.date}`] = r.value;
-        }
-        _c.checkinsLoaded.add(memberId);
-      }
-      renderMembers(); // re-render with real data
+      const atRiskMembers = members.filter(m => (_c.excRedemptions[m.id]||[]).some(r=>r.status==='pending') || (_c.excRedemptions[m.id]||[]).length >= 2);
+      const pendingAll = members.filter(m => (_c.excRedemptions[m.id]||[]).some(r=>r.status==='pending'));
+
+      document.getElementById('summaryBar').style.display = '';
+      document.getElementById('summaryBar').innerHTML = `
+        <div class="stat-item"><div class="stat-value">${members.length}</div><div class="stat-label">Members</div></div>
+        <div class="stat-item"><div class="stat-value good">${members.length - atRiskMembers.length}</div><div class="stat-label">On Track</div></div>
+        <div class="stat-item"><div class="stat-value${pendingAll.length>0?' warn':''}">${pendingAll.length}</div><div class="stat-label">Owe Redemp.</div></div>`;
+
+      document.getElementById('content').innerHTML = members.map(m => renderExcMemberCard(m, cohort, day)).join('');
     }
 
-    async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
+    function renderExcMemberCard(member, cohort, day) {
+      const goals = _c.excGoals[member.id] || [];
+      const redemptions = _c.excRedemptions[member.id] || [];
+      const isSelf = member.id === _c.userId;
+      const isOpen = expandedId === member.id;
+      const atRisk = redemptions.some(r=>r.status==='pending') || redemptions.length >= 2;
+      const cardClass = ['member-card', atRisk ? 'at-risk' : 'complete', isOpen ? 'open' : ''].filter(Boolean).join(' ');
+      const badge = atRisk ? `<span class="status-badge at-risk">⚠ At Risk</span>` : `<span class="status-badge on-track">✓ On Track</span>`;
+
+      let detailHTML = '';
+      if (isOpen) {
+        const goalRows = goals.length
+          ? goals.map(g => `<div class="detail-goal-row"><div class="detail-goal-name">${g.title}</div></div>`).join('')
+          : '<div style="font-size:0.8rem;color:var(--muted);">No goals.</div>';
+        const redRows = redemptions.length
+          ? redemptions.map(r => `<div class="redemption-row"><span class="r-badge ${r.status}">${r.status==='pending'?'Pending':'Done'}</span><span class="r-reason">${r.reason||''}</span></div>`).join('')
+          : '<div style="font-size:0.8rem;color:var(--muted);padding:4px 0;">No strikes.</div>';
+        detailHTML = `<div style="margin-bottom:14px;"><div class="detail-section-title">Goals</div>${goalRows}</div><div><div class="detail-section-title">Redemptions</div><div class="redemption-list">${redRows}</div></div>`;
+      }
+
+      return `<div class="${cardClass}" onclick="toggleExpand('${member.id}','exclusive')">
+        <div class="member-top">
+          <div class="member-name">${member.first_name || ''}${isSelf?' <span class="member-meta-inline">(you)</span>':''}</div>
+          <div class="member-right">
+            <span class="day-pill">Day ${day}</span>
+            ${badge}
+            <div class="member-strikes">${[1,2,3].map(n=>`<div class="strike-pip${n<=redemptions.length?' active':''}"></div>`).join('')}</div>
+            <span class="member-chevron">▼</span>
+          </div>
+        </div>
+        <div class="member-detail${isOpen?' open':''}">
+          ${isOpen ? detailHTML : ''}
+        </div>
+      </div>`;
+    }
+
+    async function toggleExpand(memberId, tab) {
+      expandedId = expandedId === memberId ? null : memberId;
+      if (tab === 'skool') renderSkool();
+      else renderExclusive();
+    }
+
+    init();
   </script>
 </body>
 </html>
