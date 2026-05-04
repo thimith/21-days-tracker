@@ -1634,7 +1634,7 @@
       const pct      = Math.max(0, Math.min(100, Math.round(((Math.min(day,21)-1)/21)*100)));
 
       const isBetweenCycles = _c.skoolMember && day > 21;
-      const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? 'Upcoming' : isBetweenCycles ? 'Challenge Completed' : 'Complete';
+      const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? `Day ${day}` : isBetweenCycles ? 'Challenge Completed' : 'Complete';
       document.getElementById('cohortLabel').textContent = dayLabel;
 
       // Show/hide the between-cycles banner and trigger overlay
@@ -2698,6 +2698,19 @@
     function _updateScrollPill() {
       const pill = document.getElementById('scrollPill');
       if (!pill || !cohort) return;
+      const todayDay = db.getCohortDay(cohort.startDate);
+      // Before cycle starts: show negative day relative to today
+      if (todayDay < 1) {
+        const daysUntil = 1 - todayDay; // days until Day 1
+        pill.textContent = `Day -${daysUntil - 1} · Upcoming`;
+        return;
+      }
+      // After cycle: show completed state
+      if (todayDay > 21) {
+        pill.textContent = 'Challenge Completed';
+        return;
+      }
+      // During cycle: show the page being viewed
       const date = _pgDates[_pageIdx];
       if (!date) return;
       const today     = localDateStr();

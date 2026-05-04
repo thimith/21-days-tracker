@@ -375,13 +375,13 @@
       }
       const today = localDateStr();
 
-      // Split active vs inactive
+      // Split active (in cycle or upcoming) vs inactive (between cycles / no cycle)
       const active = [], inactive = [];
       for (const m of members) {
         const cycle = _c.skoolCycles[m.id];
         if (cycle) {
           const day = getCohortDay(cycle.start_date);
-          if (day >= 1 && day <= 21) active.push(m);
+          if (day <= 21) active.push(m); // includes upcoming (day < 1) and in-progress
           else inactive.push(m);
         } else {
           inactive.push(m);
@@ -444,9 +444,9 @@
 
       if (cycle && !isInactive) {
         const day = getCohortDay(cycle.start_date);
-        dayLabel = `Day ${day}`;
-        dayPillClass = 'day-pill';
-        atRisk = pendingR.length > 0 || redemptions.length >= 2;
+        dayLabel = day >= 1 ? `Day ${day}` : `Day ${day} · Upcoming`;
+        dayPillClass = day < 1 ? 'day-pill' : 'day-pill';
+        atRisk = day >= 1 && (pendingR.length > 0 || redemptions.length >= 2);
       }
 
       const cardClass = ['member-card', isInactive ? 'inactive' : atRisk ? 'at-risk' : 'complete', isOpen ? 'open' : ''].filter(Boolean).join(' ');
