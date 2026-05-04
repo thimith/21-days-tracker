@@ -1847,10 +1847,16 @@
             ${!addFormOpen && goals.length > 0 ? `
               <button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
+      // Small stakes link shown right after "I'm Done" is clicked (finalized state)
+      if (!locked && finalized && !isViewingOther) {
+        html.push(`<div style="text-align:center;margin-top:6px;">
+          <a href="me.html" style="font-size:0.75rem;color:var(--muted);text-decoration:underline;text-underline-offset:2px;">Set your stakes and accountability on your profile →</a>
+        </div>`);
+      }
       }
 
-      // Notes always last
-      if (notesHTML) html.push(notesHTML);
+      // Notes only shown once goals are locked or finalized
+      if (notesHTML && (locked || finalized || isViewingOther)) html.push(notesHTML);
 
       return html.join('');
     }
