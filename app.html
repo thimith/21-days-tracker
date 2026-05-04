@@ -1732,7 +1732,7 @@
       }
 
       const daily     = goals.filter(g => ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'].includes(g.type));
-      const weekly    = goals.filter(g => ['weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'].includes(g.type));
+      const weekly    = goals.filter(g => ['weekly_boolean','weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'].includes(g.type));
       const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
 
       if (daily.length) {
@@ -1804,7 +1804,8 @@
                 <label class="form-label">Type</label>
                 <div class="type-pills" id="cfgMetricPills">
                   ${addGoalFrame === 'weekly'
-                    ? `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')"       data-tip="How many days you show up&#10;e.g. Work out 4 days/week">Days/week</button>
+                    ? `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')"    data-tip="Did you do it this week? Yes or No&#10;e.g. No alcohol, Meal prepped">Yes / No</button>
+                       <button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')"       data-tip="How many days you show up&#10;e.g. Work out 4 days/week">Days/week</button>
                        <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="Total reps over the week&#10;e.g. 20 cold showers this week&#10;Multiple per day allowed">Count/Week</button>
                        <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')" data-tip="A count target each day&#10;e.g. 3 glasses of water/day&#10;for at least N days/week">Count/Day</button>
                        <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per week&#10;e.g. At least 150 min of exercise">Min time</button>
@@ -1849,11 +1850,6 @@
             </div>
             <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
             ${!addFormOpen && goals.length > 0 ? `
-              ${!_c.stakes ? `
-              <a href="me.html" class="stakes-prompt" id="stakesPrompt" style="display:block;text-decoration:none;">
-                <div class="stakes-prompt-title">⚡ Set your stakes</div>
-                <div class="stakes-prompt-sub">What happens if you slip? What do you get if you crush it? Real stakes make real accountability. <strong style="color:var(--orange);">Set them on your profile →</strong></div>
-              </a>` : ''}
               <button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
       }
@@ -1903,7 +1899,7 @@
       const c = db.getCheckin(g.id, date);
       const accentColor = g.config?.color || '';
       const ctrStyle = accentColor ? ` style="background:${accentColor};color:#fff;padding:2px 8px;border-radius:99px;"` : '';
-      const typeLabel ={ daily_boolean:'Daily habit', daily_count:'Daily count', weekly_days:'Days per week', weekly_count:'Weekly count', daily_count_weekly:'Count + days/week', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', weekly_time_min:'Weekly — min time', weekly_time_max:'Weekly — max time', milestone:'21-day goal', total_count:'21-day count', total_time_min:'21-day min time', total_time_max:'21-day max time' }[g.type] || g.type;
+      const typeLabel ={ daily_boolean:'Daily habit', daily_count:'Daily count', weekly_boolean:'Weekly yes/no', weekly_days:'Days per week', weekly_count:'Weekly count', daily_count_weekly:'Count + days/week', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', weekly_time_min:'Weekly — min time', weekly_time_max:'Weekly — max time', milestone:'21-day goal', total_count:'21-day count', total_time_min:'21-day min time', total_time_max:'21-day max time' }[g.type] || g.type;
       const deleteBtn = !locked ? `<button type="button" class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
 
       if (g.type === 'daily_boolean') {
@@ -1942,6 +1938,31 @@
                   <path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
+            </div>
+          </div>`;
+      }
+
+      if (g.type === 'weekly_boolean') {
+        const wk        = db.getCohortWeekNum(cohort.startDate, date);
+        const wkDate    = db.getWeekDates(cohort.startDate, wk)[0]; // Monday of current week
+        const done      = !!(c?.value);
+        const weekPips  = [1,2,3].map(w => {
+          const wd  = db.getWeekDates(cohort.startDate, w)[0];
+          const hit = !!db.getCheckin(g.id, wd)?.value;
+          const isCur = w === wk;
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+            <span style="font-size:0.6rem;font-weight:700;color:${isCur?'var(--orange)':'var(--muted)'};">W${w}</span>
+            <div class="check-circle${hit?' checked':''}">
+              <svg width="12" height="9" viewBox="0 0 13 10" fill="none"><path d="M1 5L5 9L12 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>`;
+        }).join('');
+        return `
+          <div class="goal-card${done?' is-done':''} is-tappable" onclick="${!isFuture?`toggleBoolean('${g.id}','${wkDate}')`:''}" style="${isFuture?'cursor:default':''}">
+            ${deleteBtn}
+            <div class="bool-row">
+              <div class="goal-title">${g.title}</div>
+              <div style="display:flex;gap:10px;align-items:center;">${weekPips}</div>
             </div>
           </div>`;
       }
@@ -2321,7 +2342,7 @@
     // ── Drag-and-drop goal reordering ────────────────────────────────────
     const _dndGroups = {
       daily:     ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'],
-      weekly:    ['weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'],
+      weekly:    ['weekly_boolean','weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'],
       milestone: ['milestone','total_count','total_time_min','total_time_max'],
     };
     function _dndGroup(type) {
@@ -2951,13 +2972,14 @@
       btn.closest('.type-pills').querySelectorAll('.type-pill').forEach(p => p.classList.remove('sel'));
       btn.classList.add('sel');
       // Reset metric to valid default for frame
-      if (frame === 'weekly' && !['days','count','count_days','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'days';
+      if (frame === 'weekly' && !['boolean','days','count','count_days','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'boolean';
       if (frame !== 'weekly' && !['boolean','count','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'boolean';
       // Rebuild metric pills for new frame
       const mp = document.getElementById('cfgMetricPills');
       if (mp) {
         if (frame === 'weekly') {
-          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')"       data-tip="How many days you show up&#10;e.g. Work out 4 days/week">Days/week</button>
+          mp.innerHTML = `<button type="button" class="type-pill${addGoalMetric==='boolean'?' sel':''}"   onclick="setAddMetric(this,'boolean')"    data-tip="Did you do it this week? Yes or No&#10;e.g. No alcohol, Meal prepped">Yes / No</button>
+                          <button type="button" class="type-pill${addGoalMetric==='days'?' sel':''}"       onclick="setAddMetric(this,'days')"       data-tip="How many days you show up&#10;e.g. Work out 4 days/week">Days/week</button>
                           <button type="button" class="type-pill${addGoalMetric==='count'?' sel':''}"     onclick="setAddMetric(this,'count')"      data-tip="Total reps over the week&#10;e.g. 20 cold showers this week&#10;Multiple per day allowed">Count/Week</button>
                           <button type="button" class="type-pill${addGoalMetric==='count_days'?' sel':''}" onclick="setAddMetric(this,'count_days')" data-tip="A count target each day&#10;e.g. 3 glasses of water/day&#10;for at least N days/week">Count/Day</button>
                           <button type="button" class="type-pill${addGoalMetric==='min_time'?' sel':''}"  onclick="setAddMetric(this,'min_time')"   data-tip="Minimum minutes per week&#10;e.g. At least 150 min of exercise">Min time</button>
@@ -3060,6 +3082,7 @@
         case 'daily_count':        cfgLabel = `${cfg.dailyTarget||1}× · Daily`; break;
         case 'daily_time_min':     { const t = _timeDisp(cfg.weeklyTargetMinutes||60, cfg);  cfgLabel = `Min ${t.val}${t.unit} · Daily`; break; }
         case 'daily_time_max':     { const t = _timeDisp(cfg.weeklyMaxMinutes||120, cfg);    cfgLabel = `Max ${t.val}${t.unit} · Daily`; break; }
+        case 'weekly_boolean':     cfgLabel = 'Yes / No · Weekly'; break;
         case 'weekly_days':        cfgLabel = `${cfg.daysTarget||5} days/week`; break;
         case 'weekly_count':       cfgLabel = `${cfg.weeklyTarget||3}× per week`; break;
         case 'daily_count_weekly': cfgLabel = `${cfg.dailyTarget||1}× · ${cfg.daysTarget||5} days/week`; break;
@@ -3088,7 +3111,7 @@
     function renderNoCohort() {
       const drafts = getDraftGoals();
       const _dailyT     = ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'];
-      const _weeklyT    = ['weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'];
+      const _weeklyT    = ['weekly_boolean','weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'];
       const _milestoneT = ['milestone','total_count','total_time_min','total_time_max'];
       const draftDaily     = drafts.filter(g => _dailyT.includes(g.type));
       const draftWeekly    = drafts.filter(g => _weeklyT.includes(g.type));
@@ -3246,6 +3269,7 @@
         'daily_count':        { frame:'daily',     metric:'count' },
         'daily_time_min':     { frame:'daily',     metric:'min_time' },
         'daily_time_max':     { frame:'daily',     metric:'max_time' },
+        'weekly_boolean':     { frame:'weekly',    metric:'boolean' },
         'weekly_days':        { frame:'weekly',    metric:'days' },
         'weekly_count':       { frame:'weekly',    metric:'count' },
         'daily_count_weekly': { frame:'weekly',    metric:'count_days' },
@@ -3292,6 +3316,7 @@
         if (addGoalMetric === 'min_time') { type = 'total_time_min'; config.totalTargetMinutes = _tv('cfgTimeVal')||120; }
         if (addGoalMetric === 'max_time') { type = 'total_time_max'; config.totalMaxMinutes    = _tv('cfgTimeVal')||300; }
       } else if (addGoalFrame === 'weekly') {
+        if (addGoalMetric === 'boolean')   { type = 'weekly_boolean'; }
         if (addGoalMetric === 'days')      { type = 'weekly_days';        config.daysTarget          = parseInt(document.getElementById('cfgDaysVal')?.value)||5; }
         if (addGoalMetric === 'count')     { type = 'weekly_count';       config.weeklyTarget        = parseInt(document.getElementById('cfgCountVal')?.value)||3; config.multiPerDay = true; }
         if (addGoalMetric === 'count_days'){ type = 'daily_count_weekly'; config.dailyTarget         = parseInt(document.getElementById('cfgCountVal')?.value)||1;
