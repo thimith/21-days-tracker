@@ -1748,20 +1748,21 @@
         milestone.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
       }
 
-      // ── Notes ──
+      // ── Notes — built here, pushed after goal setup ──
       const journalContent = _c.journal[date] || '';
       const isFutureDate = date > localDateStr();
+      let notesHTML = '';
       if (!isFutureDate) {
         if (isViewingOther) {
           if (journalContent) {
-            html.push(`
+            notesHTML = `
               <div class="journal-wrap">
                 <div class="journal-header"><div class="journal-dot"></div>Notes</div>
                 <div class="journal-readonly">${journalContent.replace(/</g,'&lt;')}</div>
-              </div>`);
+              </div>`;
           }
         } else {
-          html.push(`
+          notesHTML = `
             <div class="journal-wrap">
               <div class="journal-header"><div class="journal-dot"></div>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem;color:#ccc;">— private</span></div>
               <textarea class="journal-textarea" id="journal-${date}" placeholder="What's waffling today?"
@@ -1769,7 +1770,7 @@
                 onkeydown="if(event.key==='Enter'&&event.metaKey)this.blur()"
               >${journalContent.replace(/</g,'&lt;')}</textarea>
               <div class="journal-saving" id="journal-status-${date}"></div>
-            </div>`);
+            </div>`;
         }
       }
 
@@ -1853,6 +1854,9 @@
               <button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
           </div>`);
       }
+
+      // Notes always last
+      if (notesHTML) html.push(notesHTML);
 
       return html.join('');
     }
