@@ -161,7 +161,10 @@
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
   </div>
 
-  <!-- Tabs (hidden until we know which to show) -->
+  <!-- Page title (shown when only one tab) -->
+  <div id="pageTitle" style="display:none; padding:14px 20px 0; font-size:1rem; font-weight:800; color:var(--text); letter-spacing:-0.01em;"></div>
+
+  <!-- Tabs (shown when admin sees both) -->
   <div class="tabs" id="tabBar" style="display:none;">
     <button class="tab-btn active" id="tabSkool" onclick="switchTab('skool')">Skool Community</button>
     <button class="tab-btn" id="tabExclusive" onclick="switchTab('exclusive')">Exclusive Cohort</button>
@@ -239,14 +242,20 @@
       const showExclusive = _c.isAdmin || _c.isExclusive;
       const tabBar = document.getElementById('tabBar');
 
+      const titleEl = document.getElementById('pageTitle');
       if (showSkool && showExclusive) {
         tabBar.style.display = 'flex';
+        titleEl.style.display = 'none';
         _c.activeTab = 'skool';
       } else if (showSkool) {
         tabBar.style.display = 'none';
+        titleEl.textContent = 'Skool Community';
+        titleEl.style.display = '';
         _c.activeTab = 'skool';
       } else if (showExclusive) {
         tabBar.style.display = 'none';
+        titleEl.textContent = 'Exclusive Cohort';
+        titleEl.style.display = '';
         _c.activeTab = 'exclusive';
       } else {
         document.getElementById('content').innerHTML = '<div class="empty-state">No cohort access found.</div>';
@@ -396,28 +405,21 @@
       });
 
       // Summary bar
+      const inCycle = active.filter(m => { const c = _c.skoolCycles[m.id]; return c && getCohortDay(c.start_date) >= 1; });
       const pending = members.filter(m => (_c.skoolRedemptions[m.id]||[]).some(r=>r.status==='pending'));
       document.getElementById('summaryBar').style.display = '';
       document.getElementById('summaryBar').innerHTML = `
-        <div class="stat-item"><div class="stat-value">${active.length}</div><div class="stat-label">Active</div></div>
+        <div class="stat-item"><div class="stat-value">${inCycle.length}</div><div class="stat-label">In Cycle</div></div>
         <div class="stat-item"><div class="stat-value">${members.length}</div><div class="stat-label">Total Members</div></div>
         <div class="stat-item"><div class="stat-value${pending.length>0?' warn':''}">${pending.length}</div><div class="stat-label">Owe Redemp.</div></div>`;
 
-      // Render cards
+      // All active (in-cycle + upcoming) — no collapse
       let html = active.map(m => renderSkoolMemberCard(m)).join('');
 
-      // Inactive section
+      // Between-cycles section — visible but separated
       if (inactive.length) {
-        const inactiveOpen = sessionStorage.getItem('inactiveOpen') === '1';
-        html += `<div class="inactive-section-header${inactiveOpen?' open':''}" onclick="toggleInactive(this)" id="inactiveHeader">
-          <span>Between cycles (${inactive.length})</span>
-          <span class="chev">▼</span>
-        </div>`;
-        if (inactiveOpen) {
-          html += `<div id="inactiveList">${inactive.map(m => renderSkoolMemberCard(m, true)).join('')}</div>`;
-        } else {
-          html += `<div id="inactiveList" style="display:none;">${inactive.map(m => renderSkoolMemberCard(m, true)).join('')}</div>`;
-        }
+        html += `<div style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;padding:12px 4px 4px;">Between cycles (${inactive.length})</div>`;
+        html += inactive.map(m => renderSkoolMemberCard(m, true)).join('');
       }
 
       document.getElementById('content').innerHTML = html;
