@@ -3001,21 +3001,8 @@
     function getDraftGoals() {
       if (!_c.userId) return [];
       try {
-        const seededKey = _draftKey() + '_seeded';
         const raw = localStorage.getItem(_draftKey());
-        const goals = raw !== null ? JSON.parse(raw) : null;
-        // Return existing goals if any
-        if (goals && goals.length > 0) return goals;
-        // Respect intentional empty state (user deleted all goals)
-        if (localStorage.getItem(seededKey)) return goals || [];
-        // First time for this user — seed defaults
-        const defaults = [
-          { id:`g_${_uid()}`, type:'daily_boolean',   title:'Mindful Meditation (10min)', config:{}, locked:false },
-          { id:`g_${_uid()}`, type:'weekly_days',     title:'Exercise 30min', config:{ daysTarget:3 }, locked:false },
-          { id:`g_${_uid()}`, type:'weekly_time_max', title:'Max 1h on Socials', config:{ weeklyMaxMinutes:60, timeUnit:'hr' }, locked:false }
-        ];
-        saveDraftGoals(defaults);
-        return defaults;
+        return raw !== null ? JSON.parse(raw) : [];
       } catch(e) { return []; }
     }
     function saveDraftGoals(goals) {
