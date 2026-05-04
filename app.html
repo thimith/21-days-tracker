@@ -1441,16 +1441,8 @@
         }
       }
 
-      if (memberships?.length) {
-        const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
-        const actives = cohorts.filter(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
-        const active = actives.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
-        const picked = active || cohorts.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0];
-        if (picked) _c.cohort = { ...picked, startDate: picked.start_date };
-      }
-
-      // For Skool members without an exclusive cohort, use their skool cycle
-      if (!_c.cohort && skoolMbr) {
+      // Skool members always use skool_cycles — never the exclusive cohort table
+      if (skoolMbr) {
         const { data: cycles } = await sb.from('skool_cycles')
           .select('*').eq('user_id', userId).order('start_date', { ascending: false });
         if (cycles?.length) {
@@ -1458,6 +1450,14 @@
           const picked = active || cycles[0];
           _c.cohort = { id: picked.id, startDate: picked.start_date, start_date: picked.start_date, name: 'Skool Community' };
         }
+        // If no cycle found, _c.cohort stays null → renderNoCohort shows Monday picker
+      } else if (memberships?.length) {
+        // Exclusive-only members
+        const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
+        const actives = cohorts.filter(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+        const active = actives.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+        const picked = active || cohorts.sort((a,b) => new Date(b.start_date)-new Date(a.start_date))[0];
+        if (picked) _c.cohort = { ...picked, startDate: picked.start_date };
       }
 
       if (!_c.cohort) { _saveAppCache(); return; }
