@@ -150,6 +150,7 @@
 
   <div class="tab-bar">
     <button type="button" class="tab-btn active" onclick="switchTab('members')">Members</button>
+    <button type="button" class="tab-btn"        onclick="switchTab('invites')">Invites</button>
     <button type="button" class="tab-btn"        onclick="switchTab('override')">Override</button>
     <button type="button" class="tab-btn"        onclick="switchTab('cohorts')">Cohorts</button>
     <button type="button" class="tab-btn"        onclick="switchTab('requests')" id="tabRequests">Requests</button>
@@ -157,6 +158,7 @@
 
   <div class="content">
     <div class="tab-panel active" id="tab-members"><div class="loading-state">Loading…</div></div>
+    <div class="tab-panel" id="tab-invites"></div>
     <div class="tab-panel" id="tab-override"></div>
     <div class="tab-panel" id="tab-cohorts"></div>
     <div class="tab-panel" id="tab-requests"></div>
@@ -222,7 +224,7 @@
     function switchTab(tab) {
       activeTab = tab;
       document.querySelectorAll('.tab-btn').forEach((b,i) => {
-        b.classList.toggle('active', ['members','override','cohorts','requests'][i] === tab);
+        b.classList.toggle('active', ['members','invites','override','cohorts','requests'][i] === tab);
       });
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
@@ -231,6 +233,7 @@
 
     async function renderTab(tab) {
       if (tab === 'members')  await renderMembers();
+      if (tab === 'invites')  await renderInvites();
       if (tab === 'override') await renderOverride();
       if (tab === 'cohorts')  await renderCohorts();
       if (tab === 'requests') await renderRequests();
@@ -919,6 +922,121 @@
       const flash = document.getElementById('stakesFlash');
       if (error) { flash.textContent = error.message; flash.className = 'flash error'; }
       else { flash.textContent = 'Stakes saved.'; flash.className = 'flash success'; setTimeout(() => flash.className = 'flash', 2500); }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // TAB: INVITES
+    // ════════════════════════════════════════════════════════════════════
+    let _inviteLink = '';
+    let _inviteType = 'skool';
+
+    async function renderInvites() {
+      const el = document.getElementById('tab-invites');
+      const { data: cohortsRaw } = await sb.from('cohorts').select('*').order('start_date', { ascending: false });
+      const cohorts = cohortsRaw || [];
+
+      el.innerHTML = `
+        <div class="card">
+          <div class="card-title">Generate Invite Link</div>
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">
+            Recipients go straight to their onboarding — no option to switch cohort type.
+          </p>
+
+          <div class="form-field">
+            <label class="form-label">Type</label>
+            <div style="display:flex;gap:8px;">
+              <button type="button" id="inv-btn-skool"      onclick="selectInviteType('skool')"
+                style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--orange);background:var(--orange);color:#fff;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;">
+                🌀 Skool Community
+              </button>
+              <button type="button" id="inv-btn-exclusive"  onclick="selectInviteType('exclusive')"
+                style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;">
+                ⭐ Exclusive Cohort
+              </button>
+            </div>
+          </div>
+
+          <div class="form-field" id="inv-cohort-field" style="display:none;">
+            <label class="form-label">Cohort</label>
+            <select class="form-select" id="inv-cohort-select">
+              ${cohorts.length
+                ? cohorts.map(c => `<option value="${c.id}">${c.name || c.start_date}</option>`).join('')
+                : '<option value="">No cohorts — create one first</option>'}
+            </select>
+          </div>
+
+          <div id="inv-link-box" class="invite-link-box" style="display:none;"></div>
+          <div id="inv-flash" class="flash"></div>
+
+          <div class="btn-row" style="margin-top:8px;">
+            <button type="button" class="btn primary full" onclick="generateInviteLink()">Generate Link</button>
+            <button type="button" class="btn secondary" id="inv-copy-btn" style="display:none;" onclick="copyGeneratedLink()">Copy</button>
+          </div>
+        </div>
+
+        <div class="card" style="background:var(--orange-lt);border:1.5px solid var(--orange-lt);">
+          <div class="card-title" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;">How it works</div>
+          <div style="font-size:0.82rem;color:var(--text);line-height:1.6;display:flex;flex-direction:column;gap:8px;">
+            <div>🌀 <strong>Skool link</strong> — recipient joins Skool Community directly. They pick their start Monday inside the app.</div>
+            <div>⭐ <strong>Exclusive link</strong> — recipient is added to the selected cohort. They wait for your approval.</div>
+            <div>Both links are single-use and expire once the person signs in.</div>
+          </div>
+        </div>`;
+    }
+
+    function selectInviteType(type) {
+      _inviteType = type;
+      const skoolBtn = document.getElementById('inv-btn-skool');
+      const excBtn   = document.getElementById('inv-btn-exclusive');
+      const cohortField = document.getElementById('inv-cohort-field');
+      if (type === 'skool') {
+        skoolBtn.style.cssText = 'flex:1;padding:12px;border-radius:10px;border:2px solid var(--orange);background:var(--orange);color:#fff;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;';
+        excBtn.style.cssText   = 'flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;';
+        cohortField.style.display = 'none';
+      } else {
+        excBtn.style.cssText   = 'flex:1;padding:12px;border-radius:10px;border:2px solid var(--orange);background:var(--orange);color:#fff;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;';
+        skoolBtn.style.cssText = 'flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;';
+        cohortField.style.display = '';
+      }
+      document.getElementById('inv-link-box').style.display = 'none';
+      document.getElementById('inv-copy-btn').style.display = 'none';
+      document.getElementById('inv-flash').className = 'flash';
+    }
+
+    async function generateInviteLink() {
+      const flash   = document.getElementById('inv-flash');
+      const linkBox = document.getElementById('inv-link-box');
+      flash.className = 'flash';
+      linkBox.style.display = 'none';
+      document.getElementById('inv-copy-btn').style.display = 'none';
+
+      const cohortId = _inviteType === 'exclusive'
+        ? document.getElementById('inv-cohort-select')?.value : null;
+      if (_inviteType === 'exclusive' && !cohortId) {
+        flash.textContent = 'Select a cohort.'; flash.className = 'flash error'; return;
+      }
+
+      const { data: invite, error } = await sb.from('invites')
+        .insert({ name: _inviteType, email: '', cohort_id: cohortId || null })
+        .select().single();
+      if (error || !invite) { flash.textContent = error?.message || 'Failed.'; flash.className = 'flash error'; return; }
+
+      const base = window.location.origin + window.location.pathname.replace('admin.html', '');
+      _inviteLink = `${base}index.html?invite=${invite.token}&path=${_inviteType}${cohortId ? '&cohort=' + cohortId : ''}`;
+
+      linkBox.textContent = _inviteLink;
+      linkBox.style.display = 'block';
+      document.getElementById('inv-copy-btn').style.display = 'flex';
+      flash.textContent = `${_inviteType === 'skool' ? 'Skool Community' : 'Exclusive Cohort'} link ready.`;
+      flash.className = 'flash success';
+    }
+
+    function copyGeneratedLink() {
+      navigator.clipboard.writeText(_inviteLink).then(() => {
+        const btn = document.getElementById('inv-copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
     }
 
     // ════════════════════════════════════════════════════════════════════
