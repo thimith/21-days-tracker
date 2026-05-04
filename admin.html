@@ -150,22 +150,16 @@
 
   <div class="tab-bar">
     <button type="button" class="tab-btn active" onclick="switchTab('members')">Members</button>
-    <button type="button" class="tab-btn"        onclick="switchTab('goals')">Goals</button>
-    <button type="button" class="tab-btn"        onclick="switchTab('stakes')">Stakes</button>
     <button type="button" class="tab-btn"        onclick="switchTab('override')">Override</button>
     <button type="button" class="tab-btn"        onclick="switchTab('cohorts')">Cohorts</button>
     <button type="button" class="tab-btn"        onclick="switchTab('requests')" id="tabRequests">Requests</button>
-    <button type="button" class="tab-btn"        onclick="switchTab('skool')"   id="tabSkool">Skool</button>
   </div>
 
   <div class="content">
     <div class="tab-panel active" id="tab-members"><div class="loading-state">Loading…</div></div>
-    <div class="tab-panel" id="tab-goals"></div>
-    <div class="tab-panel" id="tab-stakes"></div>
     <div class="tab-panel" id="tab-override"></div>
     <div class="tab-panel" id="tab-cohorts"></div>
     <div class="tab-panel" id="tab-requests"></div>
-    <div class="tab-panel" id="tab-skool"></div>
   </div>
 
   <nav class="bottom-nav">
@@ -228,7 +222,7 @@
     function switchTab(tab) {
       activeTab = tab;
       document.querySelectorAll('.tab-btn').forEach((b,i) => {
-        b.classList.toggle('active', ['members','goals','stakes','override','cohorts','requests','skool'][i] === tab);
+        b.classList.toggle('active', ['members','override','cohorts','requests'][i] === tab);
       });
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
@@ -237,107 +231,320 @@
 
     async function renderTab(tab) {
       if (tab === 'members')  await renderMembers();
-      if (tab === 'goals')    await renderGoals();
-      if (tab === 'stakes')   await renderStakes();
       if (tab === 'override') await renderOverride();
       if (tab === 'cohorts')  await renderCohorts();
       if (tab === 'requests') await renderRequests();
-      if (tab === 'skool')    await renderSkool();
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // TAB: MEMBERS
+    // TAB: MEMBERS (Skool + exclusive cohorts, collapsible, expandable)
     // ════════════════════════════════════════════════════════════════════
+    const _mexpData = {}; // cache: memberId+cohortId → {goals, stakes}
+    let _expandGoalForm = null; // { userId, cohortId }
+
     async function renderMembers() {
       const el = document.getElementById('tab-members');
       el.innerHTML = '<div class="loading-state">Loading…</div>';
 
+      // Load Skool members
+      const { data: skoolRows } = await sb.from('skool_members').select('user_id');
+      const skoolIds = (skoolRows || []).map(r => r.user_id);
+      let skoolProfiles = [];
+      if (skoolIds.length) {
+        const { data: p } = await sb.from('profiles').select('id,first_name,email').in('id', skoolIds);
+        skoolProfiles = p || [];
+      }
+      const { data: allCycles } = skoolIds.length
+        ? await sb.from('skool_cycles').select('*').in('user_id', skoolIds).order('start_date', { ascending: false })
+        : { data: [] };
+      const latestCycle = {};
+      for (const c of (allCycles || [])) { if (!latestCycle[c.user_id]) latestCycle[c.user_id] = c; }
+
+      // Load exclusive cohorts + members
       const { data: cohortsRaw } = await sb.from('cohorts').select('*').order('start_date', { ascending: false });
       const cohorts = cohortsRaw || [];
-
-      if (!cohorts.length) { el.innerHTML = '<div class="empty-state">No cohorts yet. Create one in the Cohorts tab.</div>'; return; }
-      if (!membersCohortId) membersCohortId = (_ac.activeCohort?.id || cohorts[0].id);
-
-      const mc = cohorts.find(c => c.id === membersCohortId) || cohorts[0];
-      membersCohortId = mc.id;
-
-      // Load members of this cohort
-      const { data: memberRows } = await sb.from('cohort_members')
-        .select('user_id, profiles(id, first_name, role)')
-        .eq('cohort_id', mc.id);
-      const members = (memberRows || []).map(r => r.profiles).filter(Boolean);
-
-      // Load redemptions for these members
-      const memberIds = members.map(m => m.id);
-      let redemptionsMap = {};
-      if (memberIds.length) {
-        const { data: rRaw } = await sb.from('redemptions')
-          .select('*').eq('cohort_id', mc.id).in('user_id', memberIds);
-        for (const r of (rRaw || [])) {
-          if (!redemptionsMap[r.user_id]) redemptionsMap[r.user_id] = [];
-          redemptionsMap[r.user_id].push(r);
-        }
+      const cohortMemberMap = {};
+      for (const cohort of cohorts) {
+        const { data: rows } = await sb.from('cohort_members')
+          .select('user_id, profiles(id,first_name,email)').eq('cohort_id', cohort.id);
+        cohortMemberMap[cohort.id] = (rows || []).map(r => r.profiles).filter(Boolean);
       }
 
-      const cohortOptions = cohorts.map(c => `<option value="${c.id}"${c.id === mc.id ? ' selected' : ''}>${c.name}</option>`).join('');
+      // Build HTML
+      let html = '';
 
-      const rows = members.map(m => {
-        const redemptions = redemptionsMap[m.id] || [];
-        const pending     = redemptions.filter(r => r.status === 'pending');
-        const pips        = [1,2,3].map(n => `<div class="strike-pip${n<=redemptions.length?' active':''}"></div>`).join('');
-        const status      = pending.length
-          ? `<span class="redemption-status pending">${pending.length} pending</span>`
-          : `<span class="redemption-status clear">Clear</span>`;
-        return `
-          <div class="member-row">
-            <div class="member-avatar">${(m.first_name||'?')[0].toUpperCase()}</div>
-            <div class="member-info">
-              <div class="member-name" id="mname-${m.id}">${m.first_name}</div>
-              <div class="strikes-row">${pips} ${status}</div>
-            </div>
-            <div class="member-actions">
-              <button type="button" class="icon-btn" onclick="removeRedemption('${m.id}')" title="Remove redemption">−</button>
-              <button type="button" class="icon-btn add" onclick="addRedemption('${m.id}')" title="Add redemption">+</button>
-              <button type="button" class="icon-btn edit" onclick="editMemberName('${m.id}')" title="Edit name">✎</button>
-              <button type="button" class="icon-btn remove" onclick="removeMember('${m.id}')" title="Remove">✕</button>
-            </div>
-          </div>`;
-      }).join('');
+      // ── Skool Community section ──
+      const skoolMemberRows = skoolProfiles.map(m => _memberRowHTML(m, latestCycle[m.id], 'skool', latestCycle[m.id]?.id)).join('');
+      html += _sectionHTML('skool', `Skool Community (${skoolProfiles.length})`, skoolMemberRows);
 
-      el.innerHTML = `
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div class="card-title" style="margin-bottom:0;">Members</div>
-            <select class="form-input" style="width:auto;font-size:0.8rem;padding:6px 10px;"
-              onchange="membersCohortId=this.value;renderMembers()">
-              ${cohortOptions}
-            </select>
-          </div>
-          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;">${members.length} member${members.length!==1?'s':''} · starts ${mc.start_date}</div>
-          <div>${rows || '<div class="empty-state">No members yet.</div>'}</div>
+      // ── Each exclusive cohort section ──
+      for (const cohort of cohorts) {
+        const members = cohortMemberMap[cohort.id] || [];
+        const day = getCohortDay(cohort.start_date);
+        const dayText = day < 1 ? `Day ${day}` : day <= 21 ? `Day ${day}` : 'Complete';
+        const rows = members.map(m => _memberRowHTML(m, cohort, 'exclusive', cohort.id)).join('');
+        html += _sectionHTML(`exc-${cohort.id}`, `${cohort.name} (${members.length}) · ${dayText}`, rows);
+      }
+
+      // ── Invite generator ──
+      html += `<div class="card">
+        <div class="card-title">Generate Invite Link</div>
+        <div class="form-field">
+          <label class="form-label">Invite to</label>
+          <select class="form-select" id="inviteType" onchange="onInviteTypeChange()">
+            <option value="skool">Skool Community</option>
+            <option value="exclusive">Exclusive Cohort</option>
+          </select>
         </div>
-        <div class="card">
-          <div class="card-title">Generate Invite Link</div>
-          <div class="form-field">
-            <label class="form-label">Invite to</label>
-            <select class="form-select" id="inviteType" onchange="onInviteTypeChange()">
-              <option value="skool">Skool Community</option>
-              <option value="exclusive">Exclusive Cohort</option>
-            </select>
+        <div class="form-field" id="inviteCohortField" style="display:none;">
+          <label class="form-label">Cohort</label>
+          <select class="form-select" id="inviteCohortSelect">
+            ${cohorts.map(c => `<option value="${c.id}">${c.name||c.start_date}</option>`).join('')}
+          </select>
+        </div>
+        <div id="inviteLinkBox" style="display:none;" class="invite-link-box"></div>
+        <div id="inviteFlash" class="flash"></div>
+        <div class="btn-row" style="margin-top:4px;">
+          <button type="button" class="btn primary full" onclick="inviteMember()">Generate Invite Link</button>
+          <button type="button" class="btn secondary" id="copyInviteBtn" style="display:none;" onclick="copyInviteLink()">Copy</button>
+        </div>
+      </div>`;
+
+      el.innerHTML = html;
+    }
+
+    function _sectionHTML(key, title, bodyHtml) {
+      const isOpen = sessionStorage.getItem(`admsec_${key}`) !== '0';
+      return `<div class="card" style="padding:0;overflow:hidden;">
+        <div onclick="toggleAdminSection('${key}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">
+          <div class="card-title" style="margin:0;">${title}</div>
+          <span id="admsec-chev-${key}" style="font-size:0.72rem;color:var(--muted);transition:transform 0.2s;${isOpen?'transform:rotate(180deg)':''}">▼</span>
+        </div>
+        <div id="admsec-body-${key}" style="${isOpen?'':'display:none;'}border-top:1px solid var(--border);">
+          ${bodyHtml || '<div class="empty-state" style="padding:16px;">No members.</div>'}
+        </div>
+      </div>`;
+    }
+
+    function toggleAdminSection(key) {
+      const body = document.getElementById(`admsec-body-${key}`);
+      const chev = document.getElementById(`admsec-chev-${key}`);
+      const isOpen = body.style.display !== 'none';
+      body.style.display = isOpen ? 'none' : '';
+      if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+      sessionStorage.setItem(`admsec_${key}`, isOpen ? '0' : '1');
+    }
+
+    function _memberRowHTML(member, cohortOrCycle, type, cohortId) {
+      const day = cohortOrCycle ? getCohortDay(cohortOrCycle.start_date) : null;
+      const dayLabel = day === null ? 'No cycle' : day < 1 ? `Day ${day}` : day <= 21 ? `Day ${day}/21` : 'Complete';
+      const key = `${member.id}_${cohortId}`;
+      return `<div>
+        <div onclick="toggleMemberExpand('${member.id}','${cohortId||''}','${type}')" style="display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);">
+          <div class="member-avatar">${(member.first_name||'?')[0].toUpperCase()}</div>
+          <div class="member-info" style="flex:1;">
+            <div class="member-name" id="mname-${key}">${member.first_name}</div>
+            <div class="member-email">${dayLabel}${member.email?' · '+member.email:''}</div>
           </div>
-          <div class="form-field" id="inviteCohortField" style="display:none;">
-            <label class="form-label">Cohort</label>
-            <select class="form-select" id="inviteCohortSelect">
-              ${cohorts.map(c => `<option value="${c.id}">${c.name || c.start_date}</option>`).join('')}
-            </select>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <button class="icon-btn edit" onclick="event.stopPropagation();editMemberName('${member.id}','${cohortId||''}','${type}')" title="Edit name">✎</button>
+            <span id="mchev-${key}" style="font-size:0.68rem;color:var(--muted);margin-left:4px;transition:transform 0.2s;">▼</span>
           </div>
-          <div id="inviteLinkBox" style="display:none;" class="invite-link-box"></div>
-          <div id="inviteFlash" class="flash"></div>
-          <div class="btn-row" style="margin-top:4px;">
-            <button type="button" class="btn primary full" onclick="inviteMember()">Generate Invite Link</button>
-            <button type="button" class="btn secondary" id="copyInviteBtn" style="display:none;" onclick="copyInviteLink()">Copy</button>
+        </div>
+        <div id="mexp-${key}" style="display:none;background:var(--bg);padding:14px 16px;border-bottom:1px solid var(--border);">
+          <div class="loading-state" style="padding:8px 0;">Loading…</div>
+        </div>
+      </div>`;
+    }
+
+    async function toggleMemberExpand(userId, cohortId, type) {
+      const key = `${userId}_${cohortId}`;
+      const expEl = document.getElementById(`mexp-${key}`);
+      const chev  = document.getElementById(`mchev-${key}`);
+      if (!expEl) return;
+      const isOpen = expEl.style.display !== 'none';
+      expEl.style.display = isOpen ? 'none' : '';
+      if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+      if (!isOpen) await loadMemberExpand(userId, cohortId, type, key);
+    }
+
+    async function loadMemberExpand(userId, cohortId, type, key) {
+      const expEl = document.getElementById(`mexp-${key}`);
+      if (!expEl) return;
+
+      const [goalsRes, stakesRes] = await Promise.all([
+        cohortId ? sb.from('goals').select('*').eq('user_id', userId).eq('cohort_id', cohortId).order('sort_order') : { data: [] },
+        cohortId ? sb.from('stakes').select('*').eq('user_id', userId).eq('cohort_id', cohortId).maybeSingle() : { data: null }
+      ]);
+      const goals  = goalsRes.data  || [];
+      const stakes = stakesRes.data || {};
+
+      const frameOf = t => ['milestone','total_count','total_time_min','total_time_max'].includes(t) ? '21 Days'
+        : ['weekly_boolean','weekly_days','weekly_count','weekly_time_min','weekly_time_max','daily_count_weekly'].includes(t) ? 'Weekly' : 'Daily';
+
+      const goalRows = goals.map(g => `
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
+          <div style="flex:1;font-size:0.84rem;color:var(--text);font-weight:500;">${g.title}</div>
+          <span style="font-size:0.68rem;font-weight:700;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:8px;">${frameOf(g.type)}</span>
+          <button class="icon-btn remove" onclick="adminDeleteGoal('${g.id}','${userId}','${cohortId}','${type}')">✕</button>
+        </div>`).join('');
+
+      const showForm = _expandGoalForm?.userId === userId && _expandGoalForm?.cohortId === cohortId;
+      const pillS = sel => `style="padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;cursor:pointer;border:1.5px solid;${sel?'background:var(--orange);color:#fff;border-color:var(--orange);':'background:var(--bg);color:var(--muted);border-color:var(--border);'}"`;
+      const addForm = showForm ? `
+        <div style="padding:12px 0;border-top:1px solid var(--border);margin-top:8px;">
+          <div class="form-field"><label class="form-label">Goal name</label>
+            <input class="form-input" id="agTitle-${key}" placeholder="e.g. Meditate" value="${addGoalTitle}" oninput="addGoalTitle=this.value" /></div>
+          <div class="form-field"><label class="form-label">Frame</label>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button type="button" ${pillS(addGoalFrame==='daily')}     onclick="setAdminFrame(this,'daily','${key}')">Daily</button>
+              <button type="button" ${pillS(addGoalFrame==='weekly')}    onclick="setAdminFrame(this,'weekly','${key}')">Weekly</button>
+              <button type="button" ${pillS(addGoalFrame==='milestone')} onclick="setAdminFrame(this,'milestone','${key}')">21 Days</button>
+            </div></div>
+          <div class="form-field"><label class="form-label">Type</label>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;" id="agMetric-${key}">
+              ${addGoalFrame==='weekly'
+                ? `<button type="button" ${pillS(addGoalMetric==='boolean')}    onclick="setAdminMetric(this,'boolean','${key}')">Yes/No</button>
+                   <button type="button" ${pillS(addGoalMetric==='days')}       onclick="setAdminMetric(this,'days','${key}')">Days/wk</button>
+                   <button type="button" ${pillS(addGoalMetric==='count')}      onclick="setAdminMetric(this,'count','${key}')">Count</button>
+                   <button type="button" ${pillS(addGoalMetric==='min_time')}   onclick="setAdminMetric(this,'min_time','${key}')">Min time</button>
+                   <button type="button" ${pillS(addGoalMetric==='max_time')}   onclick="setAdminMetric(this,'max_time','${key}')">Max time</button>`
+                : `<button type="button" ${pillS(addGoalMetric==='boolean')}  onclick="setAdminMetric(this,'boolean','${key}')">Yes/No</button>
+                   <button type="button" ${pillS(addGoalMetric==='count')}    onclick="setAdminMetric(this,'count','${key}')">Count</button>
+                   <button type="button" ${pillS(addGoalMetric==='min_time')} onclick="setAdminMetric(this,'min_time','${key}')">Min time</button>
+                   <button type="button" ${pillS(addGoalMetric==='max_time')} onclick="setAdminMetric(this,'max_time','${key}')">Max time</button>`}
+            </div></div>
+          <div class="btn-row">
+            <button type="button" class="btn secondary" onclick="_expandGoalForm=null;loadMemberExpand('${userId}','${cohortId}','${type}','${key}')">Cancel</button>
+            <button type="button" class="btn primary" onclick="adminSaveGoalInline('${userId}','${cohortId}','${type}','${key}')">Add</button>
+          </div>
+        </div>` : `<button type="button" class="btn secondary" style="margin-top:8px;font-size:0.8rem;padding:7px 14px;" onclick="_expandGoalForm={userId:'${userId}',cohortId:'${cohortId}'};addGoalTitle='';addGoalFrame='daily';addGoalMetric='boolean';loadMemberExpand('${userId}','${cohortId}','${type}','${key}')">+ Add Goal</button>`;
+
+      const s = stakes;
+      expEl.innerHTML = `
+        <div style="margin-bottom:10px;">
+          <div class="section-label" style="margin-bottom:6px;">Goals (${goals.length})</div>
+          ${goalRows || '<div style="font-size:0.8rem;color:var(--muted);padding:4px 0;">No goals yet.</div>'}
+          ${cohortId ? addForm : ''}
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom:8px;">Stakes</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div><div style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">🏆 Reward</div>
+              <textarea class="stakes-input" rows="2" oninput="adminSaveStakeDebounce('${userId}','${cohortId}','complete',this.value)">${s?.complete||''}</textarea></div>
+            <div><div style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">⚡ Slip 1</div>
+              <textarea class="stakes-input" rows="1" oninput="adminSaveStakeDebounce('${userId}','${cohortId}','r1',this.value)">${s?.r1||''}</textarea></div>
+            <div><div style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">⚡ Slip 2</div>
+              <textarea class="stakes-input" rows="1" oninput="adminSaveStakeDebounce('${userId}','${cohortId}','r2',this.value)">${s?.r2||''}</textarea></div>
+            <div><div style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">💀 Fail</div>
+              <textarea class="stakes-input" rows="1" oninput="adminSaveStakeDebounce('${userId}','${cohortId}','fail',this.value)">${s?.fail||''}</textarea></div>
+            <div id="stakes-saved-${key}" style="font-size:0.72rem;font-weight:700;color:var(--green);display:none;">✓ Saved</div>
           </div>
         </div>`;
+    }
+
+    const _adminStakeTimers = {};
+    function adminSaveStakeDebounce(userId, cohortId, field, value) {
+      const k = `${userId}_${cohortId}_${field}`;
+      clearTimeout(_adminStakeTimers[k]);
+      _adminStakeTimers[k] = setTimeout(async () => {
+        await sb.from('stakes').upsert({ user_id: userId, cohort_id: cohortId, [field]: value }, { onConflict: 'user_id,cohort_id' });
+        const key = `${userId}_${cohortId}`;
+        const ind = document.getElementById(`stakes-saved-${key}`);
+        if (ind) { ind.style.display='block'; setTimeout(() => ind.style.display='none', 2000); }
+      }, 800);
+    }
+
+    function setAdminFrame(btn, frame, key) {
+      addGoalFrame = frame;
+      if (frame === 'weekly' && !['boolean','days','count','count_days','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'boolean';
+      if (frame !== 'weekly' && !['boolean','count','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'boolean';
+      btn.closest('div').querySelectorAll('button').forEach(b => { b.style.background=''; b.style.color=''; b.style.borderColor=''; });
+      btn.style.background='var(--orange)'; btn.style.color='#fff'; btn.style.borderColor='var(--orange)';
+      // Rebuild metric pills
+      const mp = document.getElementById(`agMetric-${key}`);
+      if (mp) {
+        const pillS = sel => `style="padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;cursor:pointer;border:1.5px solid;${sel?'background:var(--orange);color:#fff;border-color:var(--orange);':'background:var(--bg);color:var(--muted);border-color:var(--border);'}"`;
+        if (frame==='weekly') {
+          mp.innerHTML = `<button type="button" ${pillS(true)} onclick="setAdminMetric(this,'boolean','${key}')">Yes/No</button>
+                          <button type="button" ${pillS(false)} onclick="setAdminMetric(this,'days','${key}')">Days/wk</button>
+                          <button type="button" ${pillS(false)} onclick="setAdminMetric(this,'count','${key}')">Count</button>
+                          <button type="button" ${pillS(false)} onclick="setAdminMetric(this,'min_time','${key}')">Min time</button>
+                          <button type="button" ${pillS(false)} onclick="setAdminMetric(this,'max_time','${key}')">Max time</button>`;
+          addGoalMetric = 'boolean';
+        } else {
+          mp.innerHTML = `<button type="button" ${pillS(true)} onclick="setAdminMetric(this,'boolean','${key}')">Yes/No</button>
+                          <button type="button" ${pillS(false)} onclick="setAdminMetric(this,'count','${key}')">Count</button>
+                          <button type="button" ${pillS(false)} onclick="setAdminMetric(this,'min_time','${key}')">Min time</button>
+                          <button type="button" ${pillS(false)} onclick="setAdminMetric(this,'max_time','${key}')">Max time</button>`;
+          addGoalMetric = 'boolean';
+        }
+      }
+    }
+
+    function setAdminMetric(btn, metric, key) {
+      addGoalMetric = metric;
+      const mp = document.getElementById(`agMetric-${key}`);
+      if (mp) mp.querySelectorAll('button').forEach(b => { b.style.background=''; b.style.color=''; b.style.borderColor=''; });
+      btn.style.background='var(--orange)'; btn.style.color='#fff'; btn.style.borderColor='var(--orange)';
+    }
+
+    async function adminSaveGoalInline(userId, cohortId, type, key) {
+      const title = (document.getElementById(`agTitle-${key}`)?.value || addGoalTitle).trim();
+      if (!title) return;
+      const { count } = await sb.from('goals').select('*', { count:'exact', head:true }).eq('user_id', userId).eq('cohort_id', cohortId);
+      if (count >= 15) { alert('Max 15 goals.'); return; }
+      let type2, config = {};
+      if (addGoalFrame==='milestone') {
+        type2 = addGoalMetric==='boolean' ? 'milestone' : addGoalMetric==='count' ? 'total_count' : addGoalMetric==='min_time' ? 'total_time_min' : 'total_time_max';
+      } else if (addGoalFrame==='weekly') {
+        if (addGoalMetric==='boolean') type2 = 'weekly_boolean';
+        else if (addGoalMetric==='days') { type2='weekly_days'; config.daysTarget=5; }
+        else if (addGoalMetric==='count') { type2='weekly_count'; config.weeklyTarget=3; }
+        else if (addGoalMetric==='min_time') { type2='weekly_time_min'; config.weeklyTargetMinutes=60; }
+        else { type2='weekly_time_max'; config.weeklyMaxMinutes=120; }
+      } else {
+        if (addGoalMetric==='boolean') type2='daily_boolean';
+        else if (addGoalMetric==='count') { type2='daily_count'; config.dailyTarget=1; }
+        else if (addGoalMetric==='min_time') { type2='daily_time_min'; config.weeklyTargetMinutes=60; }
+        else { type2='daily_time_max'; config.weeklyMaxMinutes=120; }
+      }
+      await sb.from('goals').insert({ id:`g_${uid()}`, type:type2, title, config, user_id:userId, cohort_id:cohortId, locked:false, sort_order:count||0 });
+      _expandGoalForm = null; addGoalTitle=''; addGoalFrame='daily'; addGoalMetric='boolean';
+      await loadMemberExpand(userId, cohortId, type, key);
+    }
+
+    async function adminDeleteGoal(goalId, userId, cohortId, type) {
+      if (!confirm('Delete this goal?')) return;
+      await sb.from('goals').delete().eq('id', goalId);
+      const key = `${userId}_${cohortId}`;
+      await loadMemberExpand(userId, cohortId, type, key);
+    }
+
+    function editMemberName(userId, cohortId, type) {
+      const key = `${userId}_${cohortId}`;
+      const nameEl = document.getElementById(`mname-${key}`);
+      if (!nameEl) return;
+      const current = nameEl.textContent;
+      const input = document.createElement('input');
+      input.style.cssText = 'font-size:0.88rem;font-weight:700;font-family:inherit;color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--orange);outline:none;padding:0;width:140px;';
+      input.value = current;
+      nameEl.replaceWith(input);
+      input.focus(); input.select();
+      const commit = async () => {
+        const newName = input.value.trim();
+        if (newName && newName !== current) await sb.from('profiles').update({ first_name: newName }).eq('id', userId);
+        renderMembers();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', ev => { if (ev.key==='Enter') { ev.preventDefault(); input.blur(); } if (ev.key==='Escape') renderMembers(); });
+    }
+
+    // removeMember still used for cohort membership removal
+    async function removeMember(userId) {
+      if (!confirm('Remove from cohort?')) return;
+      await sb.from('cohort_members').delete().eq('cohort_id', membersCohortId).eq('user_id', userId);
+      renderMembers();
     }
 
     let _pendingInviteLink = '';
@@ -388,33 +595,6 @@
       });
     }
 
-    async function editMemberName(userId) {
-      const nameEl = document.getElementById(`mname-${userId}`);
-      if (!nameEl) return;
-      const current = nameEl.textContent;
-      const input = document.createElement('input');
-      input.style.cssText = 'font-size:0.88rem;font-weight:700;font-family:inherit;color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--orange);outline:none;padding:0;width:140px;';
-      input.value = current;
-      nameEl.replaceWith(input);
-      input.focus(); input.select();
-      const commit = async () => {
-        const newName = input.value.trim();
-        if (newName && newName !== current) {
-          const { error } = await sb.from('profiles').update({ first_name: newName }).eq('id', userId);
-          if (error) { alert('Failed: ' + error.message); renderMembers(); return; }
-        }
-        renderMembers();
-      };
-      input.addEventListener('blur', commit);
-      input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); } if (ev.key === 'Escape') renderMembers(); });
-    }
-
-    async function removeMember(userId) {
-      if (!confirm('Remove this member from the cohort?')) return;
-      await sb.from('cohort_members').delete().eq('cohort_id', membersCohortId).eq('user_id', userId);
-      renderMembers();
-    }
-
     async function addRedemption(userId) {
       const mc = (await sb.from('cohorts').select('start_date').eq('id', membersCohortId).single()).data;
       if (!mc) return;
@@ -434,10 +614,8 @@
       renderMembers();
     }
 
-    // ════════════════════════════════════════════════════════════════════
-    // TAB: GOALS
-    // ════════════════════════════════════════════════════════════════════
-    async function renderGoals() {
+    // (Goals/Stakes tabs removed — now inline in Members expand)
+    async function _removedRenderGoals() {
       const el = document.getElementById('tab-goals');
       el.innerHTML = '<div class="loading-state">Loading…</div>';
 
@@ -559,9 +737,8 @@
     }
 
 
-    function setAdminFrame(btn, frame) {
+    function _oldSetAdminFrame(btn, frame) {
       addGoalFrame = frame;
-      // Reset metric to a valid default for this frame
       if (frame === 'weekly' && !['days','count','count_days','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'days';
       if (frame !== 'weekly' && !['boolean','count','min_time','max_time'].includes(addGoalMetric)) addGoalMetric = 'boolean';
       btn.closest("#agFramePills").querySelectorAll("button").forEach(b => { b.style.background=""; b.style.color=""; b.style.borderColor=""; });
@@ -657,10 +834,7 @@
       renderGoals();
     }
 
-    // ════════════════════════════════════════════════════════════════════
-    // TAB: STAKES
-    // ════════════════════════════════════════════════════════════════════
-    async function renderStakes() {
+    async function _removedRenderStakes() {
       const el = document.getElementById('tab-stakes');
       el.innerHTML = '<div class="loading-state">Loading…</div>';
 
