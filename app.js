@@ -93,7 +93,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         }, 0);
       },
       areGoalsLocked() {
-        return _c.cohort ? this.getCohortDay(_c.cohort.startDate) >= 2 : false;
+        return _c.cohort ? this.getCohortDay(_c.cohort.startDate) >= 4 : false;
       },
       getPendingRedemptions() {
         return _c.redemptions.filter(r => r.status === 'pending');
@@ -1057,7 +1057,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           <div class="goals-done-banner">
             <div>
               <div class="goals-done-label">✓ Goals set</div>
-              <div class="goals-done-sub">You can still add more until end of Day 2.</div>
+              <div class="goals-done-sub">You can still add more until end of Day 3.</div>
             </div>
             <button type="button" class="btn-forgot" onclick="unfinalizeGoals()">I forgot something</button>
           </div>`);
