@@ -1095,7 +1095,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         out = out.replace(`data-goal-type="${g.type}" class`, `data-goal-type="${g.type}" style="${accentStyle}" class`);
       }
       if (week > 1) {
-        const indicator = week === 2 ? '&rsaquo;' : '&raquo;';
+        const indicator = week === 2 ? 'W2' : 'W3';
         return `<div class="goal-extra-wrap goal-extra-w${week}"><span class="goal-extra-indicator">${indicator}</span><div class="goal-extra-card">${out}</div></div>`;
       }
       return out;
