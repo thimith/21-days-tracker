@@ -79,6 +79,16 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           return localDateStr(d);
         });
       },
+      // Returns the dates a goal is active for, starting from the week it was added.
+      getGoalActiveDates(g, cohortStartDate) {
+        const week = g.config?.addedOnWeek || 1;
+        const startOffset = (week - 1) * 7;
+        return Array.from({length: 21 - startOffset}, (_, i) => {
+          const d = parseLocalDate(cohortStartDate);
+          d.setDate(d.getDate() + startOffset + i);
+          return localDateStr(d);
+        });
+      },
 
       // ── Cache reads ──
       getGoalsForUser() { return _c.goals; },
@@ -204,17 +214,19 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         if (currentDay > 21) completedWeeks.push(3);
 
         for (const g of goals) {
+          const goalWeek = g.config?.addedOnWeek || 1;
+          const activeCompletedWeeks = completedWeeks.filter(wk => wk >= goalWeek);
 
-          // ── Daily: check all past days (not just yesterday) ──────────
+          // ── Daily: check all past days within goal's active range ────
           if (g.type === 'daily_boolean') {
-            const allDates = this.getCohortDates(cohortObj.startDate);
+            const allDates = this.getGoalActiveDates(g, cohortObj.startDate);
             for (const d of allDates) {
               if (d >= todayStr) continue;
               const v = _c.checkins[`${g.id}_${d}`];
               if (!v) addF(this.getCohortWeekNum(cohortObj.startDate, d), `Missed: ${g.title}`);
             }
           } else if (g.type === 'daily_count') {
-            const allDates = this.getCohortDates(cohortObj.startDate);
+            const allDates = this.getGoalActiveDates(g, cohortObj.startDate);
             const target = g.config?.dailyTarget || 1;
             for (const d of allDates) {
               if (d >= todayStr) continue;
@@ -222,9 +234,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
               if (v < target) addF(this.getCohortWeekNum(cohortObj.startDate, d), `${g.title}: ${v}/${target}`);
             }
 
-          // ── Weekly: evaluate all completed weeks (retroactive) ────────
+          // ── Weekly: evaluate completed weeks since goal was added ────
           } else if (g.type === 'weekly_days') {
-            for (const prevWk of completedWeeks) {
+            for (const prevWk of activeCompletedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const daysHit = wkDates.filter(d => !!_c.checkins[`${g.id}_${d}`]).length;
               const daysTarget = g.config?.daysTarget || 5;
@@ -232,7 +244,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 addF(prevWk, `${g.title}: ${daysHit}/${daysTarget} days`, true);
             }
           } else if (g.type === 'daily_count_weekly') {
-            for (const prevWk of completedWeeks) {
+            for (const prevWk of activeCompletedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const dailyTarget = g.config?.dailyTarget || 1;
               const daysTarget  = g.config?.daysTarget  || 5;
@@ -241,54 +253,54 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 addF(prevWk, `${g.title}: ${daysHit}/${daysTarget} days`, true);
             }
           } else if (g.type === 'weekly_count') {
-            for (const prevWk of completedWeeks) {
+            for (const prevWk of activeCompletedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total < (g.config.weeklyTarget||1))
                 addF(prevWk, `${g.title}: ${total}/${g.config.weeklyTarget} sessions`, true);
             }
           } else if (g.type === 'weekly_time_min' || g.type === 'daily_time_min') {
-            for (const prevWk of completedWeeks) {
+            for (const prevWk of activeCompletedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total < (g.config.weeklyTargetMinutes||60))
                 addF(prevWk, `${g.title}: ${total}min/${g.config.weeklyTargetMinutes}min target`, true);
             }
           } else if (g.type === 'weekly_time_max' || g.type === 'daily_time_max' || g.type === 'daily_time') {
-            for (const prevWk of completedWeeks) {
+            for (const prevWk of activeCompletedWeeks) {
               const wkDates = this.getWeekDates(cohortObj.startDate, prevWk);
               const total = this.getWeeklyTotal(g.id, wkDates);
               if (total > (g.config.weeklyMaxMinutes||120))
                 addF(prevWk, `${g.title}: over weekly limit`, true);
             }
 
-          // ── 21-day: evaluate at end of challenge (day 22) ─────────────────
+          // ── span goals: evaluate at end of cohort (day 22) ──────────
           } else if (g.type === 'milestone') {
             if (currentDay === 22) {
-              const allDates = this.getCohortDates(cohortObj.startDate);
+              const allDates = this.getGoalActiveDates(g, cohortObj.startDate);
               const done = allDates.some(d => !!_c.checkins[`${g.id}_${d}`]);
-              if (!done) addF(3, `${g.title}: 21-day goal not completed`);
+              if (!done) addF(3, `${g.title}: goal not completed`);
             }
           } else if (g.type === 'total_count') {
             if (currentDay === 22) {
-              const allDates = this.getCohortDates(cohortObj.startDate);
+              const allDates = this.getGoalActiveDates(g, cohortObj.startDate);
               const total = allDates.reduce((s,d) => s + (Number(_c.checkins[`${g.id}_${d}`])||0), 0);
               if (total < (g.config.totalTarget||10))
                 addF(3, `${g.title}: ${total}/${g.config.totalTarget} sessions`);
             }
           } else if (g.type === 'total_time_min') {
             if (currentDay === 22) {
-              const allDates = this.getCohortDates(cohortObj.startDate);
+              const allDates = this.getGoalActiveDates(g, cohortObj.startDate);
               const total = allDates.reduce((s,d) => s + (Number(_c.checkins[`${g.id}_${d}`])||0), 0);
               if (total < (g.config.totalTargetMinutes||120))
                 addF(3, `${g.title}: ${total}min/${g.config.totalTargetMinutes}min target`);
             }
           } else if (g.type === 'total_time_max') {
             if (currentDay === 22) {
-              const allDates = this.getCohortDates(cohortObj.startDate);
+              const allDates = this.getGoalActiveDates(g, cohortObj.startDate);
               const total = allDates.reduce((s,d) => s + (Number(_c.checkins[`${g.id}_${d}`])||0), 0);
               if (total > (g.config.totalMaxMinutes||300))
-                addF(3, `${g.title}: over 21-day limit`);
+                addF(3, `${g.title}: over limit`);
             }
           }
         }
@@ -928,13 +940,16 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
 
 
       // ── Goal cards (grouped) ──
-      if (!goals.length) {
+      const dateWeek     = db.getCohortWeekNum(cohort.startDate, date);
+      const visibleGoals = goals.filter(g => (g.config?.addedOnWeek || 1) <= dateWeek);
+
+      if (!visibleGoals.length) {
         html.push(`<div class="empty-state">${isViewingOther ? 'No goals set.' : 'No goals yet — add one below.'}</div>`);
       }
 
-      const daily     = goals.filter(g => ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'].includes(g.type));
-      const weekly    = goals.filter(g => ['weekly_boolean','weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'].includes(g.type));
-      const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
+      const daily     = visibleGoals.filter(g => ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'].includes(g.type));
+      const weekly    = visibleGoals.filter(g => ['weekly_boolean','weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'].includes(g.type));
+      const milestone = visibleGoals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
 
       if (daily.length) {
         html.push('<div class="goal-group-label">Daily</div>');
@@ -1041,7 +1056,12 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
               </div>
             </div>`);
         } else {
-          html.push(`<button type="button" class="btn-add-goal-bottom" onclick="openAddForm()">+ Add goal</button>`);
+          const currentWeek = db.getCohortWeekNum(cohort.startDate);
+          const addLabel    = currentWeek > 1 ? '+ Add Extra Goal 🔥' : '+ Add Goal';
+          const addSub      = currentWeek === 2 ? 'Day 8–21' : currentWeek === 3 ? 'Day 15–21' : '';
+          html.push(`<button type="button" class="btn-add-goal-bottom" onclick="openAddForm()">
+            ${addLabel}${addSub ? `<span class="btn-add-goal-sub">${addSub}</span>` : ''}
+          </button>`);
         }
       }
 
@@ -1069,9 +1089,12 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const html  = _renderGoalCardInner(g, date, locked);
       const color = g.config?.color || '';
       const accentStyle = color ? `border-left:4px solid ${color};` : '';
+      const week = g.config?.addedOnWeek || 1;
+      const indentStyle = week === 2 ? 'margin-left:10px;' : week === 3 ? 'margin-left:20px;' : '';
+      const combinedStyle = [accentStyle, indentStyle].filter(Boolean).join('');
       let out = html.replace('<div class="goal-card', `<div data-goal-id="${g.id}" data-goal-type="${g.type}" class="goal-card`);
-      if (accentStyle) {
-        out = out.replace(`data-goal-type="${g.type}" class`, `data-goal-type="${g.type}" style="${accentStyle}" class`);
+      if (combinedStyle) {
+        out = out.replace(`data-goal-type="${g.type}" class`, `data-goal-type="${g.type}" style="${combinedStyle}" class`);
       }
       return out;
     }
@@ -1420,7 +1443,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
 
       if (g.type === 'milestone') {
-        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const allDates = cohort ? db.getGoalActiveDates(g, cohort.startDate) : [];
         const done = allDates.some(d => !!db.getCheckin(g.id, d)?.value);
         return `
           <div class="goal-card${done?' is-done':''} is-tappable" onclick="toggleMilestone('${g.id}')">
@@ -1438,7 +1461,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
 
       if (g.type === 'total_count') {
-        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const allDates = cohort ? db.getGoalActiveDates(g, cohort.startDate) : [];
         const total    = allDates.reduce((s,d) => s + Number(db.getCheckin(g.id,d)?.value||0), 0);
         const target   = g.config.totalTarget || 10;
         const met      = total >= target;
@@ -1466,7 +1489,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
 
       if (g.type === 'total_time_min') {
-        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const allDates = cohort ? db.getGoalActiveDates(g, cohort.startDate) : [];
         const total    = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
         const target   = g.config.totalTargetMinutes || 120;
         const met      = total >= target;
@@ -1498,7 +1521,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
 
       if (g.type === 'total_time_max') {
-        const allDates = cohort ? db.getCohortDates(cohort.startDate) : [];
+        const allDates = cohort ? db.getGoalActiveDates(g, cohort.startDate) : [];
         const total    = allDates.reduce((s,d) => s + (db.getCheckin(g.id,d)?.value||0), 0);
         const maxMin   = g.config.totalMaxMinutes || 300;
         const over     = total > maxMin;
@@ -2571,6 +2594,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
       if (addGoalColor) config.color = addGoalColor;
       if (['min_time','max_time'].includes(addGoalMetric)) config.timeUnit = addGoalTimeUnit;
+      config.addedOnWeek = cohort ? db.getCohortWeekNum(cohort.startDate) : 1;
 
       if (!cohort) {
         const drafts = getDraftGoals();
