@@ -475,6 +475,17 @@ html { font-size: 120%; }
     .btn-xs.sec { background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); }
 
     /* ── Goal delete button (setup / unlocked mode) ──────────────────────── */
+    /* ── Extra-goal indent wrapper ──────────────────────────────────────── */
+    .goal-extra-wrap { display: flex; align-items: flex-start; gap: 5px; }
+    .goal-extra-w2   { margin-left: 6px; }
+    .goal-extra-w3   { margin-left: 14px; }
+    .goal-extra-indicator {
+      flex-shrink: 0; padding-top: 11px;
+      font-size: 0.9rem; font-weight: 700; color: var(--muted);
+      opacity: 0.4; line-height: 1; user-select: none;
+    }
+    .goal-extra-card { flex: 1; min-width: 0; }
+
     /* ── Delete row inside edit overlay ─────────────────────────────────── */
     .ov-delete-row { padding: 2px 6px 0; }
     .ov-delete-btn {

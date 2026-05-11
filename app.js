@@ -1004,7 +1004,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 <div class="type-pills">
                   <button type="button" class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')" data-tip="Tracked every day&#10;e.g. Meditate, No alcohol">Daily</button>
                   <button type="button" class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')" data-tip="Tracked over 7 days&#10;e.g. Work out 4x this week">Weekly</button>
-                  <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')" data-tip="One goal over all 21 days&#10;e.g. Read 1 book">21 Days</button>
+                  <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')" data-tip="One goal over all 21 days&#10;e.g. Read 1 book">${_spanDaysLabel()} Days</button>
                 </div>
               </div>
               <div class="form-field">
@@ -1024,7 +1024,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 </div>
               </div>
               <div class="form-field" id="cfgCountField" style="${['count','count_days'].includes(addGoalMetric)?'':'display:none'}">
-                <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':addGoalMetric==='count_days'?'Count per day':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
+                <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?`Total sessions over ${_spanDaysLabel()} days`:addGoalMetric==='count_days'?'Count per day':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
                 <input class="form-input" id="cfgCountVal" type="number" inputmode="numeric" min="1" max="63" onwheel="this.blur()" />
               </div>
               <div class="form-field" id="cfgDaysField" style="${['days','count_days'].includes(addGoalMetric)?'':'display:none'}">
@@ -1032,7 +1032,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 <input class="form-input" id="cfgDaysVal" type="number" inputmode="numeric" min="1" max="7" onwheel="this.blur()" />
               </div>
               <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
-                <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days':addGoalFrame==='daily'?'Daily minimum':'Weekly minimum'):(addGoalFrame==='milestone'?'Total maximum over 21 days':addGoalFrame==='daily'?'Daily maximum':'Weekly maximum')}</label>
+                <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?`Total minimum over ${_spanDaysLabel()} days`:addGoalFrame==='daily'?'Daily minimum':'Weekly minimum'):(addGoalFrame==='milestone'?`Total maximum over ${_spanDaysLabel()} days`:addGoalFrame==='daily'?'Daily maximum':'Weekly maximum')}</label>
                 <div style="display:flex;gap:8px;align-items:center;">
                   <input class="form-input" id="cfgTimeVal" type="number" inputmode="decimal" step="any" min="0.1" onwheel="this.blur()" style="flex:1;" />
                   <div style="display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
@@ -1090,11 +1090,13 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const color = g.config?.color || '';
       const accentStyle = color ? `border-left:4px solid ${color};` : '';
       const week = g.config?.addedOnWeek || 1;
-      const indentStyle = week === 2 ? 'margin-left:10px;' : week === 3 ? 'margin-left:20px;' : '';
-      const combinedStyle = [accentStyle, indentStyle].filter(Boolean).join('');
       let out = html.replace('<div class="goal-card', `<div data-goal-id="${g.id}" data-goal-type="${g.type}" class="goal-card`);
-      if (combinedStyle) {
-        out = out.replace(`data-goal-type="${g.type}" class`, `data-goal-type="${g.type}" style="${combinedStyle}" class`);
+      if (accentStyle) {
+        out = out.replace(`data-goal-type="${g.type}" class`, `data-goal-type="${g.type}" style="${accentStyle}" class`);
+      }
+      if (week > 1) {
+        const indicator = week === 2 ? '&rsaquo;' : '&raquo;';
+        return `<div class="goal-extra-wrap goal-extra-w${week}"><span class="goal-extra-indicator">${indicator}</span><div class="goal-extra-card">${out}</div></div>`;
       }
       return out;
     }
@@ -2264,6 +2266,12 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       _syncCfgFields();
     }
 
+    function _spanDaysLabel() {
+      if (!cohort) return '21';
+      const wk = db.getCohortWeekNum(cohort.startDate);
+      return wk === 2 ? '14' : wk === 3 ? '7' : '21';
+    }
+
     function _syncCfgFields() {
       const cf = document.getElementById('cfgCountField');
       const df = document.getElementById('cfgDaysField');
@@ -2274,10 +2282,11 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       tf.style.display = (addGoalMetric === 'min_time' || addGoalMetric === 'max_time') ? '' : 'none';
       const cl = document.getElementById('cfgCountLabel');
       const tl = document.getElementById('cfgTimeLabel');
-      if (cl) cl.textContent = addGoalFrame === 'milestone' ? 'Total sessions over 21 days' : addGoalMetric === 'count_days' ? 'Count per day' : addGoalFrame === 'daily' ? 'Sessions per day' : 'Sessions per week';
+      const _sdl = _spanDaysLabel();
+      if (cl) cl.textContent = addGoalFrame === 'milestone' ? `Total sessions over ${_sdl} days` : addGoalMetric === 'count_days' ? 'Count per day' : addGoalFrame === 'daily' ? 'Sessions per day' : 'Sessions per week';
       if (tl) tl.textContent = addGoalMetric === 'min_time'
-        ? (addGoalFrame === 'milestone' ? 'Total minimum over 21 days (minutes)' : addGoalFrame === 'daily' ? 'Daily minimum (minutes)' : 'Weekly minimum (minutes)')
-        : (addGoalFrame === 'milestone' ? 'Total maximum over 21 days (minutes)' : addGoalFrame === 'daily' ? 'Daily maximum (minutes)' : 'Weekly maximum (minutes)');
+        ? (addGoalFrame === 'milestone' ? `Total minimum over ${_sdl} days (minutes)` : addGoalFrame === 'daily' ? 'Daily minimum (minutes)' : 'Weekly minimum (minutes)')
+        : (addGoalFrame === 'milestone' ? `Total maximum over ${_sdl} days (minutes)` : addGoalFrame === 'daily' ? 'Daily maximum (minutes)' : 'Weekly maximum (minutes)');
     }
 
     // ── Draft goals + stakes (no cohort yet) ─────────────────────────────
@@ -2397,7 +2406,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
               <div class="type-pills">
                 <button type="button" class="type-pill${addGoalFrame==='daily'?' sel':''}" onclick="setAddFrame(this,'daily')" data-tip="Tracked every day&#10;e.g. Meditate, No alcohol">Daily</button>
                 <button type="button" class="type-pill${addGoalFrame==='weekly'?' sel':''}" onclick="setAddFrame(this,'weekly')" data-tip="Tracked over 7 days&#10;e.g. Work out 4x this week">Weekly</button>
-                <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')" data-tip="One goal over all 21 days&#10;e.g. Read 1 book">21 Days</button>
+                <button type="button" class="type-pill${addGoalFrame==='milestone'?' sel':''}" onclick="setAddFrame(this,'milestone')" data-tip="One goal over all 21 days&#10;e.g. Read 1 book">${_spanDaysLabel()} Days</button>
               </div>
             </div>
             <div class="form-field">
@@ -2416,7 +2425,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
               </div>
             </div>
             <div class="form-field" id="cfgCountField" style="${['count','count_days'].includes(addGoalMetric)?'':'display:none'}">
-              <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?'Total sessions over 21 days':addGoalMetric==='count_days'?'Count per day':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
+              <label class="form-label" id="cfgCountLabel">${addGoalFrame==='milestone'?`Total sessions over ${_spanDaysLabel()} days`:addGoalMetric==='count_days'?'Count per day':addGoalFrame==='daily'?'Sessions per day':'Sessions per week'}</label>
               <input class="form-input" id="cfgCountVal" type="number" inputmode="numeric" min="1" max="63" onwheel="this.blur()" />
             </div>
             <div class="form-field" id="cfgDaysField" style="${['days','count_days'].includes(addGoalMetric)?'':'display:none'}">
@@ -2424,7 +2433,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
               <input class="form-input" id="cfgDaysVal" type="number" inputmode="numeric" min="1" max="7" onwheel="this.blur()" />
             </div>
             <div class="form-field" id="cfgTimeField" style="${addGoalMetric==='min_time'||addGoalMetric==='max_time'?'':'display:none'}">
-              <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?'Total minimum over 21 days':addGoalFrame==='daily'?'Daily minimum':'Weekly minimum'):(addGoalFrame==='milestone'?'Total maximum over 21 days':addGoalFrame==='daily'?'Daily maximum':'Weekly maximum')}</label>
+              <label class="form-label" id="cfgTimeLabel">${addGoalMetric==='min_time'?(addGoalFrame==='milestone'?`Total minimum over ${_spanDaysLabel()} days`:addGoalFrame==='daily'?'Daily minimum':'Weekly minimum'):(addGoalFrame==='milestone'?`Total maximum over ${_spanDaysLabel()} days`:addGoalFrame==='daily'?'Daily maximum':'Weekly maximum')}</label>
               <div style="display:flex;gap:8px;align-items:center;">
                 <input class="form-input" id="cfgTimeVal" type="number" inputmode="decimal" step="any" min="0.1" onwheel="this.blur()" style="flex:1;" />
                 <div style="display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
