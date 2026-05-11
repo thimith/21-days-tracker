@@ -926,12 +926,60 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           </div>`);
       }
 
-      // ── Goal setup first (pre Day-2, not finalized) — appears at top ──
-      if (!locked && !finalized && !isViewingOther) {
-        html.push(`
-          <div class="setup-banner">
-            <div class="setup-banner-title">⚙ Goal Setup</div>
-            <div class="add-form${addFormOpen?' open':''}" id="addForm">
+
+      // ── Goal cards (grouped) ──
+      if (!goals.length) {
+        html.push(`<div class="empty-state">${isViewingOther ? 'No goals set.' : 'No goals yet — add one below.'}</div>`);
+      }
+
+      const daily     = goals.filter(g => ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'].includes(g.type));
+      const weekly    = goals.filter(g => ['weekly_boolean','weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'].includes(g.type));
+      const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
+
+      if (daily.length) {
+        html.push('<div class="goal-group-label">Daily</div>');
+        daily.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
+      }
+      if (weekly.length) {
+        html.push('<div class="goal-group-label">Weekly</div>');
+        weekly.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
+      }
+      if (milestone.length) {
+        html.push('<div class="goal-group-label">21-Day</div>');
+        milestone.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
+      }
+
+      // ── Notes — built here, pushed after goal setup ──
+      const journalContent = _c.journal[date] || '';
+      const isFutureDate = date > localDateStr();
+      let notesHTML = '';
+      if (!isFutureDate) {
+        if (isViewingOther) {
+          if (journalContent) {
+            notesHTML = `
+              <div class="journal-wrap">
+                <div class="journal-header"><div class="journal-dot"></div>Notes</div>
+                <div class="journal-readonly">${journalContent.replace(/</g,'&lt;')}</div>
+              </div>`;
+          }
+        } else {
+          notesHTML = `
+            <div class="journal-wrap">
+              <div class="journal-header"><div class="journal-dot"></div>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem;color:#ccc;">— private</span></div>
+              <textarea class="journal-textarea" id="journal-${date}" placeholder="What's waffling today?"
+                onblur="saveJournal('${date}',this.value)"
+                onkeydown="if(event.key==='Enter'&&event.metaKey)this.blur()"
+              >${journalContent.replace(/</g,'&lt;')}</textarea>
+              <div class="journal-saving" id="journal-status-${date}"></div>
+            </div>`;
+        }
+      }
+
+      // ── Add goal button + form (bottom of list) ──
+      if (!isViewingOther) {
+        if (addFormOpen) {
+          html.push(`
+            <div class="add-form open" id="addForm">
               <div class="form-field">
                 <label class="form-label">Goal name</label>
                 <input class="form-input" id="newTitle" placeholder="e.g. Meditate, Workout, No YouTube…" value="${addGoalTitle}" oninput="addGoalTitle=this.value" />
@@ -991,79 +1039,10 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 <button type="button" class="btn-xs sec" onclick="closeAddForm()">Cancel</button>
                 <button type="button" class="btn-xs pri" onclick="saveGoal()">Add Goal</button>
               </div>
-            </div>
-            <button type="button" class="btn-add-goal" id="addGoalBtn" style="${addFormOpen?'display:none':''}" onclick="openAddForm()">+ Add a goal</button>
-            ${!addFormOpen && goals.length > 0 ? `
-              <button type="button" class="btn-im-done" onclick="finalizeGoals()">I'm Done with my Goals ✓</button>` : ''}
-          </div>`);
-      }
-
-      // ── Goal cards (grouped) ──
-      // Only show empty state when locked (no setup form visible to explain it)
-      if (!goals.length && (locked || isViewingOther)) {
-        const currentDay = db.getCohortDay(cohort.startDate);
-        const msg = currentDay >= 2
-          ? 'Add your Goals or ask Thierry to add them for you.'
-          : 'No goals yet.';
-        html.push(`<div class="empty-state">${msg}</div>`);
-      }
-
-      const daily     = goals.filter(g => ['daily_boolean','daily_count','daily_time','daily_time_min','daily_time_max'].includes(g.type));
-      const weekly    = goals.filter(g => ['weekly_boolean','weekly_count','weekly_time_min','weekly_time_max','weekly_days','daily_count_weekly'].includes(g.type));
-      const milestone = goals.filter(g => ['milestone','total_count','total_time_min','total_time_max'].includes(g.type));
-
-      if (daily.length) {
-        html.push('<div class="goal-group-label">Daily</div>');
-        daily.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
-      }
-      if (weekly.length) {
-        html.push('<div class="goal-group-label">Weekly</div>');
-        weekly.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
-      }
-      if (milestone.length) {
-        html.push('<div class="goal-group-label">21-Day</div>');
-        milestone.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
-      }
-
-      // ── Notes — built here, pushed after goal setup ──
-      const journalContent = _c.journal[date] || '';
-      const isFutureDate = date > localDateStr();
-      let notesHTML = '';
-      if (!isFutureDate) {
-        if (isViewingOther) {
-          if (journalContent) {
-            notesHTML = `
-              <div class="journal-wrap">
-                <div class="journal-header"><div class="journal-dot"></div>Notes</div>
-                <div class="journal-readonly">${journalContent.replace(/</g,'&lt;')}</div>
-              </div>`;
-          }
+            </div>`);
         } else {
-          notesHTML = `
-            <div class="journal-wrap">
-              <div class="journal-header"><div class="journal-dot"></div>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem;color:#ccc;">— private</span></div>
-              <textarea class="journal-textarea" id="journal-${date}" placeholder="What's waffling today?"
-                onblur="saveJournal('${date}',this.value)"
-                onkeydown="if(event.key==='Enter'&&event.metaKey)this.blur()"
-              >${journalContent.replace(/</g,'&lt;')}</textarea>
-              <div class="journal-saving" id="journal-status-${date}"></div>
-            </div>`;
+          html.push(`<button type="button" class="btn-add-goal-bottom" onclick="openAddForm()">+ Add goal</button>`);
         }
-      }
-
-      // ── Goal setup (pre Day-2) ──
-      if (!locked && finalized) {
-        html.push(`
-          <div class="goals-done-banner">
-            <div>
-              <div class="goals-done-label">✓ Goals set</div>
-              <div class="goals-done-sub">You can still add more until end of Day 3.</div>
-            </div>
-            <button type="button" class="btn-forgot" onclick="unfinalizeGoals()">I forgot something</button>
-          </div>`);
-        if (!isViewingOther) html.push(`<div style="text-align:center;margin-top:6px;">
-          <a href="me.html" style="font-size:0.75rem;color:var(--muted);text-decoration:underline;text-underline-offset:2px;">Set your stakes and accountability on your profile →</a>
-        </div>`);
       }
 
       if (notesHTML) html.push(notesHTML);
@@ -1114,7 +1093,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const accentColor = g.config?.color || '';
       const ctrStyle = accentColor ? ` style="background:${accentColor};color:#fff;padding:2px 8px;border-radius:99px;"` : '';
       const typeLabel ={ daily_boolean:'Daily habit', daily_count:'Daily count', weekly_boolean:'Weekly yes/no', weekly_days:'Days per week', weekly_count:'Weekly count', daily_count_weekly:'Count + days/week', daily_time:'Time tracking', daily_time_min:'Daily — min time', daily_time_max:'Daily — max time', weekly_time_min:'Weekly — min time', weekly_time_max:'Weekly — max time', milestone:'21-day goal', total_count:'21-day count', total_time_min:'21-day min time', total_time_max:'21-day max time' }[g.type] || g.type;
-      const deleteBtn = !locked ? `<button type="button" class="goal-delete" onclick="deleteGoal(event,'${g.id}')">✕</button>` : '';
+      const deleteBtn = ''; // delete moved to long-press edit overlay
 
       if (g.type === 'daily_boolean') {
         const done = !!(c?.value);
@@ -1717,6 +1696,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     ];
 
     function _enterEditMode(card) {
+      if (_c.viewingUserId && _c.viewingUserId !== _c.userId) return;
       if (_editCardId === card.dataset.goalId) return;
       _exitEditMode();
       const goalId       = card.dataset.goalId;
@@ -1789,7 +1769,18 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
       buildSwatches();
 
-      overlay.append(row1, row2);
+      // ── Row 3: delete button ──
+      const row3 = document.createElement('div');
+      row3.className = 'ov-delete-row';
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'ov-delete-btn';
+      delBtn.textContent = '✕ Remove goal';
+      delBtn.addEventListener('click', e => { e.stopPropagation(); _exitEditMode(); db.deleteGoal(goalId); renderContent(); });
+      delBtn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+      row3.appendChild(delBtn);
+
+      overlay.append(row1, row2, row3);
       card.appendChild(overlay);
       setTimeout(() => { input.focus(); input.select(); }, 40);
 
