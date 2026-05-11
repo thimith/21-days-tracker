@@ -481,8 +481,8 @@ html { font-size: 120%; }
     .goal-extra-w3   { margin-left: 14px; }
     .goal-extra-indicator {
       flex-shrink: 0; padding-top: 11px;
-      font-size: 0.9rem; font-weight: 700; color: var(--muted);
-      opacity: 0.4; line-height: 1; user-select: none;
+      font-size: 0.9rem; font-weight: 700; color: var(--orange);
+      opacity: 0.7; line-height: 1; user-select: none;
     }
     .goal-extra-card { flex: 1; min-width: 0; }
 
