@@ -901,7 +901,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     function _buildDayHTML(date) {
       const goals   = db.getGoalsForUser();
       const isViewingOther = _c.viewingUserId && _c.viewingUserId !== _c.userId;
-      const locked     = db.areGoalsLocked() || isViewingOther;
+      const locked     = isViewingOther;
       const finalized  = !locked && !isViewingOther && isGoalsFinalized();
       const pending = db.getPendingRedemptions();
       const strikes = db.getRedemptionsForUser().length;
@@ -1014,15 +1014,15 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
 
       if (daily.length) {
         html.push('<div class="goal-group-label">Daily</div>');
-        daily.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
+        daily.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
       }
       if (weekly.length) {
         html.push('<div class="goal-group-label">Weekly</div>');
-        weekly.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
+        weekly.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
       }
       if (milestone.length) {
         html.push('<div class="goal-group-label">21-Day</div>');
-        milestone.forEach(g => html.push(renderGoalCard(g, date, locked || finalized)));
+        milestone.forEach(g => html.push(renderGoalCard(g, date, isViewingOther)));
       }
 
       // ── Notes — built here, pushed after goal setup ──
@@ -1066,8 +1066,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         </div>`);
       }
 
-      // Notes only shown once goals are locked or finalized
-      if (notesHTML && (locked || finalized || isViewingOther)) html.push(notesHTML);
+      if (notesHTML) html.push(notesHTML);
 
       return html.join('');
     }

@@ -54,9 +54,9 @@ There are two member types — routing logic differs throughout:
 
 Config stored in `goals.config` JSONB. Time values stored in **minutes** internally; `config.timeUnit` ('min' or 'hr') controls display.
 
-## Goal Locking
+## Goal Editing
 
-Goals lock after **Day 2** (start of Day 3). Before lock, user can add/delete goals and finalize with "I'm Done". `finalized` flag stored in local state `_c.finalized`.
+Goals are **never locked** — users can add, delete, and edit (long-press) their goals at any time during the 21 days. The "I'm Done" / finalize flow is purely optional UX. `locked` in `_buildDayHTML` is only `true` when an admin is viewing another member's data (read-only).
 
 ## Key Functions in app.js
 
