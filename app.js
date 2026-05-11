@@ -2197,14 +2197,13 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
 
     function openAddForm() {
       addFormOpen = true;
-      document.getElementById('addForm').classList.add('open');
-      document.getElementById('addGoalBtn').style.display = 'none';
+      if (!cohort) { renderNoCohort(); return; }
+      renderContent();
     }
     function closeAddForm() {
       addFormOpen = false; addGoalTitle = ''; addGoalColor = ''; addGoalTimeUnit = 'min'; editingDraftIdx = -1;
       if (!cohort) { renderNoCohort(); return; }
-      document.getElementById('addForm').classList.remove('open');
-      document.getElementById('addGoalBtn').style.display = '';
+      renderContent();
       const t = document.getElementById('newTitle'); if (t) t.value = '';
     }
 
