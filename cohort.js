@@ -45,6 +45,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
 
       // Pre-compute weekly totals for weekly goals
+      const weeklyMet = {};
       if (WEEKLY_TYPES.has(g.type)) {
         for (let wk = 1; wk <= 3; wk++) {
           const wkDates = dates.slice((wk-1)*7, wk*7);
