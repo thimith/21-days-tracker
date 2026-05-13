@@ -953,11 +953,11 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     }
 
     function initGridToggle() {
-      const on  = localStorage.getItem(GRID_KEY) === '1';
       const el  = document.getElementById('progressGrid');
       const btn = document.getElementById('gridToggleBtn');
       if (!el || !btn) return;
-      el.style.display = on ? 'flex' : 'none';
+      el.style.display = 'none';
+      btn.classList.remove('active');
       // Pulse 5x on first ever load to introduce the feature
       const PULSE_KEY = '21d_grid_pulsed';
       if (!localStorage.getItem(PULSE_KEY)) {
