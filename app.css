@@ -143,11 +143,18 @@ html { font-size: 120%; }
       50%     { opacity:0.65; transform:scaleY(1.5); }
     }
 
-    /* ── Date tabs ───────────────────────────────────────────────────────── */
-    .date-tabs {
+    /* ── Date tabs row ───────────────────────────────────────────────────── */
+    .date-tabs-row {
+      display: flex; align-items: stretch;
       background: var(--card);
       border-bottom: 1px solid var(--border);
+    }
+    /* ── Date tabs ───────────────────────────────────────────────────────── */
+    .date-tabs {
+      background: transparent;
+      border-bottom: none;
       padding: 10px 20px;
+      flex: 1;
       display: flex; gap: 6px;
       overflow-x: auto; scrollbar-width: none;
       position: relative;
@@ -664,38 +671,71 @@ html { font-size: 120%; }
 
     /* ── Grid toggle button ──────────────────────────────────────────────── */
     .grid-toggle-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--muted); padding: 6px; border-radius: 8px;
+      background: none; border: none; border-left: 1px solid var(--border);
+      cursor: pointer; padding: 0 14px;
       display: flex; align-items: center; justify-content: center;
-      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
       -webkit-tap-highlight-color: transparent;
     }
-    .grid-toggle-btn:hover  { background: var(--border); }
-    .grid-toggle-btn.active { color: var(--orange); }
+    .grid-icon-dots {
+      display: grid;
+      grid-template-columns: repeat(7, 2.5px);
+      grid-template-rows: repeat(3, 2.5px);
+      gap: 2px;
+      width: 22px; height: 10.5px;
+    }
+    .grid-icon-dots::before {
+      content: '';
+      display: contents;
+    }
+    /* Generate 21 dot cells via box-shadow trick on a single element */
+    .grid-icon-dots {
+      position: relative; overflow: visible;
+    }
+    .grid-icon-dots::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 2.5px; height: 2.5px;
+      border-radius: 50%;
+      background: var(--orange);
+      /* 7 cols × 3 rows, step = 4.5px (2.5 dot + 2 gap) */
+      box-shadow:
+        0px    0px  0 0 var(--orange),  4.5px  0px  0 0 var(--orange),   9px  0px  0 0 var(--orange),  13.5px  0px  0 0 var(--orange),  18px  0px  0 0 var(--orange),  22.5px  0px  0 0 var(--orange),  27px  0px  0 0 var(--orange),
+        0px  4.5px  0 0 var(--orange),  4.5px  4.5px 0 0 var(--orange),  9px  4.5px 0 0 var(--orange),  13.5px  4.5px 0 0 var(--orange),  18px  4.5px 0 0 var(--orange),  22.5px  4.5px 0 0 var(--orange),  27px  4.5px 0 0 var(--orange),
+        0px  9px   0 0 var(--orange),  4.5px  9px   0 0 var(--orange),   9px  9px   0 0 var(--orange),  13.5px  9px   0 0 var(--orange),  18px  9px   0 0 var(--orange),  22.5px  9px   0 0 var(--orange),  27px  9px   0 0 var(--orange);
+    }
+    @keyframes grid-btn-pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.4; transform: scale(0.75); }
+    }
+    .grid-toggle-btn.pulse .grid-icon-dots::after {
+      animation: grid-btn-pulse 0.5s ease-in-out 5;
+    }
 
     /* ── Progress grid ───────────────────────────────────────────────────── */
     .progress-grid {
       background: var(--card);
       border-bottom: 1px solid var(--border);
-      padding: 12px 16px 14px;
-      display: flex; flex-direction: column; gap: 8px;
+      padding: 10px 12px 12px;
+      display: flex; flex-direction: column; gap: 7px;
     }
     .pg-label {
       font-size: 0.62rem; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1px;
     }
     .pg-row {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 8px;
     }
     .pg-goal-name {
       font-size: 0.72rem; font-weight: 600; color: var(--text);
-      width: 90px; flex-shrink: 0;
+      width: 110px; flex-shrink: 0;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .pg-dots {
-      display: flex; gap: 3px; align-items: center; flex: 1;
+      display: flex; gap: 3px; align-items: center; flex: 1; min-width: 0;
     }
     .pg-week-sep {
-      width: 1px; height: 9px; background: rgba(0,0,0,0.15);
-      flex-shrink: 0; margin: 0 2px; border-radius: 1px;
+      width: 1px; height: 8px; background: rgba(0,0,0,0.15);
+      flex-shrink: 0; margin: 0 1px; border-radius: 1px;
     }

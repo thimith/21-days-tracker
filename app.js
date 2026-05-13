@@ -922,7 +922,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           color = 'rgba(255,59,48,0.7)';
         }
         if (isToday && !isPeriod) border='border:1.5px solid #111;';
-        const dot = `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
+        const dot = `<div title="Day ${dayNum}" style="width:8px;height:8px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
         return (dayNum===7||dayNum===14) ? dot+sep : dot;
       }).join('');
     }
@@ -953,12 +953,18 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     }
 
     function initGridToggle() {
-      const on = localStorage.getItem(GRID_KEY) === '1';
+      const on  = localStorage.getItem(GRID_KEY) === '1';
       const el  = document.getElementById('progressGrid');
       const btn = document.getElementById('gridToggleBtn');
       if (!el || !btn) return;
       el.style.display = on ? 'flex' : 'none';
-      btn.classList.toggle('active', on);
+      // Pulse 5x on first ever load to introduce the feature
+      const PULSE_KEY = '21d_grid_pulsed';
+      if (!localStorage.getItem(PULSE_KEY)) {
+        btn.classList.add('pulse');
+        btn.addEventListener('animationend', () => btn.classList.remove('pulse'), { once: true });
+        localStorage.setItem(PULSE_KEY, '1');
+      }
     }
 
     function renderDateTabs() {
