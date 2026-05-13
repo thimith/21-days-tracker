@@ -661,3 +661,41 @@ html { font-size: 120%; }
       body { max-width: min(62.5vw, 720px); margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.12); }
       .bottom-nav { left: 50%; right: auto; transform: translateX(-50%); width: min(62.5vw, 720px); }
     }
+
+    /* ── Grid toggle button ──────────────────────────────────────────────── */
+    .grid-toggle-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); padding: 6px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .grid-toggle-btn:hover  { background: var(--border); }
+    .grid-toggle-btn.active { color: var(--orange); }
+
+    /* ── Progress grid ───────────────────────────────────────────────────── */
+    .progress-grid {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .pg-label {
+      font-size: 0.62rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;
+    }
+    .pg-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pg-goal-name {
+      font-size: 0.72rem; font-weight: 600; color: var(--text);
+      width: 90px; flex-shrink: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pg-dots {
+      display: flex; gap: 3px; align-items: center; flex: 1;
+    }
+    .pg-week-sep {
+      width: 1px; height: 9px; background: rgba(0,0,0,0.15);
+      flex-shrink: 0; margin: 0 2px; border-radius: 1px;
+    }

@@ -20,9 +20,20 @@
     <div class="header-logo"><img src="brand_assets/logo_eye.png" alt="">21-D Tracker</div>
     <div class="header-right">
       <select class="member-select" id="memberSelect" style="display:none;" onchange="switchToMember(this.value)"></select>
+      <button id="gridToggleBtn" class="grid-toggle-btn" onclick="toggleProgressGrid()" title="Toggle progress grid">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="5" height="5" rx="1.2" fill="currentColor"/>
+          <rect x="10" y="1" width="5" height="5" rx="1.2" fill="currentColor"/>
+          <rect x="1" y="10" width="5" height="5" rx="1.2" fill="currentColor"/>
+          <rect x="10" y="10" width="5" height="5" rx="1.2" fill="currentColor"/>
+        </svg>
+      </button>
     </div>
   </div>
   <div class="viewing-banner" id="viewingBanner" style="display:none;"></div>
+
+  <!-- Progress grid (toggled) -->
+  <div id="progressGrid" class="progress-grid" style="display:none;"></div>
 
   <!-- Progress strip -->
   <div class="progress-section">

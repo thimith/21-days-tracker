@@ -837,7 +837,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     // RENDER
     // ══════════════════════════════════════════════════════════════════════
     function render() {
+      initGridToggle();
       renderDots();
+      renderProgressGrid();
       renderDateTabs();
       renderPager();
       checkFailed();
@@ -884,6 +886,79 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         const sep = (dayNum === 7 || dayNum === 14) ? '<div class="dots-week-sep"></div>' : '';
         return `<div class="${cls}"></div>${sep}`;
       }).join('');
+    }
+
+    // ── Progress grid ─────────────────────────────────────────────────────
+    const GRID_KEY = '21d_progress_grid';
+    const WEEKLY_TYPES_APP  = new Set(['weekly_boolean','weekly_days','weekly_count','daily_count_weekly','weekly_time_min','weekly_time_max']);
+    const PERIOD_TYPES_APP  = new Set(['milestone','total_count','total_time_min','total_time_max']);
+
+    function buildAppDots(g, dates, today, currentWeek) {
+      let goalStartWeek = 1;
+      if (g.created_at) {
+        const idx = dates.indexOf(g.created_at.slice(0,10));
+        if (idx >= 0) goalStartWeek = Math.ceil((idx+1)/7);
+      }
+      const isPeriod = PERIOD_TYPES_APP.has(g.type);
+      const lastDate = dates[dates.length-1];
+      const sep = `<div class="pg-week-sep"></div>`;
+      return dates.map((d,i) => {
+        const dayNum    = i+1;
+        const weekOfDay = Math.ceil(dayNum/7);
+        const isFuture  = d > today;
+        const isToday   = d === today;
+        const val       = _c.checkins[`${g.id}_${d}`];
+        const done      = val !== undefined && val !== false && val !== 0 && val !== '0';
+        let color, border='';
+        if (weekOfDay < goalStartWeek) {
+          color = 'rgba(0,0,0,0.1)';
+        } else if (done) {
+          color = 'rgba(52,199,89,0.7)';
+        } else if (isPeriod) {
+          color = (d === lastDate && !isFuture) ? 'rgba(255,59,48,0.7)' : 'rgba(0,0,0,0.1)';
+        } else if (isFuture || isToday) {
+          color = 'rgba(0,0,0,0.1)';
+        } else {
+          color = 'rgba(255,59,48,0.7)';
+        }
+        if (isToday && !isPeriod) border='border:1.5px solid #111;';
+        const dot = `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
+        return (dayNum===7||dayNum===14) ? dot+sep : dot;
+      }).join('');
+    }
+
+    function renderProgressGrid() {
+      const el = document.getElementById('progressGrid');
+      if (!el || el.style.display === 'none') return;
+      if (!cohort || !_c.goals.length) { el.innerHTML = '<div class="pg-label">No goals yet.</div>'; return; }
+      const dates   = db.getCohortDates(cohort.startDate);
+      const today   = localDateStr();
+      const currDay = db.getCohortDay(cohort.startDate);
+      const currWk  = Math.min(3, Math.max(1, Math.ceil(currDay/7)));
+      el.innerHTML = '<div class="pg-label">21-Day Progress</div>' +
+        _c.goals.map(g => `<div class="pg-row">
+          <div class="pg-goal-name" title="${g.title}">${g.title}</div>
+          <div class="pg-dots">${buildAppDots(g, dates, today, currWk)}</div>
+        </div>`).join('');
+    }
+
+    function toggleProgressGrid() {
+      const el  = document.getElementById('progressGrid');
+      const btn = document.getElementById('gridToggleBtn');
+      const on  = el.style.display === 'none';
+      el.style.display  = on ? 'flex' : 'none';
+      btn.classList.toggle('active', on);
+      localStorage.setItem(GRID_KEY, on ? '1' : '0');
+      if (on) renderProgressGrid();
+    }
+
+    function initGridToggle() {
+      const on = localStorage.getItem(GRID_KEY) === '1';
+      const el  = document.getElementById('progressGrid');
+      const btn = document.getElementById('gridToggleBtn');
+      if (!el || !btn) return;
+      el.style.display = on ? 'flex' : 'none';
+      btn.classList.toggle('active', on);
     }
 
     function renderDateTabs() {
