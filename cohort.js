@@ -36,8 +36,15 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     const PERIOD_TYPES  = new Set(['milestone','total_count','total_time_min','total_time_max']);
 
     function buildDots(g, dates, today, checkins, currentWeek) {
+      // Determine which cohort week the goal was created in
+      let goalStartWeek = 1;
+      if (g.created_at) {
+        const createdDate = g.created_at.slice(0, 10);
+        const idx = dates.indexOf(createdDate);
+        if (idx >= 0) goalStartWeek = Math.ceil((idx + 1) / 7);
+      }
+
       // Pre-compute weekly totals for weekly goals
-      const weeklyMet = {};
       if (WEEKLY_TYPES.has(g.type)) {
         for (let wk = 1; wk <= 3; wk++) {
           const wkDates = dates.slice((wk-1)*7, wk*7);
@@ -62,7 +69,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         const done      = val !== undefined && val !== false && val !== 0 && val !== '0';
 
         let color, border = '';
-        if (done) {
+        if (weekOfDay < goalStartWeek) {
+          color = 'rgba(0,0,0,0.1)';       // before goal was committed to
+        } else if (done) {
           color = 'rgba(52,199,89,0.7)';
         } else if (isFutureDay && PERIOD_TYPES.has(g.type) && periodMet) {
           color = 'rgba(52,199,89,0.4)';   // 21-day goal already completed
