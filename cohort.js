@@ -154,52 +154,41 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     }
 
     async function loadSkoolData() {
-      // Fetch skool member user_ids, then profiles separately (no FK join needed)
+      // Trip 1: member IDs
       const { data: memberRows } = await sb.from('skool_members').select('user_id');
       if (!memberRows?.length) return;
-
       const memberIds = memberRows.map(r => r.user_id);
-      const { data: profiles } = await sb.from('profiles').select('*').in('id', memberIds);
+
+      // Trip 2: profiles + cycles in parallel
+      const [{ data: profiles }, { data: cycles }] = await Promise.all([
+        sb.from('profiles').select('*').in('id', memberIds),
+        sb.from('skool_cycles').select('*').in('user_id', memberIds).order('start_date', { ascending: false })
+      ]);
       _c.skoolMembers = profiles || [];
       if (!_c.skoolMembers.length) return;
-
-      // Most recent cycle per member
-      const { data: cycles } = await sb.from('skool_cycles')
-        .select('*').in('user_id', memberIds).order('start_date', { ascending: false });
       _c.skoolCycles = {};
       for (const c of (cycles || [])) {
         if (!_c.skoolCycles[c.user_id]) _c.skoolCycles[c.user_id] = c;
       }
 
-      // Goals for all current cycles
+      // Trip 3: goals + redemptions in parallel
       const cycleIds = Object.values(_c.skoolCycles).map(c => c.id);
-      if (cycleIds.length) {
-        const { data: goals } = await sb.from('goals').select('*').in('cohort_id', cycleIds).order('sort_order');
-        _c.skoolGoals = {};
-        for (const g of (goals || [])) {
-          if (!_c.skoolGoals[g.user_id]) _c.skoolGoals[g.user_id] = [];
-          _c.skoolGoals[g.user_id].push(g);
-        }
-        // Redemptions
-        const { data: redemptions } = await sb.from('redemptions').select('*').in('cohort_id', cycleIds).order('strike_number');
-        _c.skoolRedemptions = {};
-        for (const r of (redemptions || [])) {
-          if (!_c.skoolRedemptions[r.user_id]) _c.skoolRedemptions[r.user_id] = [];
-          _c.skoolRedemptions[r.user_id].push(r);
-        }
-        // Checkins — only within each member's current 21-day cycle window
-        const allGoalIds = (goals || []).map(g => g.id);
-        if (allGoalIds.length) {
-          const startDates = Object.values(_c.skoolCycles).map(c => c.start_date).filter(Boolean);
-          const minStart = startDates.sort()[0];
-          const { data: checkins } = await sb.from('checkins')
-            .select('goal_id,date,value')
-            .in('goal_id', allGoalIds)
-            .gte('date', minStart);
-          for (const r of (checkins || [])) _c.skoolCheckins[`${r.goal_id}_${r.date}`] = r.value;
-        }
-        for (const m of _c.skoolMembers) _c.skoolCheckinsLoaded.add(m.id);
+      if (!cycleIds.length) return;
+      const [{ data: goals }, { data: redemptions }] = await Promise.all([
+        sb.from('goals').select('*').in('cohort_id', cycleIds).order('sort_order'),
+        sb.from('redemptions').select('*').in('cohort_id', cycleIds).order('strike_number')
+      ]);
+      _c.skoolGoals = {};
+      for (const g of (goals || [])) {
+        if (!_c.skoolGoals[g.user_id]) _c.skoolGoals[g.user_id] = [];
+        _c.skoolGoals[g.user_id].push(g);
       }
+      _c.skoolRedemptions = {};
+      for (const r of (redemptions || [])) {
+        if (!_c.skoolRedemptions[r.user_id]) _c.skoolRedemptions[r.user_id] = [];
+        _c.skoolRedemptions[r.user_id].push(r);
+      }
+      // Checkins loaded lazily per member on card expand
     }
 
     // ── EXCLUSIVE DATA ───────────────────────────────────────────────────
@@ -216,10 +205,12 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       _c.excMembers = (memberRows || []).map(r => r.profiles).filter(Boolean);
       const memberIds = _c.excMembers.map(m => m.id);
 
-      const [goalsRes, redemptionsRes] = await Promise.all([
+      const [{ data: excGoalsData }, { data: excRedemptionsData }] = await Promise.all([
         sb.from('goals').select('*').eq('cohort_id', _c.excCohort.id).in('user_id', memberIds).order('sort_order'),
         sb.from('redemptions').select('*').eq('cohort_id', _c.excCohort.id).in('user_id', memberIds).order('strike_number')
       ]);
+      const goalsRes = { data: excGoalsData };
+      const redemptionsRes = { data: excRedemptionsData };
       _c.excGoals = {};
       for (const g of (goalsRes.data || [])) {
         if (!_c.excGoals[g.user_id]) _c.excGoals[g.user_id] = [];
@@ -230,15 +221,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         if (!_c.excRedemptions[r.user_id]) _c.excRedemptions[r.user_id] = [];
         _c.excRedemptions[r.user_id].push(r);
       }
-      const allGoalIds = (goalsRes.data || []).map(g => g.id);
-      if (allGoalIds.length) {
-        const { data: checkins } = await sb.from('checkins')
-          .select('goal_id,date,value')
-          .in('goal_id', allGoalIds)
-          .gte('date', _c.excCohort.start_date);
-        for (const r of (checkins || [])) _c.excCheckins[`${r.goal_id}_${r.date}`] = r.value;
-      }
-      for (const m of _c.excMembers) _c.excCheckinsLoaded.add(m.id);
+      // Checkins loaded lazily per member on card expand
     }
 
     // ── RENDER ───────────────────────────────────────────────────────────
@@ -447,9 +430,28 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     }
 
     async function toggleExpand(memberId, tab) {
-      expandedId = expandedId === memberId ? null : memberId;
-      if (tab === 'skool') renderSkool();
-      else renderExclusive();
+      if (expandedId === memberId) { expandedId = null; if (tab==='skool') renderSkool(); else renderExclusive(); return; }
+      expandedId = memberId;
+      if (tab === 'skool') renderSkool(); else renderExclusive(); // show open immediately
+
+      // Lazy-load this member's checkins if not yet fetched
+      const loaded = tab === 'skool' ? _c.skoolCheckinsLoaded : _c.excCheckinsLoaded;
+      const goals  = tab === 'skool' ? (_c.skoolGoals[memberId]||[]) : (_c.excGoals[memberId]||[]);
+      const cache  = tab === 'skool' ? _c.skoolCheckins : _c.excCheckins;
+      const startDate = tab === 'skool'
+        ? _c.skoolCycles[memberId]?.start_date
+        : _c.excCohort?.start_date;
+
+      if (!loaded.has(memberId) && goals.length && startDate) {
+        const goalIds = goals.map(g => g.id);
+        const { data: rows } = await sb.from('checkins')
+          .select('goal_id,date,value')
+          .in('goal_id', goalIds)
+          .gte('date', startDate);
+        for (const r of (rows||[])) cache[`${r.goal_id}_${r.date}`] = r.value;
+        loaded.add(memberId);
+        if (expandedId === memberId) { if (tab==='skool') renderSkool(); else renderExclusive(); }
+      }
     }
 
     init();
