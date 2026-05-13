@@ -280,18 +280,23 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       if (isOpen) {
         const skoolToday = localDateStr();
         const skoolDates = getCohortDates(_c.skoolCycles[member.id]?.start_date || skoolToday);
+        const skoolCurrentDay = skoolDates.indexOf(skoolToday) + 1 || 21;
+        const skoolCurrentWeek = Math.ceil(skoolCurrentDay / 7);
         const goalRows = goals.length
           ? goals.map(g => {
               const frame = ['milestone','total_count','total_time_min','total_time_max'].includes(g.type) ? '21 Days'
                           : ['weekly_boolean','weekly_days','weekly_count','weekly_time_min','weekly_time_max','daily_count_weekly'].includes(g.type) ? 'Weekly'
                           : 'Daily';
               const dots = skoolDates.map((d, i) => {
+                const dayNum = i + 1;
+                const weekOfDay = Math.ceil(dayNum / 7);
+                const isFutureWeek = weekOfDay > skoolCurrentWeek;
+                if (isFutureWeek) return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:rgba(0,0,0,0.1);flex-shrink:0;"></div>`;
                 const val = _c.skoolCheckins[`${g.id}_${d}`];
                 const done = val !== undefined && val !== false && val !== 0 && val !== '0';
-                const isFuture = d > skoolToday;
-                const isToday  = d === skoolToday;
-                const color = isFuture ? 'var(--border)' : done ? 'var(--green)' : isToday ? 'var(--orange)' : 'var(--red)';
-                return `<div title="Day ${i+1}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
+                const isToday = d === skoolToday;
+                const color = done ? 'rgba(52,199,89,0.4)' : isToday ? 'rgba(255,159,10,0.4)' : 'rgba(255,59,48,0.4)';
+                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
               }).join('');
               return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
@@ -360,15 +365,20 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       if (isOpen) {
         const excToday = localDateStr();
         const excDates = getCohortDates(cohort.start_date);
+        const excCurrentDay = excDates.indexOf(excToday) + 1 || 21;
+        const excCurrentWeek = Math.ceil(excCurrentDay / 7);
         const goalRows = goals.length
           ? goals.map(g => {
               const dots = excDates.map((d, i) => {
+                const dayNum = i + 1;
+                const weekOfDay = Math.ceil(dayNum / 7);
+                const isFutureWeek = weekOfDay > excCurrentWeek;
+                if (isFutureWeek) return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:rgba(0,0,0,0.1);flex-shrink:0;"></div>`;
                 const val = _c.excCheckins[`${g.id}_${d}`];
                 const done = val !== undefined && val !== false && val !== 0 && val !== '0';
-                const isFuture = d > excToday;
-                const isToday  = d === excToday;
-                const color = isFuture ? 'var(--border)' : done ? 'var(--green)' : isToday ? 'var(--orange)' : 'var(--red)';
-                return `<div title="Day ${i+1}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
+                const isToday = d === excToday;
+                const color = done ? 'rgba(52,199,89,0.4)' : isToday ? 'rgba(255,159,10,0.4)' : 'rgba(255,59,48,0.4)';
+                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
               }).join('');
               return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
                 <div style="display:flex;align-items:center;width:100%;"><div class="detail-goal-name">${g.title}</div></div>
