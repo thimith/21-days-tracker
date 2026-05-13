@@ -60,19 +60,22 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         const val       = checkins[`${g.id}_${d}`];
         const done      = val !== undefined && val !== false && val !== 0 && val !== '0';
 
+        const isFutureDay = d > today;
         let color, border = '';
         if (isFutureWeek) {
           color = 'rgba(0,0,0,0.1)';
         } else if (done) {
-          color = 'rgba(52,199,89,0.4)';
+          color = 'rgba(52,199,89,0.7)';
         } else if (WEEKLY_TYPES.has(g.type) && weeklyMet[weekOfDay]) {
-          color = 'rgba(52,199,89,0.2)';   // target met this week, day not needed
+          color = 'rgba(52,199,89,0.4)';   // target met this week, day not needed
         } else if (PERIOD_TYPES.has(g.type) && periodMet) {
-          color = 'rgba(52,199,89,0.2)';   // 21-day target already met
+          color = 'rgba(52,199,89,0.4)';   // 21-day target already met
+        } else if (WEEKLY_TYPES.has(g.type) && isFutureDay) {
+          color = 'rgba(0,0,0,0.1)';       // weekly goal, week not over yet
         } else if (isToday) {
-          color = 'rgba(255,159,10,0.4)';
+          color = 'rgba(255,159,10,0.7)';
         } else {
-          color = 'rgba(255,59,48,0.4)';   // missed
+          color = 'rgba(255,59,48,0.7)';   // missed
         }
         if (isToday) border = 'border:1.5px solid #111;';
         return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
