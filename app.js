@@ -956,6 +956,8 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const el  = document.getElementById('progressGrid');
       const btn = document.getElementById('gridToggleBtn');
       if (!el || !btn) return;
+      if (btn.dataset.initialized) return;
+      btn.dataset.initialized = '1';
       el.style.display = 'none';
       btn.classList.remove('active');
       // Pulse 5x on first ever load to introduce the feature
