@@ -68,12 +68,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         } else if (isPeriod) {
           // 21-day goal: gray until done, red only on day 21
           color = d === lastDate && !isFutureDay ? 'rgba(255,59,48,0.7)' : 'rgba(0,0,0,0.1)';
-        } else if (isFutureDay) {
-          // Future day (daily or weekly) — gray, not committed yet
+        } else if (isFutureDay || isToday) {
+          // Future day or today not yet done — gray
           color = 'rgba(0,0,0,0.1)';
-        } else if (isToday) {
-          // Today, not yet done
-          color = 'rgba(255,159,10,0.7)';
         } else {
           // Past day, not done — red
           color = 'rgba(255,59,48,0.7)';
