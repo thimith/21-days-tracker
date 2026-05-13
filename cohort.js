@@ -296,7 +296,8 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 const done = val !== undefined && val !== false && val !== 0 && val !== '0';
                 const isToday = d === skoolToday;
                 const color = done ? 'rgba(52,199,89,0.4)' : isToday ? 'rgba(255,159,10,0.4)' : 'rgba(255,59,48,0.4)';
-                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
+                const border = isToday ? 'border:1.5px solid #111;' : '';
+                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
               }).join('');
               return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
@@ -378,7 +379,8 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
                 const done = val !== undefined && val !== false && val !== 0 && val !== '0';
                 const isToday = d === excToday;
                 const color = done ? 'rgba(52,199,89,0.4)' : isToday ? 'rgba(255,159,10,0.4)' : 'rgba(255,59,48,0.4)';
-                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
+                const border = isToday ? 'border:1.5px solid #111;' : '';
+                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
               }).join('');
               return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
                 <div style="display:flex;align-items:center;width:100%;"><div class="detail-goal-name">${g.title}</div></div>
