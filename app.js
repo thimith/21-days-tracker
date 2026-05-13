@@ -901,7 +901,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
       const isPeriod = PERIOD_TYPES_APP.has(g.type);
       const lastDate = dates[dates.length-1];
-      const sep = `<div class="pg-week-sep"></div>`;
+      const sep = `<div style="width:1px;height:8px;background:rgba(0,0,0,0.15);flex-shrink:0;margin:0 2px;border-radius:1px;"></div>`;
       return dates.map((d,i) => {
         const dayNum    = i+1;
         const weekOfDay = Math.ceil(dayNum/7);
@@ -922,7 +922,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           color = 'rgba(255,59,48,0.7)';
         }
         if (isToday && !isPeriod) border='border:1.5px solid #111;';
-        const dot = `<div title="Day ${dayNum}" style="width:8px;height:8px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
+        const dot = `<div title="Day ${dayNum}" style="flex:1;min-width:5px;aspect-ratio:1/1;border-radius:50%;background:${color};${border}"></div>`;
         return (dayNum===7||dayNum===14) ? dot+sep : dot;
       }).join('');
     }

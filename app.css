@@ -692,14 +692,6 @@ html { font-size: 120%; }
       padding: 10px 12px 12px;
       display: flex; flex-direction: column; gap: 7px;
     }
-    @media (min-width: 768px) {
-      .progress-grid {
-        width: 100vw;
-        margin-left: calc(50% - 50vw);
-        padding-left: max(24px, calc(50vw - 50%));
-        padding-right: max(24px, calc(50vw - 50%));
-      }
-    }
     .pg-label {
       font-size: 0.62rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1px;
