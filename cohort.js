@@ -32,6 +32,53 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       return Array.from({length:7},(_,i)=>{ const d=new Date(s); d.setDate(d.getDate()+(weekNum-1)*7+i); return localDateStr(d); });
     }
 
+    const WEEKLY_TYPES  = new Set(['weekly_boolean','weekly_days','weekly_count','daily_count_weekly','weekly_time_min','weekly_time_max']);
+    const PERIOD_TYPES  = new Set(['milestone','total_count','total_time_min','total_time_max']);
+
+    function buildDots(g, dates, today, checkins, currentWeek) {
+      // Pre-compute weekly totals for weekly goals
+      const weeklyMet = {};
+      if (WEEKLY_TYPES.has(g.type)) {
+        for (let wk = 1; wk <= 3; wk++) {
+          const wkDates = dates.slice((wk-1)*7, wk*7);
+          const total = wkDates.reduce((s,d) => s + (Number(checkins[`${g.id}_${d}`]) || 0), 0);
+          const target = g.config?.weeklyTarget || g.config?.weeklyTargetMinutes || 1;
+          weeklyMet[wk] = total >= target;
+        }
+      }
+      // For 21-day goals, check if any check-in exists
+      let periodMet = false;
+      if (PERIOD_TYPES.has(g.type)) {
+        periodMet = dates.some(d => { const v = checkins[`${g.id}_${d}`]; return v !== undefined && v !== false && v !== 0 && v !== '0'; });
+      }
+
+      return dates.map((d, i) => {
+        const dayNum    = i + 1;
+        const weekOfDay = Math.ceil(dayNum / 7);
+        const isFutureWeek = weekOfDay > currentWeek;
+        const isToday   = d === today;
+        const val       = checkins[`${g.id}_${d}`];
+        const done      = val !== undefined && val !== false && val !== 0 && val !== '0';
+
+        let color, border = '';
+        if (isFutureWeek) {
+          color = 'rgba(0,0,0,0.1)';
+        } else if (done) {
+          color = 'rgba(52,199,89,0.4)';
+        } else if (WEEKLY_TYPES.has(g.type) && weeklyMet[weekOfDay]) {
+          color = 'rgba(52,199,89,0.2)';   // target met this week, day not needed
+        } else if (PERIOD_TYPES.has(g.type) && periodMet) {
+          color = 'rgba(52,199,89,0.2)';   // 21-day target already met
+        } else if (isToday) {
+          color = 'rgba(255,159,10,0.4)';
+        } else {
+          color = 'rgba(255,59,48,0.4)';   // missed
+        }
+        if (isToday) border = 'border:1.5px solid #111;';
+        return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
+      }).join('');
+    }
+
     // ── Auth + membership detection ──────────────────────────────────────
     async function init() {
       const { data: { session } } = await sb.auth.getSession();
@@ -287,18 +334,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
               const frame = ['milestone','total_count','total_time_min','total_time_max'].includes(g.type) ? '21 Days'
                           : ['weekly_boolean','weekly_days','weekly_count','weekly_time_min','weekly_time_max','daily_count_weekly'].includes(g.type) ? 'Weekly'
                           : 'Daily';
-              const dots = skoolDates.map((d, i) => {
-                const dayNum = i + 1;
-                const weekOfDay = Math.ceil(dayNum / 7);
-                const isFutureWeek = weekOfDay > skoolCurrentWeek;
-                if (isFutureWeek) return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:rgba(0,0,0,0.1);flex-shrink:0;"></div>`;
-                const val = _c.skoolCheckins[`${g.id}_${d}`];
-                const done = val !== undefined && val !== false && val !== 0 && val !== '0';
-                const isToday = d === skoolToday;
-                const color = done ? 'rgba(52,199,89,0.4)' : isToday ? 'rgba(255,159,10,0.4)' : 'rgba(255,59,48,0.4)';
-                const border = isToday ? 'border:1.5px solid #111;' : '';
-                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
-              }).join('');
+              const dots = buildDots(g, skoolDates, skoolToday, _c.skoolCheckins, skoolCurrentWeek);
               return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
                   <div class="detail-goal-name">${g.title}</div>
@@ -370,18 +406,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         const excCurrentWeek = Math.ceil(excCurrentDay / 7);
         const goalRows = goals.length
           ? goals.map(g => {
-              const dots = excDates.map((d, i) => {
-                const dayNum = i + 1;
-                const weekOfDay = Math.ceil(dayNum / 7);
-                const isFutureWeek = weekOfDay > excCurrentWeek;
-                if (isFutureWeek) return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:rgba(0,0,0,0.1);flex-shrink:0;"></div>`;
-                const val = _c.excCheckins[`${g.id}_${d}`];
-                const done = val !== undefined && val !== false && val !== 0 && val !== '0';
-                const isToday = d === excToday;
-                const color = done ? 'rgba(52,199,89,0.4)' : isToday ? 'rgba(255,159,10,0.4)' : 'rgba(255,59,48,0.4)';
-                const border = isToday ? 'border:1.5px solid #111;' : '';
-                return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
-              }).join('');
+              const dots = buildDots(g, excDates, excToday, _c.excCheckins, excCurrentWeek);
               return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
                 <div style="display:flex;align-items:center;width:100%;"><div class="detail-goal-name">${g.title}</div></div>
                 <div style="display:flex;gap:4px;padding-bottom:2px;">${dots}</div>
