@@ -52,33 +52,33 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         periodMet = dates.some(d => { const v = checkins[`${g.id}_${d}`]; return v !== undefined && v !== false && v !== 0 && v !== '0'; });
       }
 
+      const separator = `<div style="width:1px;height:9px;background:rgba(0,0,0,0.15);flex-shrink:0;margin:0 3px;border-radius:1px;"></div>`;
       return dates.map((d, i) => {
         const dayNum    = i + 1;
         const weekOfDay = Math.ceil(dayNum / 7);
-        const isFutureWeek = weekOfDay > currentWeek;
+        const isFutureDay = d > today;
         const isToday   = d === today;
         const val       = checkins[`${g.id}_${d}`];
         const done      = val !== undefined && val !== false && val !== 0 && val !== '0';
 
-        const isFutureDay = d > today;
         let color, border = '';
-        if (isFutureWeek) {
-          color = 'rgba(0,0,0,0.1)';
-        } else if (done) {
+        if (done) {
           color = 'rgba(52,199,89,0.7)';
+        } else if (isFutureDay && PERIOD_TYPES.has(g.type) && periodMet) {
+          color = 'rgba(52,199,89,0.4)';   // 21-day goal already completed
+        } else if (isFutureDay) {
+          color = 'rgba(0,0,0,0.1)';       // all other future days → gray
         } else if (WEEKLY_TYPES.has(g.type) && weeklyMet[weekOfDay]) {
-          color = 'rgba(52,199,89,0.4)';   // target met this week, day not needed
-        } else if (PERIOD_TYPES.has(g.type) && periodMet) {
-          color = 'rgba(52,199,89,0.4)';   // 21-day target already met
-        } else if (WEEKLY_TYPES.has(g.type) && isFutureDay) {
-          color = 'rgba(0,0,0,0.1)';       // weekly goal, week not over yet
+          color = 'rgba(52,199,89,0.4)';   // weekly target met, extra days not needed
         } else if (isToday) {
           color = 'rgba(255,159,10,0.7)';
         } else {
-          color = 'rgba(255,59,48,0.7)';   // missed
+          color = 'rgba(255,59,48,0.7)';   // genuinely missed past day
         }
         if (isToday) border = 'border:1.5px solid #111;';
-        return `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
+        const dot = `<div title="Day ${dayNum}" style="width:9px;height:9px;border-radius:50%;background:${color};${border}flex-shrink:0;"></div>`;
+        // Insert week separator after day 7 and day 14
+        return (dayNum === 7 || dayNum === 14) ? dot + separator : dot;
       }).join('');
     }
 
