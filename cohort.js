@@ -278,12 +278,28 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
 
       let detailHTML = '';
       if (isOpen) {
+        const skoolToday = localDateStr();
+        const skoolDates = getCohortDates(_c.skoolCycles[member.id]?.start_date || skoolToday);
         const goalRows = goals.length
           ? goals.map(g => {
               const frame = ['milestone','total_count','total_time_min','total_time_max'].includes(g.type) ? '21 Days'
                           : ['weekly_boolean','weekly_days','weekly_count','weekly_time_min','weekly_time_max','daily_count_weekly'].includes(g.type) ? 'Weekly'
                           : 'Daily';
-              return `<div class="detail-goal-row"><div class="detail-goal-name">${g.title}</div><div class="detail-goal-status na">${frame}</div></div>`;
+              const dots = skoolDates.map((d, i) => {
+                const val = _c.skoolCheckins[`${g.id}_${d}`];
+                const done = val !== undefined && val !== false && val !== 0 && val !== '0';
+                const isFuture = d > skoolToday;
+                const isToday  = d === skoolToday;
+                const color = isFuture ? 'var(--border)' : done ? 'var(--green)' : isToday ? 'var(--orange)' : 'var(--red)';
+                return `<div title="Day ${i+1}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
+              }).join('');
+              return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
+                  <div class="detail-goal-name">${g.title}</div>
+                  <div class="detail-goal-status na">${frame}</div>
+                </div>
+                <div style="display:flex;gap:4px;padding-bottom:2px;">${dots}</div>
+              </div>`;
             }).join('')
           : '<div style="font-size:0.8rem;color:var(--muted);">No goals set.</div>';
         const redRows = redemptions.length
@@ -342,8 +358,23 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
 
       let detailHTML = '';
       if (isOpen) {
+        const excToday = localDateStr();
+        const excDates = getCohortDates(cohort.start_date);
         const goalRows = goals.length
-          ? goals.map(g => `<div class="detail-goal-row"><div class="detail-goal-name">${g.title}</div></div>`).join('')
+          ? goals.map(g => {
+              const dots = excDates.map((d, i) => {
+                const val = _c.excCheckins[`${g.id}_${d}`];
+                const done = val !== undefined && val !== false && val !== 0 && val !== '0';
+                const isFuture = d > excToday;
+                const isToday  = d === excToday;
+                const color = isFuture ? 'var(--border)' : done ? 'var(--green)' : isToday ? 'var(--orange)' : 'var(--red)';
+                return `<div title="Day ${i+1}" style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>`;
+              }).join('');
+              return `<div class="detail-goal-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
+                <div style="display:flex;align-items:center;width:100%;"><div class="detail-goal-name">${g.title}</div></div>
+                <div style="display:flex;gap:4px;padding-bottom:2px;">${dots}</div>
+              </div>`;
+            }).join('')
           : '<div style="font-size:0.8rem;color:var(--muted);">No goals.</div>';
         const redRows = redemptions.length
           ? redemptions.map(r => `<div class="redemption-row"><span class="r-badge ${r.status}">${r.status==='pending'?'Pending':'Done'}</span><span class="r-reason">${r.reason||''}</span></div>`).join('')
