@@ -187,10 +187,15 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           if (!_c.skoolRedemptions[r.user_id]) _c.skoolRedemptions[r.user_id] = [];
           _c.skoolRedemptions[r.user_id].push(r);
         }
-        // Checkins for all active cycles
+        // Checkins — only within each member's current 21-day cycle window
         const allGoalIds = (goals || []).map(g => g.id);
         if (allGoalIds.length) {
-          const { data: checkins } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', allGoalIds);
+          const startDates = Object.values(_c.skoolCycles).map(c => c.start_date).filter(Boolean);
+          const minStart = startDates.sort()[0];
+          const { data: checkins } = await sb.from('checkins')
+            .select('goal_id,date,value')
+            .in('goal_id', allGoalIds)
+            .gte('date', minStart);
           for (const r of (checkins || [])) _c.skoolCheckins[`${r.goal_id}_${r.date}`] = r.value;
         }
         for (const m of _c.skoolMembers) _c.skoolCheckinsLoaded.add(m.id);
@@ -227,7 +232,10 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
       const allGoalIds = (goalsRes.data || []).map(g => g.id);
       if (allGoalIds.length) {
-        const { data: checkins } = await sb.from('checkins').select('goal_id,date,value').in('goal_id', allGoalIds);
+        const { data: checkins } = await sb.from('checkins')
+          .select('goal_id,date,value')
+          .in('goal_id', allGoalIds)
+          .gte('date', _c.excCohort.start_date);
         for (const r of (checkins || [])) _c.excCheckins[`${r.goal_id}_${r.date}`] = r.value;
       }
       for (const m of _c.excMembers) _c.excCheckinsLoaded.add(m.id);
