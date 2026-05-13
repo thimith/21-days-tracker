@@ -687,7 +687,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       _c.goals = (goalsRes.data || []).map(g => ({
         id: g.id, userId: g.user_id, cohortId: g.cohort_id,
         type: g.type, title: g.title, config: g.config || {},
-        locked: g.locked, order: g.sort_order
+        locked: g.locked, order: g.sort_order, created_at: g.created_at
       }));
       _c.stakes = stakesRes.data || null;
       _c.redemptions = (redemptionsRes.data || []).map(r => ({
@@ -962,7 +962,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const PULSE_KEY = '21d_grid_pulsed';
       if (!localStorage.getItem(PULSE_KEY)) {
         btn.classList.add('pulse');
-        btn.addEventListener('animationend', () => btn.classList.remove('pulse'), { once: true });
+        setTimeout(() => btn.classList.remove('pulse'), 2600); // 5 × 0.5s + buffer
         localStorage.setItem(PULSE_KEY, '1');
       }
     }

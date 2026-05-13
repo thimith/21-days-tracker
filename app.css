@@ -672,46 +672,18 @@ html { font-size: 120%; }
     /* ── Grid toggle button ──────────────────────────────────────────────── */
     .grid-toggle-btn {
       background: none; border: none; border-left: 1px solid var(--border);
-      cursor: pointer; padding: 0 14px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      cursor: pointer; padding: 0 12px;
+      font-family: inherit; font-size: 0.72rem; font-weight: 700;
+      color: var(--orange); white-space: nowrap; flex-shrink: 0;
       -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center;
     }
-    .grid-icon-dots {
-      display: grid;
-      grid-template-columns: repeat(7, 2.5px);
-      grid-template-rows: repeat(3, 2.5px);
-      gap: 2px;
-      width: 22px; height: 10.5px;
-    }
-    .grid-icon-dots::before {
-      content: '';
-      display: contents;
-    }
-    /* Generate 21 dot cells via box-shadow trick on a single element */
-    .grid-icon-dots {
-      position: relative; overflow: visible;
-    }
-    .grid-icon-dots::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 2.5px; height: 2.5px;
-      border-radius: 50%;
-      background: var(--orange);
-      /* 7 cols × 3 rows, step = 4.5px (2.5 dot + 2 gap) */
-      box-shadow:
-        0px    0px  0 0 var(--orange),  4.5px  0px  0 0 var(--orange),   9px  0px  0 0 var(--orange),  13.5px  0px  0 0 var(--orange),  18px  0px  0 0 var(--orange),  22.5px  0px  0 0 var(--orange),  27px  0px  0 0 var(--orange),
-        0px  4.5px  0 0 var(--orange),  4.5px  4.5px 0 0 var(--orange),  9px  4.5px 0 0 var(--orange),  13.5px  4.5px 0 0 var(--orange),  18px  4.5px 0 0 var(--orange),  22.5px  4.5px 0 0 var(--orange),  27px  4.5px 0 0 var(--orange),
-        0px  9px   0 0 var(--orange),  4.5px  9px   0 0 var(--orange),   9px  9px   0 0 var(--orange),  13.5px  9px   0 0 var(--orange),  18px  9px   0 0 var(--orange),  22.5px  9px   0 0 var(--orange),  27px  9px   0 0 var(--orange);
-    }
+    .grid-toggle-btn.active { color: var(--orange-dk); }
     @keyframes grid-btn-pulse {
       0%,100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.4; transform: scale(0.75); }
+      50%      { opacity: 0.3; transform: scale(0.85); }
     }
-    .grid-toggle-btn.pulse .grid-icon-dots::after {
-      animation: grid-btn-pulse 0.5s ease-in-out 5;
-    }
+    .grid-toggle-btn.pulse { animation: grid-btn-pulse 0.5s ease-in-out 5; }
 
     /* ── Progress grid ───────────────────────────────────────────────────── */
     .progress-grid {
@@ -719,6 +691,14 @@ html { font-size: 120%; }
       border-bottom: 1px solid var(--border);
       padding: 10px 12px 12px;
       display: flex; flex-direction: column; gap: 7px;
+    }
+    @media (min-width: 768px) {
+      .progress-grid {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        padding-left: max(24px, calc(50vw - 50%));
+        padding-right: max(24px, calc(50vw - 50%));
+      }
     }
     .pg-label {
       font-size: 0.62rem; font-weight: 700; color: var(--muted);
