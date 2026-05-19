@@ -2259,9 +2259,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     }
 
     function toggleMilestone(goalId) {
-      // Milestone is a one-off — store on cohort start date regardless of selected day
-      const canonDate = cohort.startDate;
-      const allDates  = db.getCohortDates(cohort.startDate);
+      const g         = db.getGoalsForUser().find(x => x.id === goalId);
+      const allDates  = g ? db.getGoalActiveDates(g, cohort.startDate) : db.getCohortDates(cohort.startDate);
+      const canonDate = allDates[0];  // first active date for this goal (respects addedOnWeek)
       const done      = allDates.some(d => !!db.getCheckin(goalId, d)?.value);
       // Clear any existing checkins on other dates, then set on canonical date
       allDates.forEach(d => { if (db.getCheckin(goalId, d)?.value) db.setCheckin(goalId, d, false); });
