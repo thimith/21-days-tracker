@@ -549,6 +549,14 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       sessionStorage.setItem('cycleEndDismissed', '1');
       document.getElementById('cycleEndOverlay').style.display = 'none';
     }
+    function closeCycleEndOverlay() {
+      document.getElementById('cycleEndOverlay').style.display = 'none';
+    }
+    function openNewCyclePicker() {
+      document.getElementById('cycleEndOverlay').style.display = 'flex';
+      document.getElementById('cycleEndIntro').style.display = 'none';
+      showCycleEndDatePicker();
+    }
     function showCycleEndDatePicker() {
       document.getElementById('cycleEndIntro').style.display = 'none';
       document.getElementById('cycleEndDatePick').style.display = '';
@@ -565,10 +573,15 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           <div class="onb-date-meta">${label}</div>
         </button>`;
       }).join('');
-      // Show copy option if previous cycle had goals
+      // Show copy option if previous cycle had goals (default checked)
       const prevGoals = _c.goals || [];
       const copyWrap = document.getElementById('cycleEndCopyWrap');
-      copyWrap.style.display = prevGoals.length ? '' : 'none';
+      if (prevGoals.length) {
+        copyWrap.style.display = '';
+        document.getElementById('cycleEndCopyGoals').checked = true;
+      } else {
+        copyWrap.style.display = 'none';
+      }
       document.getElementById('cycleEndConfirmBtn').disabled = true;
       document.getElementById('cycleEndConfirmBtn').style.opacity = '0.4';
     }
@@ -858,7 +871,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       // Show/hide the between-cycles banner and trigger overlay
       const banner = document.getElementById('newCycleBanner');
       if (isBetweenCycles) {
-        banner.style.display = 'flex';
+        banner.style.display = 'block';
         // Show overlay once per session unless dismissed
         if (!sessionStorage.getItem('cycleEndDismissed')) showCycleEndOverlay();
       } else {
@@ -2577,7 +2590,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         const copyHTML = prevGoals.length ? `
           <div style="margin-top:12px;background:var(--bg);border-radius:10px;padding:12px 14px;">
             <label style="display:flex;align-items:center;gap:10px;font-size:0.88rem;color:var(--text);cursor:pointer;font-weight:600;">
-              <input type="checkbox" id="skoolCopyGoals" style="width:18px;height:18px;accent-color:var(--orange);" />
+              <input type="checkbox" id="skoolCopyGoals" checked style="width:18px;height:18px;accent-color:var(--orange);" />
               Copy my previous goals
             </label>
           </div>` : '';

@@ -123,16 +123,16 @@
 
     <!-- Intro screen -->
     <div id="cycleEndIntro" style="text-align:center; max-width:320px;">
-      <div style="font-size:2.8rem; margin-bottom:12px;">🎉</div>
-      <div class="onb-title">Challenge Complete!</div>
-      <div class="onb-sub" style="margin-bottom:28px;">You finished your 21-day cycle. Ready to go again?</div>
-      <button onclick="showCycleEndDatePicker()" style="width:100%; padding:16px; background:var(--orange); color:#fff; font-family:inherit; font-size:1rem; font-weight:800; border:none; border-radius:12px; cursor:pointer; margin-bottom:12px;">Start a new 21-day challenge</button>
-      <button onclick="dismissCycleEnd()" style="width:100%; padding:12px; background:none; color:var(--muted); font-family:inherit; font-size:0.88rem; font-weight:600; border:none; cursor:pointer; text-decoration:underline;">View my last cycle →</button>
+      <div style="font-size:3.2rem; margin-bottom:16px;">🏆</div>
+      <div class="onb-title">Congratulations!</div>
+      <div class="onb-sub" style="margin-bottom:10px;">You completed your 21-day challenge.</div>
+      <div class="onb-sub" style="font-size:0.82rem; margin-bottom:32px;">Take a moment to review your journey — when you're ready, start a new challenge from the tracker.</div>
+      <button onclick="dismissCycleEnd()" style="width:100%; padding:16px; background:var(--orange); color:#fff; font-family:inherit; font-size:1rem; font-weight:800; border:none; border-radius:12px; cursor:pointer;">See my completed tracker →</button>
     </div>
 
     <!-- Date picker screen -->
     <div id="cycleEndDatePick" style="display:none; width:100%; max-width:360px;">
-      <button class="onb-back" onclick="showCycleEndIntro()">← Back</button>
+      <button class="onb-back" onclick="closeCycleEndOverlay()">← Back</button>
       <div class="onb-title">Pick your start Monday</div>
       <div class="onb-sub">Choose this past Monday or the upcoming one.</div>
       <div class="onb-date-grid" id="cycleEndMondayList"></div>
@@ -147,9 +147,9 @@
   </div>
 
   <!-- Between-cycles banner (shown when viewing completed cycle) -->
-  <div id="newCycleBanner" style="display:none; background:var(--orange); color:#fff; padding:10px 16px; display:none; align-items:center; justify-content:space-between; gap:12px; font-size:0.82rem; font-weight:700;">
-    <span>Challenge complete 🎉</span>
-    <button onclick="showCycleEndOverlay()" style="background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:0.8rem; font-weight:800; cursor:pointer; white-space:nowrap;">Start new 21 days →</button>
+  <div id="newCycleBanner" style="display:none; padding:20px 16px 8px; text-align:center;">
+    <div style="font-size:0.72rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">— Challenge Complete 🎉 —</div>
+    <button onclick="openNewCyclePicker()" style="width:100%; max-width:400px; padding:15px; background:var(--orange); color:#fff; font-family:inherit; font-size:0.95rem; font-weight:800; border:none; border-radius:14px; cursor:pointer; letter-spacing:-0.01em; display:block; margin:0 auto;">Start a new 21-day challenge →</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
