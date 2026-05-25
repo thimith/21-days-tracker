@@ -546,7 +546,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       _newCyclePickedDate = null;
     }
     function dismissCycleEnd() {
-      sessionStorage.setItem('cycleEndDismissed', '1');
+      localStorage.setItem('cycleEndDismissed_' + (_c.cohort?.id || ''), '1');
       document.getElementById('cycleEndOverlay').style.display = 'none';
     }
     function closeCycleEndOverlay() {
@@ -868,14 +868,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? `Day ${day}` : isBetweenCycles ? 'Challenge Completed' : 'Complete';
       document.getElementById('cohortLabel').textContent = dayLabel;
 
-      // Show/hide the between-cycles banner and trigger overlay
-      const banner = document.getElementById('newCycleBanner');
-      if (isBetweenCycles) {
-        banner.style.display = 'block';
-        // Show overlay once per session unless dismissed
-        if (!sessionStorage.getItem('cycleEndDismissed')) showCycleEndOverlay();
-      } else {
-        banner.style.display = 'none';
+      // Show congratulations overlay once when between cycles (persisted in localStorage per cycle)
+      if (isBetweenCycles && !localStorage.getItem('cycleEndDismissed_' + (_c.cohort?.id || ''))) {
+        showCycleEndOverlay();
       }
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
@@ -1034,6 +1029,12 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           </div>`);
       }
 
+
+      // ── New cycle CTA (between Skool cycles) ──
+      const isBetweenCycles = _c.skoolMember && db.getCohortDay(cohort.startDate) > 21;
+      if (isBetweenCycles && !isViewingOther) {
+        html.push(`<button type="button" onclick="openNewCyclePicker()" style="width:100%;padding:14px;background:var(--orange);color:#fff;font-family:inherit;font-size:0.92rem;font-weight:800;border:none;border-radius:12px;cursor:pointer;letter-spacing:-0.01em;margin-bottom:4px;">Start a new 21-day challenge →</button>`);
+      }
 
       // ── Goal cards (grouped) ──
       const dateWeek     = db.getCohortWeekNum(cohort.startDate, date);
@@ -2084,9 +2085,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         `<div class="day-page" data-date="${d}">${_buildDayHTML(d)}</div>`
       ).join('');
 
-      // Snap to current date; if today not in cycle, use day 1
+      // Snap to current date; if today not in cycle, use last day (e.g. between cycles)
       const inCycle = _pgDates.indexOf(selectedDate) >= 0;
-      if (!inCycle) selectedDate = _pgDates[0];
+      if (!inCycle) selectedDate = _pgDates[_pgDates.length - 1];
       const idx = Math.max(0, _pgDates.indexOf(selectedDate));
       _pageIdx = idx;
       goToPage(idx, false);
