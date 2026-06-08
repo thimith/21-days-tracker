@@ -179,6 +179,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         await sb.from('cohort_members').delete().eq('user_id', _userId).eq('cohort_id', _cohortId);
       }
 
+      localStorage.removeItem(`ft_app_${_userId}`);
       window.location.href = 'app.html';
     }
 
