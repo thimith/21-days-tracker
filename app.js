@@ -1244,7 +1244,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         html.push(`
           <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
             <div class="goal-group-label" style="margin:0;">From last round</div>
-            <button type="button" onclick="dismissPrevGoals()" style="font-size:0.72rem;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px 4px;">Dismiss all</button>
+            <button type="button" onclick="dismissPrevGoals()" style="font-size:0.72rem;font-weight:700;color:#fff;background:var(--orange);border:none;border-radius:8px;cursor:pointer;padding:4px 10px;">Dismiss all</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
       }
