@@ -167,9 +167,19 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       if (!_cohortId || !_userId) return;
       if (!confirm('Cancel your active round?\n\nYour goals will be saved as drafts so you can reuse them when you start the next round.')) return;
 
-      const { error: delErr } = await sb.from('skool_cycles').delete().eq('user_id', _userId);
-      const { data: cyclesAfter } = await sb.from('skool_cycles').select('id').eq('user_id', _userId);
-      alert('delete error: ' + JSON.stringify(delErr) + '\nrows remaining: ' + JSON.stringify(cyclesAfter));
+      const { data: goalsRaw } = await sb.from('goals')
+        .select('*').eq('user_id', _userId).eq('cohort_id', _cohortId).order('sort_order');
+      const drafts = (goalsRaw || []).map(g => ({ id: g.id, title: g.title, type: g.type, config: g.config, userId: _userId }));
+      localStorage.setItem(`ft_draft_goals_${_userId}`, JSON.stringify(drafts));
+      localStorage.setItem(`ft_draft_goals_${_userId}_seeded`, '1');
+
+      // RLS blocks deleting skool_cycles — soft-cancel by storing IDs to ignore
+      const { data: cycles } = await sb.from('skool_cycles').select('id').eq('user_id', _userId);
+      const cancelledIds = (cycles || []).map(c => c.id);
+      localStorage.setItem(`ft_cancelled_cycles_${_userId}`, JSON.stringify(cancelledIds));
+
+      localStorage.removeItem(`ft_app_${_userId}`);
+      window.location.href = 'app.html';
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }

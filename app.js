@@ -493,6 +493,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         }));
         await sb.from('goals').insert(newGoals);
       }
+      localStorage.removeItem(`ft_cancelled_cycles_${_c.userId}`);
       window.location.reload();
     }
 
@@ -611,6 +612,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         await sb.from('goals').insert(newGoals);
       }
       sessionStorage.removeItem('cycleEndDismissed');
+      localStorage.removeItem(`ft_cancelled_cycles_${_c.userId}`);
       window.location.reload();
     }
 
@@ -666,12 +668,14 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       if (skoolMbr) {
         const { data: cycles } = await sb.from('skool_cycles')
           .select('*').eq('user_id', userId).order('start_date', { ascending: false });
-        if (cycles?.length) {
-          const active = cycles.find(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
-          const picked = active || cycles[0];
+        const cancelledIds = new Set(JSON.parse(localStorage.getItem(`ft_cancelled_cycles_${userId}`) || '[]'));
+        const validCycles = (cycles || []).filter(c => !cancelledIds.has(c.id));
+        if (validCycles.length) {
+          const active = validCycles.find(c => { const d = db.getCohortDay(c.start_date); return d >= 1 && d <= 21; });
+          const picked = active || validCycles[0];
           _c.cohort = { id: picked.id, startDate: picked.start_date, start_date: picked.start_date, name: 'Skool Community' };
         }
-        // If no cycle found, _c.cohort stays null → renderNoCohort shows Monday picker
+        // If no valid cycle found, _c.cohort stays null → renderNoCohort shows Monday picker
       } else if (memberships?.length) {
         // Exclusive-only members
         const cohorts = memberships.map(m => m.cohorts).filter(Boolean);
