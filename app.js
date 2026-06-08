@@ -1150,25 +1150,6 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         }
       }
 
-      // ── From last round (days 1–3) ──
-      const prevAvail = _c.prevAvailableGoals || [];
-      if (!isViewingOther && prevAvail.length) {
-        const _pill = f => f === '21 Days'
-          ? 'background:rgba(175,82,222,0.12);color:#8e44ad;'
-          : f === 'Weekly' ? 'background:rgba(0,122,255,0.1);color:#0057cc;'
-          : 'background:rgba(52,199,89,0.12);color:#1a8f3a;';
-        const rows = prevAvail.map(g => {
-          const frame = _prevFrameLabel(g.type);
-          const accent = g.config?.color ? `border-left:4px solid ${g.config.color};` : '';
-          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);${accent}">
-            <span style="flex:1;font-size:0.88rem;font-weight:600;color:var(--text);">${g.title}</span>
-            <span style="font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;${_pill(frame)}">${frame}</span>
-            <button type="button" onclick="addFromPrevRound('${g.id}')" style="width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:1.2rem;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;">+</button>
-          </div>`;
-        }).join('');
-        html.push(`<div class="goal-group-label" style="margin-top:4px;">From last round</div><div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
-      }
-
       // ── Add goal button + form (bottom of list) ──
       if (!isViewingOther) {
         if (addFormOpen) {
@@ -1245,6 +1226,25 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
 
       if (notesHTML) html.push(notesHTML);
+
+      // ── From last round (up to day 3) ──
+      const prevAvail = _c.prevAvailableGoals || [];
+      if (!isViewingOther && prevAvail.length) {
+        const _pill = f => f === '21 Days'
+          ? 'background:rgba(175,82,222,0.12);color:#8e44ad;'
+          : f === 'Weekly' ? 'background:rgba(0,122,255,0.1);color:#0057cc;'
+          : 'background:rgba(52,199,89,0.12);color:#1a8f3a;';
+        const rows = prevAvail.map(g => {
+          const frame = _prevFrameLabel(g.type);
+          const accent = g.config?.color ? `border-left:4px solid ${g.config.color};` : '';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);${accent}">
+            <span style="flex:1;font-size:0.88rem;font-weight:600;color:var(--text);">${g.title}</span>
+            <span style="font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;${_pill(frame)}">${frame}</span>
+            <button type="button" onclick="addFromPrevRound('${g.id}')" style="width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:1.2rem;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;">+</button>
+          </div>`;
+        }).join('');
+        html.push(`<div class="goal-group-label" style="margin-top:4px;">From last round</div><div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
+      }
 
       return html.join('');
     }
