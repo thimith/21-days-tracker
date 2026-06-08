@@ -7,7 +7,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       return Math.floor((n-s)/86400000)+1;
     }
 
-    let _userId, _cohortId;
+    let _userId, _cohortId, _isSkool = false;
     const _stakeTimers = {};
 
     (async () => {
@@ -50,7 +50,10 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
 
       let cohortLabel = 'No active cohort', startDate = null;
 
+      const _cancelBtn = `<div class="info-row cancel-row"><button class="cancel-round-btn" onclick="cancelRound()">Cancel Round</button></div>`;
+
       if (skoolMbr) {
+        _isSkool = true;
         const { data: cycles } = await sb.from('skool_cycles')
           .select('*').eq('user_id', _userId).order('start_date', { ascending: false });
         if (cycles?.length) {
@@ -59,11 +62,13 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           _cohortId = picked.id;
           startDate = picked.start_date;
           const day = getCohortDay(startDate);
-          cohortLabel = day < 1 ? `Day ${day} (Upcoming — ${startDate})` : day <= 21 ? `Day ${day} of 21` : 'Completed';
+          cohortLabel = day < 1 ? `Upcoming — starts ${startDate}` : day <= 21 ? `Day ${day} of 21` : 'Completed';
+          const canCancel = day <= 21;
           document.getElementById('cohortInfo').innerHTML = `
             <div class="info-row"><span class="info-label">Cohort</span><span class="info-value">Skool Community</span></div>
             <div class="info-row"><span class="info-label">Start Date</span><span class="info-value">${startDate}</span></div>
-            <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${cohortLabel}</span></div>`;
+            <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${cohortLabel}</span></div>
+            ${canCancel ? _cancelBtn : ''}`;
         } else {
           document.getElementById('cohortInfo').innerHTML = `<div class="info-row"><span class="info-label">Cohort</span><span class="info-value">Skool — no cycle started</span></div>`;
         }
@@ -76,10 +81,12 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           startDate = cohort.start_date;
           const day = getCohortDay(startDate);
           const dl = day >= 1 && day <= 21 ? `Day ${day} of 21` : day < 1 ? 'Upcoming' : 'Completed';
+          const canCancel = day <= 21;
           document.getElementById('cohortInfo').innerHTML = `
             <div class="info-row"><span class="info-label">Cohort</span><span class="info-value">${cohort.name}</span></div>
             <div class="info-row"><span class="info-label">Start Date</span><span class="info-value">${startDate}</span></div>
-            <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${dl}</span></div>`;
+            <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${dl}</span></div>
+            ${canCancel ? _cancelBtn : ''}`;
         } else {
           document.getElementById('cohortInfo').innerHTML = `<div class="info-row"><span class="info-label">No active cohort</span></div>`;
         }
@@ -154,6 +161,25 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           setTimeout(() => ind.classList.remove('show'), 2000);
         }
       }
+    }
+
+    async function cancelRound() {
+      if (!_cohortId || !_userId) return;
+      if (!confirm('Cancel your active round?\n\nYour goals will be saved as drafts so you can reuse them when you start the next round.')) return;
+
+      const { data: goalsRaw } = await sb.from('goals')
+        .select('*').eq('user_id', _userId).eq('cohort_id', _cohortId).order('sort_order');
+      const drafts = (goalsRaw || []).map(g => ({ id: g.id, title: g.title, type: g.type, config: g.config, userId: _userId }));
+      localStorage.setItem(`ft_draft_goals_${_userId}`, JSON.stringify(drafts));
+      localStorage.setItem(`ft_draft_goals_${_userId}_seeded`, '1');
+
+      if (_isSkool) {
+        await sb.from('skool_cycles').delete().eq('id', _cohortId);
+      } else {
+        await sb.from('cohort_members').delete().eq('user_id', _userId).eq('cohort_id', _cohortId);
+      }
+
+      window.location.href = 'app.html';
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
