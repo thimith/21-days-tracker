@@ -167,28 +167,17 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       if (!_cohortId || !_userId) return;
       if (!confirm('Cancel your active round?\n\nYour goals will be saved as drafts so you can reuse them when you start the next round.')) return;
 
-      const { data: goalsRaw } = await sb.from('goals')
-        .select('*').eq('user_id', _userId).eq('cohort_id', _cohortId).order('sort_order');
-      const drafts = (goalsRaw || []).map(g => ({ id: g.id, title: g.title, type: g.type, config: g.config, userId: _userId }));
-      localStorage.setItem(`ft_draft_goals_${_userId}`, JSON.stringify(drafts));
-      localStorage.setItem(`ft_draft_goals_${_userId}_seeded`, '1');
-
-      let deleteError;
-      if (_isSkool) {
-        const { error } = await sb.from('skool_cycles').delete().eq('user_id', _userId);
-        deleteError = error;
-      } else {
-        const { error } = await sb.from('cohort_members').delete().eq('user_id', _userId).eq('cohort_id', _cohortId);
-        deleteError = error;
-      }
-
-      if (deleteError) {
-        alert('Could not cancel round: ' + deleteError.message);
-        return;
-      }
-
-      localStorage.removeItem(`ft_app_${_userId}`);
-      window.location.href = 'app.html';
+      // Debug: show what we're about to delete
+      const { data: cyclesBefore } = await sb.from('skool_cycles').select('id, start_date').eq('user_id', _userId);
+      const { data: membersBefore } = await sb.from('cohort_members').select('cohort_id').eq('user_id', _userId);
+      alert(
+        'DEBUG before delete:\n' +
+        '_isSkool=' + _isSkool + '\n' +
+        '_cohortId=' + _cohortId + '\n' +
+        '_userId=' + _userId + '\n' +
+        'skool_cycles rows: ' + JSON.stringify(cyclesBefore) + '\n' +
+        'cohort_members rows: ' + JSON.stringify(membersBefore)
+      );
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
