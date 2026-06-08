@@ -467,6 +467,68 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }).join('');
     }
 
+    let _pendingNewCycleId = null;
+    let _prevGoalPool = [];
+    let _prevGoalSel = {};
+
+    function _prevFrameLabel(t) {
+      if (['milestone','total_count','total_time_min','total_time_max'].includes(t)) return '21 Days';
+      if (['weekly_boolean','weekly_days','weekly_count','weekly_time_min','weekly_time_max','daily_count_weekly'].includes(t)) return 'Weekly';
+      return 'Daily';
+    }
+
+    function _renderPrevGoalPicker() {
+      const pillStyle = f => f === '21 Days'
+        ? 'background:rgba(175,82,222,0.12);color:#8e44ad;'
+        : f === 'Weekly' ? 'background:rgba(0,122,255,0.1);color:#0057cc;'
+        : 'background:rgba(52,199,89,0.12);color:#1a8f3a;';
+      const goalsHTML = _prevGoalPool.map(g => {
+        const frame = _prevFrameLabel(g.type);
+        const accent = g.config?.color ? `border-left:4px solid ${g.config.color};` : '';
+        return `<label style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border-radius:10px;cursor:pointer;${accent}">
+          <input type="checkbox" checked onchange="_togglePrevGoal('${g.id}',this.checked)" style="width:18px;height:18px;accent-color:var(--orange);flex-shrink:0;" />
+          <span style="flex:1;font-size:0.88rem;font-weight:600;color:var(--text);">${g.title}</span>
+          <span style="font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;${pillStyle(frame)}">${frame}</span>
+        </label>`;
+      }).join('');
+      const count = _prevGoalPool.length;
+      document.getElementById('pagerTrack').innerHTML = `
+        <div class="day-page" style="padding:24px 16px;">
+          <div style="background:var(--card);border-radius:16px;padding:20px 18px;box-shadow:var(--shadow);border-left:4px solid var(--orange);">
+            <div style="font-size:0.72rem;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Previous goals</div>
+            <div style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Pick which goals to carry over from your last round.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">${goalsHTML}</div>
+            <div style="display:flex;gap:8px;">
+              <button id="addPrevGoalsBtn" onclick="addPrevGoals()" style="flex:1;padding:12px;background:var(--orange);color:#fff;font-family:inherit;font-size:0.9rem;font-weight:800;border:none;border-radius:10px;cursor:pointer;transition:opacity 0.15s;">Add ${count} goal${count!==1?'s':''} →</button>
+              <button onclick="window.location.reload()" style="padding:12px 16px;background:none;color:var(--muted);font-family:inherit;font-size:0.88rem;font-weight:600;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;">Start fresh</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function _togglePrevGoal(id, checked) {
+      _prevGoalSel[id] = checked;
+      const count = Object.values(_prevGoalSel).filter(Boolean).length;
+      const btn = document.getElementById('addPrevGoalsBtn');
+      if (btn) { btn.textContent = `Add ${count} goal${count!==1?'s':''} →`; btn.style.opacity = count > 0 ? '1' : '0.4'; }
+    }
+
+    async function addPrevGoals() {
+      const btn = document.getElementById('addPrevGoalsBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+      const selected = _prevGoalPool.filter(g => _prevGoalSel[g.id]);
+      if (selected.length && _pendingNewCycleId) {
+        const newGoals = selected.map((g, i) => ({
+          id: 'g_' + Date.now().toString(36) + Math.random().toString(36).substr(2,5),
+          user_id: _c.userId, cohort_id: _pendingNewCycleId,
+          type: g.type, title: g.title, config: g.config || {},
+          locked: false, sort_order: i
+        }));
+        await sb.from('goals').insert(newGoals);
+      }
+      window.location.reload();
+    }
+
     let _skoolPickedDate = null;
     function skoolPickDate(date, btn) {
       _skoolPickedDate = date;
@@ -478,22 +540,19 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     async function skoolConfirmCycle() {
       if (!_skoolPickedDate) return;
       const btn = document.getElementById('skoolConfirmBtn');
-      btn.disabled = true; btn.textContent = 'Joining…';
+      btn.disabled = true; btn.textContent = 'Creating…';
       const cycleId = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
       const { error } = await sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _skoolPickedDate, cycle_number: 1 });
       if (error) { btn.disabled = false; btn.textContent = 'Confirm — I\'m in'; btn.style.opacity='1'; alert('Error: ' + error.message); return; }
-      // Copy previous goals if checkbox checked
-      const copyChecked = document.getElementById('skoolCopyGoals')?.checked;
-      if (copyChecked && (_c.goals||[]).length) {
-        const newGoals = _c.goals.map(g => ({
-          id: 'g_' + Date.now().toString(36) + Math.random().toString(36).substr(2,5),
-          user_id: _c.userId, cohort_id: cycleId,
-          type: g.type, title: g.title, config: g.config || {},
-          locked: false, sort_order: g.order ?? 0
-        }));
-        await sb.from('goals').insert(newGoals);
-      }
-      window.location.reload();
+      const { data: allPrev } = await sb.from('goals')
+        .select('*').eq('user_id', _c.userId).neq('cohort_id', cycleId)
+        .order('created_at', { ascending: false });
+      if (!allPrev?.length) { window.location.reload(); return; }
+      const prevCohortId = allPrev[0].cohort_id;
+      _pendingNewCycleId = cycleId;
+      _prevGoalPool = allPrev.filter(g => g.cohort_id === prevCohortId);
+      _prevGoalSel = Object.fromEntries(_prevGoalPool.map(g => [g.id, true]));
+      _renderPrevGoalPicker();
     }
 
     function onbSelectDate(date, btn) {
@@ -573,15 +632,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           <div class="onb-date-meta">${label}</div>
         </button>`;
       }).join('');
-      // Show copy option if previous cycle had goals (default checked)
-      const prevGoals = _c.goals || [];
-      const copyWrap = document.getElementById('cycleEndCopyWrap');
-      if (prevGoals.length) {
-        copyWrap.style.display = '';
-        document.getElementById('cycleEndCopyGoals').checked = true;
-      } else {
-        copyWrap.style.display = 'none';
-      }
+      document.getElementById('cycleEndCopyWrap').style.display = 'none';
       document.getElementById('cycleEndConfirmBtn').disabled = true;
       document.getElementById('cycleEndConfirmBtn').style.opacity = '0.4';
     }
@@ -599,19 +650,14 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const cycleId = Date.now().toString(36) + Math.random().toString(36).substr(2,6);
       const { error } = await sb.from('skool_cycles').insert({ id: cycleId, user_id: _c.userId, start_date: _newCyclePickedDate, cycle_number: 1 });
       if (error) { btn.disabled = false; btn.textContent = 'Confirm — I\'m in'; btn.style.opacity='1'; alert('Error: ' + error.message); return; }
-      // Copy previous goals if checked
-      const copyChecked = document.getElementById('cycleEndCopyGoals')?.checked;
-      if (copyChecked && (_c.goals||[]).length) {
-        const newGoals = _c.goals.map(g => ({
-          id: 'g_' + Date.now().toString(36) + Math.random().toString(36).substr(2,5),
-          user_id: _c.userId, cohort_id: cycleId,
-          type: g.type, title: g.title, config: g.config || {},
-          locked: false, sort_order: g.order ?? 0
-        }));
-        await sb.from('goals').insert(newGoals);
-      }
       sessionStorage.removeItem('cycleEndDismissed');
-      window.location.reload();
+      document.getElementById('cycleEndOverlay').style.display = 'none';
+      const prevGoals = _c.goals || [];
+      if (!prevGoals.length) { window.location.reload(); return; }
+      _pendingNewCycleId = cycleId;
+      _prevGoalPool = prevGoals;
+      _prevGoalSel = Object.fromEntries(prevGoals.map(g => [g.id, true]));
+      _renderPrevGoalPicker();
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -2587,20 +2633,11 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
             <div class="onb-date-meta">${label}</div>
           </button>`;
         }).join('');
-        const prevGoals = _c.goals || [];
-        const copyHTML = prevGoals.length ? `
-          <div style="margin-top:12px;background:var(--bg);border-radius:10px;padding:12px 14px;">
-            <label style="display:flex;align-items:center;gap:10px;font-size:0.88rem;color:var(--text);cursor:pointer;font-weight:600;">
-              <input type="checkbox" id="skoolCopyGoals" checked style="width:18px;height:18px;accent-color:var(--orange);" />
-              Copy my previous goals
-            </label>
-          </div>` : '';
         document.getElementById('pagerTrack').innerHTML = `<div class="day-page" style="padding:24px 16px;">
           <div style="background:var(--card);border-radius:16px;padding:20px 18px;box-shadow:var(--shadow);border-left:4px solid var(--orange);">
             <div style="font-size:0.72rem;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">🗓 Pick your start date</div>
             <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;">Choose which Monday to begin your 21-day cycle.</div>
             <div style="display:flex;flex-direction:column;gap:8px;" id="skoolMondayList">${mondayBtns}</div>
-            ${copyHTML}
             <button id="skoolConfirmBtn" onclick="skoolConfirmCycle()" disabled style="margin-top:14px;width:100%;padding:12px;background:var(--orange);color:#fff;font-family:inherit;font-size:0.9rem;font-weight:800;border:none;border-radius:10px;cursor:pointer;opacity:0.4;transition:opacity 0.2s;">Confirm — I'm in</button>
           </div>
         </div>`;
