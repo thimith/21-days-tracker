@@ -783,7 +783,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       _c.prevAvailableGoals = [];
       if (targetUserId === _c.userId) {
         const currentDay = db.getCohortDay(_c.cohort.startDate);
-        if (currentDay >= 1 && currentDay <= 3) {
+        if (currentDay <= 3) {
           const { data: allPrev } = await sb.from('goals')
             .select('*').eq('user_id', _c.userId).neq('cohort_id', _c.cohort.id)
             .order('created_at', { ascending: false });
