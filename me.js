@@ -173,10 +173,19 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       localStorage.setItem(`ft_draft_goals_${_userId}`, JSON.stringify(drafts));
       localStorage.setItem(`ft_draft_goals_${_userId}_seeded`, '1');
 
-      // RLS blocks deleting skool_cycles — soft-cancel by storing IDs to ignore
+      // Try to mark all cycles as expired in the DB (cross-device fix).
+      // RLS may block DELETE but allow UPDATE — set start_date far in past so
+      // getCohortDay returns >> 21, making every device treat them as completed.
       const { data: cycles } = await sb.from('skool_cycles').select('id').eq('user_id', _userId);
       const cancelledIds = (cycles || []).map(c => c.id);
-      localStorage.setItem(`ft_cancelled_cycles_${_userId}`, JSON.stringify(cancelledIds));
+      const { error: updateErr } = await sb.from('skool_cycles')
+        .update({ start_date: '2000-01-01' })
+        .eq('user_id', _userId);
+
+      // Fallback: localStorage soft-cancel in case UPDATE is also blocked
+      if (updateErr) {
+        localStorage.setItem(`ft_cancelled_cycles_${_userId}`, JSON.stringify(cancelledIds));
+      }
 
       localStorage.removeItem(`ft_app_${_userId}`);
       window.location.href = 'app.html';
