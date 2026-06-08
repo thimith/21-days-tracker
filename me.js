@@ -173,10 +173,18 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       localStorage.setItem(`ft_draft_goals_${_userId}`, JSON.stringify(drafts));
       localStorage.setItem(`ft_draft_goals_${_userId}_seeded`, '1');
 
+      let deleteError;
       if (_isSkool) {
-        await sb.from('skool_cycles').delete().eq('id', _cohortId);
+        const { error } = await sb.from('skool_cycles').delete().eq('user_id', _userId).eq('id', _cohortId);
+        deleteError = error;
       } else {
-        await sb.from('cohort_members').delete().eq('user_id', _userId).eq('cohort_id', _cohortId);
+        const { error } = await sb.from('cohort_members').delete().eq('user_id', _userId).eq('cohort_id', _cohortId);
+        deleteError = error;
+      }
+
+      if (deleteError) {
+        alert('Could not cancel round: ' + deleteError.message);
+        return;
       }
 
       localStorage.removeItem(`ft_app_${_userId}`);
