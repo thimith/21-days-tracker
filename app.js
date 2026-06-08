@@ -778,6 +778,23 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       for (const j of (journalRaw || [])) {
         _c.journal[j.date] = j.content;
       }
+
+      // Previous goals available to carry over (days 1–3, own data only)
+      _c.prevAvailableGoals = [];
+      if (targetUserId === _c.userId) {
+        const currentDay = db.getCohortDay(_c.cohort.startDate);
+        if (currentDay >= 1 && currentDay <= 3) {
+          const { data: allPrev } = await sb.from('goals')
+            .select('*').eq('user_id', _c.userId).neq('cohort_id', _c.cohort.id)
+            .order('created_at', { ascending: false });
+          if (allPrev?.length) {
+            const prevCohortId = allPrev[0].cohort_id;
+            const prevGoals = allPrev.filter(g => g.cohort_id === prevCohortId);
+            const currentKeys = new Set(_c.goals.map(g => `${g.title}|${g.type}`));
+            _c.prevAvailableGoals = prevGoals.filter(g => !currentKeys.has(`${g.title}|${g.type}`));
+          }
+        }
+      }
     }
 
     function _saveAppCache() {
@@ -1131,6 +1148,25 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
               <div class="journal-saving" id="journal-status-${date}"></div>
             </div>`;
         }
+      }
+
+      // ── From last round (days 1–3) ──
+      const prevAvail = _c.prevAvailableGoals || [];
+      if (!isViewingOther && prevAvail.length) {
+        const _pill = f => f === '21 Days'
+          ? 'background:rgba(175,82,222,0.12);color:#8e44ad;'
+          : f === 'Weekly' ? 'background:rgba(0,122,255,0.1);color:#0057cc;'
+          : 'background:rgba(52,199,89,0.12);color:#1a8f3a;';
+        const rows = prevAvail.map(g => {
+          const frame = _prevFrameLabel(g.type);
+          const accent = g.config?.color ? `border-left:4px solid ${g.config.color};` : '';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);${accent}">
+            <span style="flex:1;font-size:0.88rem;font-weight:600;color:var(--text);">${g.title}</span>
+            <span style="font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;${_pill(frame)}">${frame}</span>
+            <button type="button" onclick="addFromPrevRound('${g.id}')" style="width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:1.2rem;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;">+</button>
+          </div>`;
+        }).join('');
+        html.push(`<div class="goal-group-label" style="margin-top:4px;">From last round</div><div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
       }
 
       // ── Add goal button + form (bottom of list) ──
@@ -2274,6 +2310,21 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         ], { duration: 550 + Math.random() * 350, easing: 'cubic-bezier(0,.9,.57,1)', fill: 'forwards' })
           .onfinish = () => el.remove();
       }
+    }
+
+    async function addFromPrevRound(goalId) {
+      const g = (_c.prevAvailableGoals || []).find(x => x.id === goalId);
+      if (!g || !cohort) return;
+      const newId = 'g_' + Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+      const { error } = await sb.from('goals').insert({
+        id: newId, user_id: _c.userId, cohort_id: cohort.id,
+        type: g.type, title: g.title, config: g.config || {},
+        locked: false, sort_order: _c.goals.length
+      });
+      if (error) { alert('Error: ' + error.message); return; }
+      _c.goals.push({ id: newId, userId: _c.userId, cohortId: cohort.id, type: g.type, title: g.title, config: g.config || {}, locked: false, order: _c.goals.length });
+      _c.prevAvailableGoals = _c.prevAvailableGoals.filter(x => x.id !== goalId);
+      renderContent();
     }
 
     function toggleBoolean(goalId, date) {
