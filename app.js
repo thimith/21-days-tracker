@@ -1242,8 +1242,8 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           </div>`;
         }).join('');
         html.push(`
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
-            <div class="goal-group-label" style="margin:0;">From last round</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding:4px 2px 6px;">
+            <span style="font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);">From last round</span>
             <button type="button" onclick="dismissPrevGoals()" style="font-size:0.72rem;font-weight:700;color:#fff;background:var(--orange);border:none;border-radius:8px;cursor:pointer;padding:4px 10px;">Dismiss all</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
