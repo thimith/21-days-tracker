@@ -1225,8 +1225,6 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         }
       }
 
-      if (notesHTML) html.push(notesHTML);
-
       // ── From last round (up to day 3) ──
       const prevAvail = _c.prevAvailableGoals || [];
       if (!isViewingOther && prevAvail.length) {
@@ -1243,8 +1241,15 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
             <button type="button" onclick="addFromPrevRound('${g.id}')" style="width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:1.2rem;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;">+</button>
           </div>`;
         }).join('');
-        html.push(`<div class="goal-group-label" style="margin-top:4px;">From last round</div><div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
+        html.push(`
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+            <div class="goal-group-label" style="margin:0;">From last round</div>
+            <button type="button" onclick="dismissPrevGoals()" style="font-size:0.72rem;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px 4px;">Dismiss all</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
       }
+
+      if (notesHTML) html.push(notesHTML);
 
       return html.join('');
     }
@@ -2311,6 +2316,8 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           .onfinish = () => el.remove();
       }
     }
+
+    function dismissPrevGoals() { _c.prevAvailableGoals = []; renderContent(); }
 
     async function addFromPrevRound(goalId) {
       const g = (_c.prevAvailableGoals || []).find(x => x.id === goalId);
