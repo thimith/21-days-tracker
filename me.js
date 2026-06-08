@@ -167,17 +167,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       if (!_cohortId || !_userId) return;
       if (!confirm('Cancel your active round?\n\nYour goals will be saved as drafts so you can reuse them when you start the next round.')) return;
 
-      // Debug: show what we're about to delete
-      const { data: cyclesBefore } = await sb.from('skool_cycles').select('id, start_date').eq('user_id', _userId);
-      const { data: membersBefore } = await sb.from('cohort_members').select('cohort_id').eq('user_id', _userId);
-      alert(
-        'DEBUG before delete:\n' +
-        '_isSkool=' + _isSkool + '\n' +
-        '_cohortId=' + _cohortId + '\n' +
-        '_userId=' + _userId + '\n' +
-        'skool_cycles rows: ' + JSON.stringify(cyclesBefore) + '\n' +
-        'cohort_members rows: ' + JSON.stringify(membersBefore)
-      );
+      const { error: delErr } = await sb.from('skool_cycles').delete().eq('user_id', _userId);
+      const { data: cyclesAfter } = await sb.from('skool_cycles').select('id').eq('user_id', _userId);
+      alert('delete error: ' + JSON.stringify(delErr) + '\nrows remaining: ' + JSON.stringify(cyclesAfter));
     }
 
     async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
