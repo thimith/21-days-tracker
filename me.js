@@ -175,7 +175,7 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
 
       let deleteError;
       if (_isSkool) {
-        const { error } = await sb.from('skool_cycles').delete().eq('user_id', _userId).eq('id', _cohortId);
+        const { error } = await sb.from('skool_cycles').delete().eq('user_id', _userId);
         deleteError = error;
       } else {
         const { error } = await sb.from('cohort_members').delete().eq('user_id', _userId).eq('cohort_id', _cohortId);
