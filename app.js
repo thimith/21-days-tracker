@@ -779,11 +779,12 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         _c.journal[j.date] = j.content;
       }
 
-      // Previous goals available to carry over (days 1–3, own data only)
+      // Previous goals available to carry over (up to day 3, own data only)
       _c.prevAvailableGoals = [];
       if (targetUserId === _c.userId) {
         const currentDay = db.getCohortDay(_c.cohort.startDate);
-        if (currentDay <= 3) {
+        const dismissedKey = `ft_prev_dismissed_${_c.userId}_${_c.cohort.id}`;
+        if (currentDay <= 3 && !localStorage.getItem(dismissedKey)) {
           const { data: allPrev } = await sb.from('goals')
             .select('*').eq('user_id', _c.userId).neq('cohort_id', _c.cohort.id)
             .order('created_at', { ascending: false });
@@ -1242,9 +1243,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
           </div>`;
         }).join('');
         html.push(`
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding:4px 2px 6px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;padding:4px 2px 6px;">
             <span style="font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);">From last round</span>
-            <button type="button" onclick="dismissPrevGoals()" style="font-size:0.72rem;font-weight:700;color:#fff;background:var(--orange);border:none;border-radius:8px;cursor:pointer;padding:4px 10px;">Dismiss all</button>
+            <button type="button" onclick="dismissPrevGoals()" style="font-size:0.72rem;font-weight:700;color:#fff;background:var(--orange);border:none;border-radius:8px;cursor:pointer;padding:4px 10px;margin-left:auto;">Dismiss all</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`);
       }
@@ -2317,7 +2318,11 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
     }
 
-    function dismissPrevGoals() { _c.prevAvailableGoals = []; renderContent(); }
+    function dismissPrevGoals() {
+      if (_c.cohort) localStorage.setItem(`ft_prev_dismissed_${_c.userId}_${_c.cohort.id}`, '1');
+      _c.prevAvailableGoals = [];
+      renderContent();
+    }
 
     async function addFromPrevRound(goalId) {
       const g = (_c.prevAvailableGoals || []).find(x => x.id === goalId);
