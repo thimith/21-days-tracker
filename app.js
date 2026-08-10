@@ -595,11 +595,20 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
     // ══════════════════════════════════════════════════════════════════════
     let _newCyclePickedDate = null;
 
-    function showCycleEndOverlay() {
+    function showCycleEndOverlay(failed) {
       document.getElementById('cycleEndOverlay').style.display = 'flex';
-      showCycleEndIntro();
+      showCycleEndIntro(failed);
     }
-    function showCycleEndIntro() {
+    function showCycleEndIntro(failed) {
+      document.getElementById('cycleEndIcon').textContent = failed ? '💪' : '🏆';
+      document.getElementById('cycleEndTitle').textContent = failed ? 'Challenge Over' : 'Congratulations!';
+      document.getElementById('cycleEndSub1').textContent = failed
+        ? "You didn't complete this round — that's OK."
+        : 'You completed your 21-day challenge.';
+      document.getElementById('cycleEndSub2').textContent = failed
+        ? "Take a moment to review your journey — when you're ready, start fresh from the tracker."
+        : "Take a moment to review your journey — when you're ready, start a new challenge from the tracker.";
+      document.getElementById('cycleEndDismissBtn').textContent = failed ? 'See my tracker →' : 'See my completed tracker →';
       document.getElementById('cycleEndIntro').style.display = '';
       document.getElementById('cycleEndDatePick').style.display = 'none';
       _newCyclePickedDate = null;
@@ -919,7 +928,6 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       renderProgressGrid();
       renderDateTabs();
       renderPager();
-      checkFailed();
     }
 
     function renderDots() {
@@ -928,13 +936,15 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       const day      = db.getCohortDay(cohort.startDate);
       const pct      = Math.max(0, Math.min(100, Math.round(((Math.min(day,21)-1)/21)*100)));
 
-      const isBetweenCycles = _c.skoolMember && day > 21;
-      const dayLabel = day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? `Day ${day}` : isBetweenCycles ? 'Challenge Completed' : 'Complete';
+      const failed = db.getRedemptionsForUser().length >= 3;
+      const isBetweenCycles = _c.skoolMember && (day > 21 || failed);
+      const dayLabel = isBetweenCycles ? (failed ? 'Challenge Over' : 'Challenge Completed')
+        : day >= 1 && day <= 21 ? `Day ${day}` : day < 1 ? `Day ${day}` : 'Complete';
       document.getElementById('cohortLabel').textContent = dayLabel;
 
-      // Show congratulations overlay once when between cycles (persisted in localStorage per cycle)
+      // Show cycle-end overlay once when between cycles (persisted in localStorage per cycle)
       if (isBetweenCycles && !localStorage.getItem('cycleEndDismissed_' + (_c.cohort?.id || ''))) {
-        showCycleEndOverlay();
+        showCycleEndOverlay(failed);
       }
 
       const redemptionWeeks = new Set(db.getRedemptionsForUser().map(r => r.weekNumber));
@@ -1094,8 +1104,8 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }
 
 
-      // ── New cycle CTA (between Skool cycles) ──
-      const isBetweenCycles = _c.skoolMember && db.getCohortDay(cohort.startDate) > 21;
+      // ── New cycle CTA (between Skool cycles, or after 3 strikes) ──
+      const isBetweenCycles = _c.skoolMember && (db.getCohortDay(cohort.startDate) > 21 || strikes >= 3);
       if (isBetweenCycles && !isViewingOther) {
         html.push(`<button type="button" onclick="openNewCyclePicker()" style="width:100%;padding:14px;background:var(--orange);color:#fff;font-family:inherit;font-size:0.92rem;font-weight:800;border:none;border-radius:12px;cursor:pointer;letter-spacing:-0.01em;margin-bottom:4px;">Start a new 21-day challenge →</button>`);
       }
@@ -2120,9 +2130,9 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
         pill.textContent = `Day -${daysUntil - 1} · Upcoming`;
         return;
       }
-      // After cycle: show completed state
-      if (todayDay > 21) {
-        pill.textContent = 'Challenge Completed';
+      // After cycle: show completed/failed state
+      if (todayDay > 21 || db.getRedemptionsForUser().length >= 3) {
+        pill.textContent = todayDay > 21 ? 'Challenge Completed' : 'Challenge Over';
         return;
       }
       // During cycle: show the page being viewed
@@ -2256,21 +2266,6 @@ const SUPABASE_URL = 'https://lwlfrmdjgvybocnpchal.supabase.co';
       }, { passive: true });
 
       window.addEventListener('resize', () => goToPage(_pageIdx, false));
-    }
-
-    function checkFailed() {
-      if (!cohort) return;
-      const r = db.getRedemptionsForUser();
-      if (r.length >= 3) {
-        document.body.insertAdjacentHTML('beforeend',`
-          <div class="failed-overlay">
-            <div class="failed-card">
-              <div class="failed-icon">🔒</div>
-              <div class="failed-title">Challenge Over</div>
-              <p class="failed-body">You've reached 3 strikes. The 21-Day Challenge is complete for this cohort.<br><br>Contact Thierry for next steps.</p>
-            </div>
-          </div>`);
-      }
     }
 
     // ══════════════════════════════════════════════════════════════════════

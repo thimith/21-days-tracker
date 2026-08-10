@@ -640,24 +640,6 @@ html { font-size: 120%; }
     .onb-pending-icon { font-size: 3rem; margin-bottom: 16px; }
     .onb-cohort-list { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; }
 
-    /* ── Failed overlay ──────────────────────────────────────────────────── */
-    .failed-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.88);
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px; z-index: 999;
-    }
-    .failed-card {
-      background: var(--card); border-radius: 24px;
-      padding: 36px 28px; text-align: center; max-width: 320px;
-    }
-    .failed-icon { font-size: 3rem; margin-bottom: 16px; }
-    .failed-title {
-      font-size: 1.25rem; font-weight: 800; color: var(--text);
-      margin-bottom: 10px; letter-spacing: -0.02em;
-    }
-    .failed-body { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
-
     /* ── Empty state ─────────────────────────────────────────────────────── */
     .empty-state {
       text-align: center; padding: 48px 20px;
